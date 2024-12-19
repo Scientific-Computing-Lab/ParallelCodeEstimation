@@ -1,3 +1,16 @@
+# Modified HeCBench for Roofline Analysis
+
+We took this version of HeCBench and are modifying it to build the CUDA and OMP codes to gather their roofline performance data.
+
+## Building
+
+Execute the following commands to get the Makefile generated and to start the build process.
+```
+source ./runBuild.sh
+cd ./build
+make
+```
+
 # HeCBench
 This repository contains a collection of heterogeneous computing benchmarks written with CUDA, HIP, SYCL/DPC++, and OpenMP-4.5 target offloading for studying performance, portability, and productivity. 
 
