@@ -17,7 +17,7 @@ cmake -DCMAKE_C_COMPILER=clang \
       -DCMAKE_CXX_FLAGS="${CXX_FLAGS} -std=c++14 --offload-arch=sm_86" \
       -DCMAKE_C_FLAGS="${CXX_FLAGS}" \
       -DCUDA_EXTRA_FLAGS="${CXX_FLAGS} -arch=sm_86" \
-      -DCUDA_NVCC_FLAGS="-ccbin clang++ -Xcompiler --generate-code=arch=compute_68,code=[compute_68,sm_68]" \
+      -DCUDA_NVCC_FLAGS="-ccbin clang++ -Xcompiler --generate-code=arch=compute_86,code=[compute_86,sm_86]" \
       -S../ -B./
 
 make -j1 VERBOSE=1 all
