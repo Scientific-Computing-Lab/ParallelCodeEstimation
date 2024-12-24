@@ -26,6 +26,7 @@ IF(BUILD_CUDA)
     enable_language(CUDA)
     find_package(CUDAToolkit REQUIRED)
     #find_package(CUDA REQUIRED)
+    find_package(OpenMP REQUIRED)
 ENDIF()
 
 MACRO(SUBDIRLIST result curdir)
@@ -100,13 +101,14 @@ ENDIF()
 # fresnel-cuda is doing wonky things with relocatable code -- not linking correctly
 # openmp-cuda, qkv-cuda has a malloc visibility bug in clang
 # miniWeather-cuda, pingpong-cuda, sparkler-cuda is mpi
-# saxpy-ompt-cude having problems with finding omp.h correctly -- also doesn't build by default
+# saxpy-ompt-cude, streamUM-cuda having problems with finding omp.h correctly -- also doesn't build by default
 # slit-cude missing a file it needs to work -- can't default build
 # sss-cuda uses gsl
+# testSNAP-cuda is missing an include
 set(IGNORE_TARGETS allreduce-cuda ccl-cuda diamond-cuda fresnel-cuda langford-cuda 
-                   merkle-cuda miniWeather-cuda minibude-cuda openmp-cuda pingpong-cuda
+                   merkle-cuda miniWeather-cuda minibude-cuda pingpong-cuda
                    qkv-cuda rowwiseMoments-cuda saxpy-ompt-cuda slit-cuda sparkler-cuda
-                   sss-cuda)
+                   sss-cuda streamUM-cuda stsg-cuda testSNAP-cuda)
 set(TARGETS "")
 
 FOREACH(TARGET_DIR ${TARGET_DIRS})
@@ -307,8 +309,10 @@ target_link_options(mrg32k3a-cuda PRIVATE "-lcurand")
 
 target_link_options(norm2-cuda PRIVATE "-lcurand" "-lcublas")
 
-#target_compile_options(openmp-cuda PRIVATE "-fopenmp=libomp")
-#target_compile_options(openmp-cuda PRIVATE "-I${OMP_INCLUDE_DIR}" "-I${HECBENCH_SRC_DIR}/openmp-omp")
+target_compile_options(openmp-cuda PRIVATE "-fopenmp=libomp")
+#target_compile_options(openmp-cuda PRIVATE "-I${HECBENCH_SRC_DIR}/openmp-omp" "-I/usr/lib/gcc/x86_64-linux-gnu/13/include" )
+target_compile_options(openmp-cuda PRIVATE "-I${HECBENCH_SRC_DIR}/openmp-omp" "-I${OMP_INCLUDE_DIR}" )
+target_link_options(openmp-cuda PRIVATE "${OMP_LINKER_FLAGS}")
 
 target_link_options(pcc-cuda PRIVATE "-lcublas")
 
@@ -374,10 +378,35 @@ get_target_property(SRAD_SOURCES srad-cuda SOURCES)
 set_source_files_properties(${SRAD_SOURCES} PROPERTIES HEADER_FILE_ONLY ON)
 set_source_files_properties("${HECBENCH_SRC_DIR}/srad-cuda/main.cu" PROPERTIES HEADER_FILE_ONLY OFF)
 
-target_link_options(streamUM-cuda PRIVATE "-lcublas")
-target_compile_options(streamUM-cuda PRIVATE "-fopenmp=libomp")
-target_compile_options(streamUM-cuda PRIVATE "-I${OMP_INCLUDE_DIR}")
+#target_link_options(streamUM-cuda PRIVATE "-lcublas" "-L/usr/lib/llvm-18/lib")
+#target_compile_options(streamUM-cuda PRIVATE "-fopenmp=libomp")
+#target_compile_options(streamUM-cuda PRIVATE "-I${OMP_INCLUDE_DIR}" "-rpath /usr/lib/llvm-18/lib" )
 
+
+target_compile_options(su3-cuda PRIVATE "-DMILC_COMPLEX")
+
+
+#FILE(GLOB TPACF_CU_FILES "${HECBENCH_SRC_DIR}/tpacf-cuda/*.cu")
+#target_sources(tpacf-cuda PRIVATE ${TPACF_CU_FILES})
+#set_source_files_properties("${HECBENCH_SRC_DIR}/tpacf-cuda/ACF_kernel.cu" PROPERTIES HEADER_FILE_ONLY ON)
+#set_source_files_properties("${HECBENCH_SRC_DIR}/tpacf-cuda/histogram_kernel.cu" PROPERTIES HEADER_FILE_ONLY ON)
+#set_source_files_properties("${HECBENCH_SRC_DIR}/tpacf-cuda/model_io.cu" PROPERTIES HEADER_FILE_ONLY ON)
+get_target_property(TPACF_SOURCES tpacf-cuda SOURCES)
+set_source_files_properties(${TPACF_SOURCES} PROPERTIES LANGUAGE CUDA)
+
+
+
+target_compile_options(unfold-cuda PRIVATE "--extended-lambda")
+
+target_include_directories(urng-cuda PRIVATE "${HECBENCH_SRC_DIR}/include")
+
+target_compile_options(vol2col-cuda PRIVATE "--expt-relaxed-constexpr")
+
+target_include_directories(warpexchange-cuda PRIVATE "${HECBENCH_SRC_DIR}/blockAccess-cuda")
+
+target_sources(wordcount-cuda PRIVATE "${HECBENCH_SRC_DIR}/wordcount-sycl/main.cpp")
+
+target_compile_options(wsm5-cuda PRIVATE "-DMKX=4")
 
 # merkle also suffering from relocatable device code issues
 #set_target_properties(merkle-cuda PROPERTIES CXX_STANDARD "17")
