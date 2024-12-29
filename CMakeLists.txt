@@ -310,7 +310,6 @@ target_link_options(mrg32k3a-cuda PRIVATE "-lcurand")
 target_link_options(norm2-cuda PRIVATE "-lcurand" "-lcublas")
 
 target_compile_options(openmp-cuda PRIVATE "-fopenmp=libomp")
-#target_compile_options(openmp-cuda PRIVATE "-I${HECBENCH_SRC_DIR}/openmp-omp" "-I/usr/lib/gcc/x86_64-linux-gnu/13/include" )
 target_compile_options(openmp-cuda PRIVATE "-I${HECBENCH_SRC_DIR}/openmp-omp" "-I${OMP_INCLUDE_DIR}" )
 target_link_options(openmp-cuda PRIVATE "${OMP_LINKER_FLAGS}")
 
@@ -425,3 +424,8 @@ target_compile_options(wsm5-cuda PRIVATE "-DMKX=4")
 # these flags/args get applied to all targets
 #add_compile_options("-Wall -O3 -std=c++14 -x cu --offload-arch=${OFFLOAD_ARCH} --arch=${OFFLOAD_ARCH}")
 
+
+# need to add back in OpenMP codes
+# need to try and build codes that were problematic
+# need to clean up conventions (e.g: using 2 diff ways to add CFLAGS to builds)
+# need to add support for codes with zip/tar.gz files to be unzipped

@@ -1,15 +1,26 @@
 # Modified HeCBench for Roofline Analysis
 
 We took this version of HeCBench and are modifying it to build the CUDA and OMP codes to gather their roofline performance data.
+So far we have the CUDA codes building without issue. We use CMake because the `autohecbench.py` was giving us trouble with easily switching out compilers and build options. We also wanted to create distinct phases of building and gathering data which wasn't too easy with `autohecbench.py`.
+
+We might change our automated build and data gathering process in the future, for now what we have is working fine.
+
+Target codes thus-far:
+- CUDA (omitted MPI-based for now)
 
 ## Building
 
-Execute the following commands to get the Makefile generated and to start the build process.
+Execute the following command to get the Makefile generated and to start the build process.
+This will automatically `make` all the programs, you'll NEED to edit the `runBuild.sh` script to properly set any compilers/options for the codes to build.
 ```
 source ./runBuild.sh
-cd ./build
-make
 ```
+
+## Gathering Data
+
+Once all the codes are built, we can start the data collection process. We have our own script called `gatherData.py` which can be invoked to gather the roofline benchmarking data of each of the built programs.
+
+---
 
 # HeCBench
 This repository contains a collection of heterogeneous computing benchmarks written with CUDA, HIP, SYCL/DPC++, and OpenMP-4.5 target offloading for studying performance, portability, and productivity. 
