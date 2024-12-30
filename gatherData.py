@@ -23,6 +23,7 @@ import subprocess
 import shlex
 from io import StringIO
 import numpy as np
+import csv
 
 
 def get_runnable_targets(buildDir:str, srcDir:str):
@@ -108,7 +109,7 @@ def execute_target(target:dict):
 
 def roofline_results_to_df(rooflineResults):
     ncuOutput = rooflineResults.stdout.decode('UTF-8')
-    print(ncuOutput)
+    #print(ncuOutput)
 
     stringified = StringIO(ncuOutput)
 
@@ -152,7 +153,7 @@ def calc_roofline_data(df):
 
     avgCyclesPerSecond  = kdf['smsp__cycles_elapsed.avg.per_second'].apply(str_to_float)
 
-    print(avgCyclesPerSecond)
+    #print(avgCyclesPerSecond)
 
     sumDPAddOpsPerCycle = kdf['smsp__sass_thread_inst_executed_op_dadd_pred_on.sum.per_cycle_elapsed'].apply(str_to_float)
     sumDPMulOpsPerCycle = kdf['smsp__sass_thread_inst_executed_op_dmul_pred_on.sum.per_cycle_elapsed'].apply(str_to_float)
@@ -173,22 +174,24 @@ def calc_roofline_data(df):
     kdf['spAI'] = kdf['spPerf'] / kdf['traffic']
 
     kdf['xtime'] = kdf['gpu__time_duration.sum'].apply(str_to_float)
+    kdf['device'] = kdf['device__attribute_display_name']
 
     timeUnits = df.iloc[0]['gpu__time_duration.sum']
-    print('time units', timeUnits)
+    #print('time units', timeUnits)
 
     assert timeUnits == 'ns'
 
-    timeUnits = df.iloc[0]['smsp__cycles_elapsed.avg.per_second']
-    print('units', timeUnits)
+    #timeUnits = df.iloc[0]['smsp__cycles_elapsed.avg.per_second']
+    #print('units', timeUnits)
 
-    units = df.iloc[0]['dram__bytes.sum.per_second']
-    print('dram units', units)
+    #units = df.iloc[0]['dram__bytes.sum.per_second']
+    #print('dram units', units)
 
     #kdf['dpPerf'] = kdf['dpWork'] / kdf['xtime']
     #kdf['spPerf'] = kdf['spWork'] / kdf['xtime']
 
     return kdf
+
 
 
 def execute_targets(targets:list):
@@ -205,19 +208,29 @@ def execute_targets(targets:list):
             print(result.stdout)
 
         stdout = result.stdout.decode('UTF-8')
-        pprint(stdout)
+        #pprint(stdout)
 
-        df = roofline_results_to_df(rooflineResult)
-        pprint(df)
+        rawDF = roofline_results_to_df(rooflineResult)
+        #pprint(rawDF)
 
-        roofDF = calc_roofline_data(df)
+        roofDF = calc_roofline_data(rawDF)
 
         #subset = roofDF[['Kernel Name', 'dpWork', 'spWork', 'traffic', 'dpAI', 'spAI', 'xtime', 'dpPerf', 'spPerf']]
-        subset = roofDF[['Kernel Name', 'traffic', 'dpAI', 'spAI', 'dpPerf', 'spPerf', 'xtime']]
-        pprint(subset)
+        subset = roofDF[['Kernel Name', 'traffic', 'dpAI', 'spAI', 'dpPerf', 'spPerf', 'xtime', 'Block Size', 'Grid Size', 'device']].copy()
+        subset['targetName'] = target['basename']
+        subset['exeArgs'] = target['exeArgs']
+
+        #pprint(subset)
+
+        df = pd.concat([df, subset], ignore_index=True)
 
 
-    return
+    # save the dataframe
+    dfFilename = './roofline-data.csv'
+    print(f'Saving dataframe! {dfFilename}')
+    df.to_csv(dfFilename, quoting=csv.QUOTE_NONNUMERIC, quotechar='"', index=False)
+
+    return df
 
 # the metrics that we maybe want to gather from ncu 
 '''
@@ -328,14 +341,14 @@ def main():
     targets = get_runnable_targets(buildDir=args.buildDir, srcDir=args.srcDir)
     targets = get_exe_args(targets)
 
-    for target in targets:
-        if target['basename'] == 'lulesh-cuda':
-            pprint(target)
-            execute_targets([target])
+    #for target in targets:
+    #    if target['basename'] == 'lulesh-cuda':
+    #        pprint(target)
+    #        execute_targets([target])
 
-    #targets = targets[:2]
+    targets = targets[:2]
     #pprint(targets)
-    #results = execute_targets(targets)
+    results = execute_targets(targets)
 
     return
 
