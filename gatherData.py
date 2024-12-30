@@ -20,6 +20,7 @@ from pprint import pprint
 import re
 from tqdm import tqdm
 import subprocess
+import shlex
 
 
 def get_runnable_targets(buildDir:str, srcDir:str):
@@ -70,15 +71,32 @@ def get_exe_args(targets:list):
     return targets
 
 
-def execute_target(exeCommand:str, srcDir:str):
+
+'''
+Something to consider when executing a target is the fact that Nsight Compute (ncu)
+instrumentation for roofline can take some time.
+We're able to calculate the roofline for EVERY kernel invocation, thus we can very easily
+have hundreds of data points for one single code. We can use the `-c #` flag to limit the
+number of captures we perform.
+'''
+def execute_target(target:dict):
     # we will run each program from within it's source directory, this makes sure
     # any input/output files stay in those directories
 
+    basename = target['basename']
+    exeArgs = target['exeArgs']
+    srcDir = target['src']
+    exeCommand = f'../../build/{basename} {exeArgs}'.rstrip()
+
+    print('executing command:', exeCommand)
+
     # we print the stderr to the stdout for analysis
-    result = subprocess.run(exeCommand.split(' '), cwd=srcDir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    # 60 second timeout for now?
+    result = subprocess.run(shlex.split(exeCommand), cwd=srcDir, timeout=60, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
 
-    return
+    return result
+
 
 def execute_targets(targets:list):
     # this will gather the data for the targets into a dataframe for saving
@@ -87,10 +105,42 @@ def execute_targets(targets:list):
     assert len(targets) != 0
     df = pd.DataFrame()
 
+    for target in tqdm(targets, desc='Executing programs!'):
+        result = execute_target(target)
+
+        if result.returncode != 0:
+            print(result.stdout)
+
+        stdout = result.stdout.decode()
+        pprint(stdout)
 
 
+        # the metrics that we maybe want to gather from ncu 
+        '''
+        gpu__time_duration.sum [ms]
+        device__attribute_display_name
+        device__attribute_l2_cache_size
+        '''
+
+        '''
+        Here is the formula Nsight Compute (ncu) uses for calculating arithmetic intensity (single-precision):
+            Achieved Work: (smsp__sass_thread_inst_executed_op_fadd_pred_on.sum.per_cycle_elapsed + smsp__sass_thread_inst_executed_op_fmul_pred_on.sum.per_cycle_elapsed + derived__smsp__sass_thread_inst_executed_op_ffma_pred_on_x2) * smsp__cycles_elapsed.avg.per_second
+
+            Achieved Traffic: dram__bytes.sum.per_second
+
+            Arithmetic Intensity: Achieved Work / Achieved Traffic
+
+            AI is a measure of FLOP/byte
+
+            xtime: gpu__time_duration.sum
+            Performance: Achieved Work / xtime
+
+
+        Example execution command:  ncu -f -o test-report --set roofline -c 2 ../../build/haccmk-cuda 1000
+        '''
 
     return
+
 
 def save_run_results(targets:list=None, csvFilename:str='roofline-data.csv'):
     return
@@ -114,7 +164,10 @@ def main():
 
     targets = get_runnable_targets(buildDir=args.buildDir, srcDir=args.srcDir)
     targets = get_exe_args(targets)
+
+    targets = targets[:2]
     pprint(targets)
+    results = execute_targets(targets)
 
     return
 
