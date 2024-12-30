@@ -16,3 +16,5 @@ dpct_output
 /build/
 */*/main
 *.ncu-rep
+*.nsys-rep
+*.sqlite

@@ -21,6 +21,7 @@ import re
 from tqdm import tqdm
 import subprocess
 import shlex
+from io import StringIO
 
 
 def get_runnable_targets(buildDir:str, srcDir:str):
@@ -86,16 +87,99 @@ def execute_target(target:dict):
     basename = target['basename']
     exeArgs = target['exeArgs']
     srcDir = target['src']
-    exeCommand = f'../../build/{basename} {exeArgs}'.rstrip()
+    ncuCommand = f'ncu -f -o {basename}-report --section SpeedOfLight_RooflineChart -c 5'
+    exeCommand = f'{ncuCommand} ../../build/{basename} {exeArgs}'.rstrip()
 
     print('executing command:', exeCommand)
 
     # we print the stderr to the stdout for analysis
     # 60 second timeout for now?
-    result = subprocess.run(shlex.split(exeCommand), cwd=srcDir, timeout=60, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    execResult = subprocess.run(shlex.split(exeCommand), cwd=srcDir, timeout=60, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
 
-    return result
+    csvCommand = f'ncu --import {basename}-report.ncu-rep --csv --print-units base --page raw'
+    print('executing command:', csvCommand)
+
+    rooflineResults = subprocess.run(shlex.split(csvCommand), cwd=srcDir, timeout=60, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+    return (execResult, rooflineResults)
+
+
+def roofline_results_to_df(rooflineResults):
+    ncuOutput = rooflineResults.stdout.decode('UTF-8')
+    print(ncuOutput)
+
+    stringified = StringIO(ncuOutput)
+
+    df = pd.read_csv(stringified, quotechar='"')
+
+    return df
+
+def str_to_float(x):
+    return float(x.replace(',', ''))
+
+'''
+The CSV file is the output of the ncu report, containing the raw data
+that was sampled for each kernel invocation.
+The first row can be skipped because it contains the units of each of the
+columns. This will be useful later for checking that we got our units correct.
+
+Formulas for Double-Precision Roofline values:
+    Achieved Work: (smsp__sass_thread_inst_executed_op_dadd_pred_on.sum.per_cycle_elapsed + smsp__sass_thread_inst_executed_op_dmul_pred_on.sum.per_cycle_elapsed + derived__smsp__sass_thread_inst_executed_op_dfma_pred_on_x2) * smsp__cycles_elapsed.avg.per_second
+
+    Achieved Traffic: dram__bytes.sum.per_second
+
+    Arithmetic Intensity: Achieved Work / Achieved Traffic
+
+
+Formulas for Single-Precision Roofline values:
+    Achieved Work: (smsp__sass_thread_inst_executed_op_fadd_pred_on.sum.per_cycle_elapsed + smsp__sass_thread_inst_executed_op_fmul_pred_on.sum.per_cycle_elapsed + derived__smsp__sass_thread_inst_executed_op_ffma_pred_on_x2) * smsp__cycles_elapsed.avg.per_second
+
+    Achieved Traffic: dram__bytes.sum.per_second
+
+    Arithmetic Intensity: Achieved Work / Achieved Traffic
+
+'''
+def calc_roofline_data(df):
+
+    # kernel data dataframe
+    kdf = df.iloc[1:].copy(deep=True)
+
+    assert kdf.shape[0] != 0
+
+    avgCyclesPerSecond  = kdf['smsp__cycles_elapsed.avg.per_second'].apply(str_to_float)
+
+    print(avgCyclesPerSecond)
+
+    sumDPAddOpsPerCycle = kdf['smsp__sass_thread_inst_executed_op_dadd_pred_on.sum.per_cycle_elapsed'].apply(str_to_float)
+    sumDPMulOpsPerCycle = kdf['smsp__sass_thread_inst_executed_op_dmul_pred_on.sum.per_cycle_elapsed'].apply(str_to_float)
+    sumDPfmaOpsPerCycle = kdf['derived__smsp__sass_thread_inst_executed_op_dfma_pred_on_x2'].apply(str_to_float)
+    # this is in units of (ops/cycle + ops/cycle + ops/cycle) * (cycle/sec) = (ops/sec)
+    kdf['dpWork'] = (sumDPAddOpsPerCycle + sumDPMulOpsPerCycle + sumDPfmaOpsPerCycle) * avgCyclesPerSecond
+
+    sumSPAddOpsPerCycle = kdf['smsp__sass_thread_inst_executed_op_fadd_pred_on.sum.per_cycle_elapsed'].apply(str_to_float)
+    sumSPMulOpsPerCycle = kdf['smsp__sass_thread_inst_executed_op_fmul_pred_on.sum.per_cycle_elapsed'].apply(str_to_float)
+    sumSPfmaOpsPerCycle = kdf['derived__smsp__sass_thread_inst_executed_op_ffma_pred_on_x2'].apply(str_to_float)
+    # this is in units of (ops/cycle + ops/cycle + ops/cycle) * (cycle/sec) = (ops/sec)
+    kdf['spWork'] = (sumSPAddOpsPerCycle + sumSPMulOpsPerCycle + sumSPfmaOpsPerCycle) * avgCyclesPerSecond
+
+    # units of (bytes/sec)
+    kdf['traffic'] = kdf['dram__bytes.sum.per_second'].apply(str_to_float)
+
+    kdf['dpAI'] = kdf['dpWork'] / kdf['traffic']
+    kdf['spAI'] = kdf['spWork'] / kdf['traffic']
+
+    kdf['xtime'] = kdf['gpu__time_duration.sum'].apply(str_to_float)
+
+    timeUnits = df.iloc[0]['gpu__time_duration.sum']
+    print('time units', timeUnits)
+    timeUnits = df.iloc[0]['smsp__cycles_elapsed.avg.per_second']
+    print('time units', timeUnits)
+
+    kdf['dpPerf'] = kdf['dpWork'] / kdf['xtime']
+    kdf['spPerf'] = kdf['spWork'] / kdf['xtime']
+
+    return kdf
 
 
 def execute_targets(targets:list):
@@ -106,40 +190,108 @@ def execute_targets(targets:list):
     df = pd.DataFrame()
 
     for target in tqdm(targets, desc='Executing programs!'):
-        result = execute_target(target)
+        result, rooflineResult = execute_target(target)
 
         if result.returncode != 0:
             print(result.stdout)
 
-        stdout = result.stdout.decode()
+        stdout = result.stdout.decode('UTF-8')
         pprint(stdout)
 
+        df = roofline_results_to_df(rooflineResult)
+        pprint(df)
 
-        # the metrics that we maybe want to gather from ncu 
-        '''
-        gpu__time_duration.sum [ms]
-        device__attribute_display_name
-        device__attribute_l2_cache_size
-        '''
+        roofDF = calc_roofline_data(df)
 
-        '''
-        Here is the formula Nsight Compute (ncu) uses for calculating arithmetic intensity (single-precision):
-            Achieved Work: (smsp__sass_thread_inst_executed_op_fadd_pred_on.sum.per_cycle_elapsed + smsp__sass_thread_inst_executed_op_fmul_pred_on.sum.per_cycle_elapsed + derived__smsp__sass_thread_inst_executed_op_ffma_pred_on_x2) * smsp__cycles_elapsed.avg.per_second
+        pprint(roofDF.iloc[0:, -8:])
 
-            Achieved Traffic: dram__bytes.sum.per_second
-
-            Arithmetic Intensity: Achieved Work / Achieved Traffic
-
-            AI is a measure of FLOP/byte
-
-            xtime: gpu__time_duration.sum
-            Performance: Achieved Work / xtime
-
-
-        Example execution command:  ncu -f -o test-report --set roofline -c 2 ../../build/haccmk-cuda 1000
-        '''
 
     return
+
+# the metrics that we maybe want to gather from ncu 
+'''
+gpu__time_duration.sum [ms]
+device__attribute_display_name
+device__attribute_l2_cache_size
+'''
+
+'''
+Here is the formula Nsight Compute (ncu) uses for calculating arithmetic intensity (single-precision):
+
+DRAM -- DRAM -- DRAM -- DRAM
+    Achieved Work: (smsp__sass_thread_inst_executed_op_fadd_pred_on.sum.per_cycle_elapsed + smsp__sass_thread_inst_executed_op_fmul_pred_on.sum.per_cycle_elapsed + derived__smsp__sass_thread_inst_executed_op_ffma_pred_on_x2) * smsp__cycles_elapsed.avg.per_second
+
+    Achieved Traffic: dram__bytes.sum.per_second
+
+    Arithmetic Intensity: Achieved Work / Achieved Traffic
+
+    AI is a measure of FLOP/byte
+
+    xtime: gpu__time_duration.sum
+    Performance: Achieved Work / xtime
+
+L1 -- L1 -- L1 -- L1 
+    Achieved Work: (smsp__sass_thread_inst_executed_op_fadd_pred_on.sum.per_cycle_elapsed + smsp__sass_thread_inst_executed_op_fmul_pred_on.sum.per_cycle_elapsed + derived__smsp__sass_thread_inst_executed_op_ffma_pred_on_x2) * smsp__cycles_elapsed.avg.per_second
+
+    Achieved Traffic: derived__l1tex__lsu_writeback_bytes_mem_lg.sum.per_second
+
+    Arithmetic Intensity: Achieved Work / Achieved Traffic
+
+L2 -- L2 -- L2 -- L2
+    Achieved Work: (smsp__sass_thread_inst_executed_op_fadd_pred_on.sum.per_cycle_elapsed + smsp__sass_thread_inst_executed_op_fmul_pred_on.sum.per_cycle_elapsed + derived__smsp__sass_thread_inst_executed_op_ffma_pred_on_x2) * smsp__cycles_elapsed.avg.per_second
+
+    Achieved Traffic: derived__lts__lts2xbar_bytes.sum.per_second
+
+    Arithmetic Intensity: Achieved Work / Achieved Traffic
+
+
+Example execution command:  ncu -f -o test-report --set roofline -c 2 ../../build/haccmk-cuda 1000
+This gathers all the data in one run, it might have to do counter multiplexing, not sure. The `-c 2` will indiscriminately
+sample just he first two CUDA kernels that are encountered.
+
+Example execution command:  ncu -f -o test-report --set roofline --replay-mode application -c 2 ../../build/haccmk-cuda 1000
+This is going to do many repeated runs of the program to capture each of the necessary metrics for roofline.
+This will allow us to get the rooflines at the L1, L2, and DRAM levels.
+It will do 16 repeated runs of the program though, which can take some time XD.
+
+Because this is a slow process, and some programs might have many kernels, we first perform an nsys run to extract
+the major time-consuming kernels. These will be the ones we pass with the `-k` argument to `ncu` so that it only captures
+data on that subset of kernels.
+
+Capture the first 5 kernel invocations that match the given regex
+ncu -f -o test-report --set roofline -c 5 -k "regex:fill_sig|hgc" ../../build/lulesh-cuda  -i 5 -s 32 -r 11 -b 1 -c 1
+
+Example nsys command:
+    nsys profile -f true -o test-report --cpuctxsw=none --backtrace=none ../../build/haccmk-cuda 1000
+    nsys stats --report cuda_gpu_kern_sum test-report.nsys-rep
+    
+
+Now, this report will tell us the top time-consuming kernels. We'll need to make an `ncu` invocation for each kernel of interest. 
+
+To get the `ncu` data from the command line we can run this command:
+    ncu --import test-report.ncu-rep --csv --page raw
+It will dump all the collected data and we'll need to read it in and use our formulas to calculate the roofline data.
+
+
+
+
+
+We can also omit the L1, L2, and DRAM rooflines and just get a high-level roofline.
+We can limit the gathered data to one section instead of all the roofline charts getting generated. 
+
+ncu -f -o test-report --section SpeedOfLight_RooflineChart -c 5 -k "regex:fill_sig|hgc" ../../build/lulesh-cuda  -i 5 -s 32 -r 11 -b 1 -c 1
+ncu --import test-report.ncu-rep --csv --page raw
+
+Formulas for roofline:
+    Achieved Work: (smsp__sass_thread_inst_executed_op_dadd_pred_on.sum.per_cycle_elapsed + smsp__sass_thread_inst_executed_op_dmul_pred_on.sum.per_cycle_elapsed + derived__smsp__sass_thread_inst_executed_op_dfma_pred_on_x2) * smsp__cycles_elapsed.avg.per_second
+
+    Achieved Traffic: dram__bytes.sum.per_second (this is in units of bytes(mbytes,gbytes)-per-second)
+
+    Arithmetic Intensity: Achieved Work / Achieved Traffic
+
+Can we calculate the rooflines from the provided data?
+
+'''
 
 
 def save_run_results(targets:list=None, csvFilename:str='roofline-data.csv'):
@@ -165,9 +317,14 @@ def main():
     targets = get_runnable_targets(buildDir=args.buildDir, srcDir=args.srcDir)
     targets = get_exe_args(targets)
 
-    targets = targets[:2]
-    pprint(targets)
-    results = execute_targets(targets)
+    for target in targets:
+        if target['basename'] == 'lulesh-cuda':
+            pprint(target)
+            execute_targets([target])
+
+    #targets = targets[:2]
+    #pprint(targets)
+    #results = execute_targets(targets)
 
     return
 
