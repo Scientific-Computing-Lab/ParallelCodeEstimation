@@ -22,6 +22,7 @@ from tqdm import tqdm
 import subprocess
 import shlex
 from io import StringIO
+import numpy as np
 
 
 def get_runnable_targets(buildDir:str, srcDir:str):
@@ -115,8 +116,9 @@ def roofline_results_to_df(rooflineResults):
 
     return df
 
+
 def str_to_float(x):
-    return float(x.replace(',', ''))
+    return np.float64(x.replace(',', ''))
 
 '''
 The CSV file is the output of the ncu report, containing the raw data
@@ -139,6 +141,7 @@ Formulas for Single-Precision Roofline values:
 
     Arithmetic Intensity: Achieved Work / Achieved Traffic
 
+It should be noted that these measurements are all on the level of DRAM. We plan to extend this to L1 + L2 later.
 '''
 def calc_roofline_data(df):
 
@@ -155,29 +158,35 @@ def calc_roofline_data(df):
     sumDPMulOpsPerCycle = kdf['smsp__sass_thread_inst_executed_op_dmul_pred_on.sum.per_cycle_elapsed'].apply(str_to_float)
     sumDPfmaOpsPerCycle = kdf['derived__smsp__sass_thread_inst_executed_op_dfma_pred_on_x2'].apply(str_to_float)
     # this is in units of (ops/cycle + ops/cycle + ops/cycle) * (cycle/sec) = (ops/sec)
-    kdf['dpWork'] = (sumDPAddOpsPerCycle + sumDPMulOpsPerCycle + sumDPfmaOpsPerCycle) * avgCyclesPerSecond
+    kdf['dpPerf'] = (sumDPAddOpsPerCycle + sumDPMulOpsPerCycle + sumDPfmaOpsPerCycle) * avgCyclesPerSecond
 
     sumSPAddOpsPerCycle = kdf['smsp__sass_thread_inst_executed_op_fadd_pred_on.sum.per_cycle_elapsed'].apply(str_to_float)
     sumSPMulOpsPerCycle = kdf['smsp__sass_thread_inst_executed_op_fmul_pred_on.sum.per_cycle_elapsed'].apply(str_to_float)
     sumSPfmaOpsPerCycle = kdf['derived__smsp__sass_thread_inst_executed_op_ffma_pred_on_x2'].apply(str_to_float)
     # this is in units of (ops/cycle + ops/cycle + ops/cycle) * (cycle/sec) = (ops/sec)
-    kdf['spWork'] = (sumSPAddOpsPerCycle + sumSPMulOpsPerCycle + sumSPfmaOpsPerCycle) * avgCyclesPerSecond
+    kdf['spPerf'] = (sumSPAddOpsPerCycle + sumSPMulOpsPerCycle + sumSPfmaOpsPerCycle) * avgCyclesPerSecond
 
     # units of (bytes/sec)
     kdf['traffic'] = kdf['dram__bytes.sum.per_second'].apply(str_to_float)
 
-    kdf['dpAI'] = kdf['dpWork'] / kdf['traffic']
-    kdf['spAI'] = kdf['spWork'] / kdf['traffic']
+    kdf['dpAI'] = kdf['dpPerf'] / kdf['traffic']
+    kdf['spAI'] = kdf['spPerf'] / kdf['traffic']
 
     kdf['xtime'] = kdf['gpu__time_duration.sum'].apply(str_to_float)
 
     timeUnits = df.iloc[0]['gpu__time_duration.sum']
     print('time units', timeUnits)
-    timeUnits = df.iloc[0]['smsp__cycles_elapsed.avg.per_second']
-    print('time units', timeUnits)
 
-    kdf['dpPerf'] = kdf['dpWork'] / kdf['xtime']
-    kdf['spPerf'] = kdf['spWork'] / kdf['xtime']
+    assert timeUnits == 'ns'
+
+    timeUnits = df.iloc[0]['smsp__cycles_elapsed.avg.per_second']
+    print('units', timeUnits)
+
+    units = df.iloc[0]['dram__bytes.sum.per_second']
+    print('dram units', units)
+
+    #kdf['dpPerf'] = kdf['dpWork'] / kdf['xtime']
+    #kdf['spPerf'] = kdf['spWork'] / kdf['xtime']
 
     return kdf
 
@@ -203,7 +212,9 @@ def execute_targets(targets:list):
 
         roofDF = calc_roofline_data(df)
 
-        pprint(roofDF.iloc[0:, -8:])
+        #subset = roofDF[['Kernel Name', 'dpWork', 'spWork', 'traffic', 'dpAI', 'spAI', 'xtime', 'dpPerf', 'spPerf']]
+        subset = roofDF[['Kernel Name', 'traffic', 'dpAI', 'spAI', 'dpPerf', 'spPerf', 'xtime']]
+        pprint(subset)
 
 
     return
