@@ -26,6 +26,22 @@ import numpy as np
 import csv
 
 
+
+def has_rodinia_datasets(srcDir):
+    return os.path.isdir(f'{srcDir}/data')
+
+
+def download_rodinia_and_extract(srcDir):
+
+    command = 'wget http://www.cs.virginia.edu/~skadron/lava/Rodinia/Packages/rodinia_3.1.tar.bz2 && tar -xzf ./rodinia_3.1'
+    result = subprocess.run(command, shell=True)
+
+    assert result.returncode == 0
+
+    return
+
+
+
 def get_runnable_targets(buildDir:str, srcDir:str):
     # gather a list of dictionaries storing executable names and source directories
     # the list of dicts will later have run command information added to them
@@ -48,15 +64,69 @@ def get_runnable_targets(buildDir:str, srcDir:str):
     return execs
 
 
+def search_and_extract_file(inFile):
+    # if the file doesn't exist, let's unpack any tar files
+    # in the specified directory
+    if not os.path.exists(inFile):
+        dirToSearch = os.path.dirname(inFile)
+
+        print('searching dir', dirToSearch)
+        print('trying to find', inFile)
+
+        tarFiles = list(glob.glob(f'{dirToSearch}/*.tar.gz'))
+        tgzFiles = list(glob.glob(f'{dirToSearch}/*.tgz'))
+        zipFiles = list(glob.glob(f'{dirToSearch}/*.zip'))
+
+        print(tarFiles)
+        print(zipFiles)
+        print(tgzFiles)
+
+        for tarFile in tarFiles:
+            filename = os.path.basename(tarFile)
+            command = f'tar -xf {filename}'
+            result = subprocess.run(shlex.split(command), cwd=dirToSearch)
+            assert result.returncode == 0
+            print('Extracted tar archive:', filename)
+
+        for tgzFile in tgzFiles:
+            filename = os.path.basename(tgzFile)
+            command = f'tar -xzf {filename}'
+            result = subprocess.run(shlex.split(command), cwd=dirToSearch)
+            assert result.returncode == 0
+            print('Extracted tgz archive:', filename)
+
+        for zipFile in zipFiles:
+            filename = os.path.basename(zipFile)
+            command = f'unzip {filename}'
+            result = subprocess.run(shlex.split(command), cwd=dirToSearch)
+            assert result.returncode == 0
+            print('Extracted zip archive:', filename)
+
+        # now let's check that the file exists
+        assert os.path.exists(inFile)
+
+    return
+
+
 def get_exec_command_from_makefile(makefile):
     assert os.path.isfile(makefile)
+
+    srcDir = os.path.dirname(makefile)
 
     with open(makefile, 'r') as file:
         for line in file:
             if './$(program) ' in line:
                 matches = re.findall(r'(?<=\.\/\$\(program\)).*', line)
                 assert len(matches) == 1
-                return matches[0]
+                args = matches[0]
+
+                # if there are any input files, let's try to find them
+                inputFiles = re.findall(r'\.+\/[0-9a-zA-Z_\-\/\.]*', args)
+                if len(inputFiles) > 0:
+                    for inFile in inputFiles:
+                        search_and_extract_file(f'{srcDir}/{inFile}')
+
+                return args
 
     return
 
@@ -107,7 +177,9 @@ def get_kernel_names_from_target(target:dict):
     for match in matches:
         if ('<' in match) or ('>' in match):
             cleanName = re.findall(r'(?<= ).*(?=<)', match)[0]
-            cleanNames.append(cleanName)
+        else:
+            cleanName = match
+        cleanNames.append(cleanName)
 
 
     #print(matches)
@@ -169,8 +241,8 @@ def execute_target(target:dict, kernelName:str):
     print('executing command:', exeCommand)
 
     # we print the stderr to the stdout for analysis
-    # 60 second timeout for now?
-    execResult = subprocess.run(shlex.split(exeCommand), cwd=srcDir, timeout=60, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    # 5 minute timeout for now?
+    execResult = subprocess.run(shlex.split(exeCommand), cwd=srcDir, timeout=300, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
 
     csvCommand = f'ncu --import {basename}-[{kernelName}]-report.ncu-rep --csv --print-units base --page raw'
@@ -302,7 +374,7 @@ def execute_targets(targets:list, dfFilename:str):
         for kernelName in kernelNames:
 
             if has_already_been_sampled(basename, kernelName, df):
-                print(f'Skipping {basename} {kernelName} due to having already been sampled!')
+                print(f'Skipping {basename}:[{kernelName}] due to having already been sampled!')
                 continue
 
             execResult, rooflineResult = execute_target(target, kernelName)
@@ -420,7 +492,6 @@ def save_run_results(targets:list=None, csvFilename:str='roofline-data.csv'):
 
 def main():
 
-    print('Starting data gathering process!')
 
     parser = argparse.ArgumentParser()
 
@@ -433,6 +504,8 @@ def main():
 
     args = parser.parse_args()
 
+    print('Starting data gathering process!')
+
     targets = get_runnable_targets(buildDir=args.buildDir, srcDir=args.srcDir)
     targets = get_exe_args(targets)
     targets = get_kernel_names(targets)
@@ -442,8 +515,8 @@ def main():
     #        pprint(target)
     #        execute_targets([target])
 
-    targets = targets[:10]
-    pprint(targets)
+    targets = targets[:40]
+    #pprint(targets)
 
     results = execute_targets(targets, args.outfile)
 

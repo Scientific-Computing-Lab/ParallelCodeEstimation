@@ -19,3 +19,7 @@ dpct_output
 *.nsys-rep
 *.sqlite
 *.nrrd
+*.fasta
+*.mtx
+*.hdr
+*.bmp
