@@ -78,8 +78,9 @@ def get_exe_args(targets:list):
 There doesn't seem to be some easy way of extracting the kernel names without executing the program.
 Here we use `cuobjdump` to get the SASS section names, `cu++filt` to demangle, then regex parsing 
 to extract the kernel names. It is possible to get duplicates if the kernels are the same name, but
-with different arguments/signatures. We drop duplicates. We don't have a smart way of differentiating
-these kernels during execution either... Leaving it for future work.
+with different arguments/signatures from being templated. We drop duplicates. 
+We don't have a smart way of differentiating these kernels during execution either, as `ncu` is not
+able to differentiate the executions at runtime either. Leaving it for future work.
 
 Some kernels make ALL external kernel calls. Because most of the time these are to cuSPARSE
 (or some other closed-source NVIDIA library), we end up skipping these codes for execution. 
@@ -101,6 +102,14 @@ def get_kernel_names_from_target(target:dict):
 
     matches = re.findall(r'(?<= : x-).*(?=\(.*\)\.sm_.*\.elf\.bin)', toRegex)
 
+    # check if any matches are templated, so we drop the return type and angle brackets
+    cleanNames = []
+    for match in matches:
+        if ('<' in match) or ('>' in match):
+            cleanName = re.findall(r'(?<= ).*(?=<)', match)[0]
+            cleanNames.append(cleanName)
+
+
     #print(matches)
 
     #assert len(matches) != 0
@@ -108,7 +117,7 @@ def get_kernel_names_from_target(target:dict):
     # the matches list will be empty, indicating we should skip sampling
     # this program as the source code is usually some external private
     # library.
-    return matches
+    return list(set(cleanNames))
 
 def get_kernel_names(targets:list):
     assert len(targets) != 0
@@ -417,7 +426,7 @@ def main():
 
     parser.add_argument('--buildDir', type=str, required=False, default='./build', help='Directory containing all the built executables')
     parser.add_argument('--srcDir', type=str, required=False, default='./src', help='Directory containing all the source files for the target executables')
-    parser.add_argument('--outfile', type=str, required=False, default='roofline-data.csv', help='Output CSV file with gathered data')
+    parser.add_argument('--outfile', type=str, required=False, default='./roofline-data.csv', help='Output CSV file with gathered data')
     parser.add_argument('--targets', type=list, required=False, default=None, help='Optional subset of targets to run')
     parser.add_argument('--forceRerun', action=argparse.BooleanOptionalAction, help='Whether to forcibly re-run already-gathered programs')
 
@@ -436,7 +445,7 @@ def main():
     targets = targets[:10]
     pprint(targets)
 
-    results = execute_targets(targets)
+    results = execute_targets(targets, args.outfile)
 
     return
 
