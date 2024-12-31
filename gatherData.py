@@ -66,7 +66,7 @@ def get_exe_args(targets:list):
     # check that the $LAUNCHER variable isn't populated
     # extract the remaining arguments for execution
     assert len(targets) != 0
-    for target in tqdm(targets, desc='Getting run commands'): 
+    for target in tqdm(targets, desc='Gathering exe args'): 
         srcDir = target['src']
         # let's read the Makefile, strip the 'run' target of 
         exeArgs = get_exec_command_from_makefile(f'{srcDir}/Makefile')
@@ -74,6 +74,48 @@ def get_exe_args(targets:list):
     return targets
 
 
+'''
+There doesn't seem to be some easy way of extracting the kernel names without executing the program.
+Here we use `cuobjdump` to get the SASS section names, `cu++filt` to demangle, then regex parsing 
+to extract the kernel names. It is possible to get duplicates if the kernels are the same name, but
+with different arguments/signatures. We drop duplicates. We don't have a smart way of differentiating
+these kernels during execution either... Leaving it for future work.
+
+Some kernels make ALL external kernel calls. Because most of the time these are to cuSPARSE
+(or some other closed-source NVIDIA library), we end up skipping these codes for execution. 
+'''
+def get_kernel_names_from_target(target:dict):
+
+    basename = target['basename']
+    srcDir = target['src']
+
+    cuobjdumpCommand = f'cuobjdump --list-text ../../build/{basename} | cu++filt'
+    #print(shlex.split(cuobjdumpCommand))
+    knamesResult = subprocess.run(cuobjdumpCommand, cwd=srcDir, shell=True, 
+                                  timeout=60, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+    assert knamesResult.returncode == 0
+
+    toRegex = knamesResult.stdout.decode('UTF-8')
+    #print(target, 'toRegex', toRegex)
+
+    matches = re.findall(r'(?<= : x-).*(?=\(.*\)\.sm_.*\.elf\.bin)', toRegex)
+
+    #print(matches)
+
+    #assert len(matches) != 0
+    # if the program doesn't have any kernels defined in its source code
+    # the matches list will be empty, indicating we should skip sampling
+    # this program as the source code is usually some external private
+    # library.
+    return matches
+
+def get_kernel_names(targets:list):
+    assert len(targets) != 0
+    for target in tqdm(targets, desc='Gathering kernel names'): 
+        knames = get_kernel_names_from_target(target)
+        target['kernelNames'] = knames
+    return targets
 
 '''
 Something to consider when executing a target is the fact that Nsight Compute (ncu)
@@ -81,6 +123,11 @@ instrumentation for roofline can take some time.
 We're able to calculate the roofline for EVERY kernel invocation, thus we can very easily
 have hundreds of data points for one single code. We can use the `-c #` flag to limit the
 number of captures we perform.
+
+What we do is get a list of all the kernels in the program, then invoke the program to capture
+2 runs of each kernel. The first run is usually disposable due to warm-up, but in some cases it's
+the only run, so we use that. 
+From these gathered runs, we 
 '''
 def execute_target(target:dict):
     # we will run each program from within it's source directory, this makes sure
@@ -340,6 +387,7 @@ def main():
 
     targets = get_runnable_targets(buildDir=args.buildDir, srcDir=args.srcDir)
     targets = get_exe_args(targets)
+    targets = get_kernel_names(targets)
 
     #for target in targets:
     #    if target['basename'] == 'lulesh-cuda':
@@ -347,8 +395,9 @@ def main():
     #        execute_targets([target])
 
     targets = targets[:2]
-    #pprint(targets)
-    results = execute_targets(targets)
+    pprint(targets)
+
+    #results = execute_targets(targets)
 
     return
 
