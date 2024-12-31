@@ -18,3 +18,4 @@ dpct_output
 *.ncu-rep
 *.nsys-rep
 *.sqlite
+*.nrrd

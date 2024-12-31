@@ -121,22 +121,40 @@ def get_kernel_names(targets:list):
 Something to consider when executing a target is the fact that Nsight Compute (ncu)
 instrumentation for roofline can take some time.
 We're able to calculate the roofline for EVERY kernel invocation, thus we can very easily
-have hundreds of data points for one single code. We can use the `-c #` flag to limit the
-number of captures we perform.
+have hundreds of data points for one single code, but it's at the cost of xtime which can
+easily go up 10x (or more) due to sampling each kernel invocation.
+We can use the `-c #` flag to limit the number of captures we perform.
 
 What we do is get a list of all the kernels in the program, then invoke the program to capture
 2 runs of each kernel. The first run is usually disposable due to warm-up, but in some cases it's
 the only run, so we use that. 
-From these gathered runs, we 
+
+Something to note is that some codes (like bitpermute-cuda) will incrementally increase the
+problem size of what it feeds the kernel invocations. Our approach fails to be able to
+capture the later invocations. This is something we need to later fix to increase the
+amount of data we capture. The problem is that we must strike a balance between experimentation
+time/data gathering and variety of data. 
+Performing an `nsys` call to find all the variety in execution, then calling `ncu` with the
+skip launch `-s` flag to gather the different kernel exeuctions is a future step we will consider.
+At the least it will double the collection time (if there is one kernel invocation with a singular
+grid/block size used). But if we have `n` kernels with at least 3 different invocations each, 
+we now have to wait (xtime)+(xtime*n*3) seconds for the desired data. 
+We'll look into this later as another data gathering approach. It would be more complete, but
+it also will take some more effort/time to gather.
+I'd rather we start with a simple (slightly smaller) dataset and see what it can achieve for us
+before we decide to do a long data gathering process.
 '''
-def execute_target(target:dict):
+def execute_target(target:dict, kernelName:str):
     # we will run each program from within it's source directory, this makes sure
     # any input/output files stay in those directories
+
+    assert kernelName != None
+    assert kernelName != ''
 
     basename = target['basename']
     exeArgs = target['exeArgs']
     srcDir = target['src']
-    ncuCommand = f'ncu -f -o {basename}-report --section SpeedOfLight_RooflineChart -c 5'
+    ncuCommand = f'ncu -f -o {basename}-[{kernelName}]-report --section SpeedOfLight_RooflineChart -c 2 -k "regex:{kernelName}"'
     exeCommand = f'{ncuCommand} ../../build/{basename} {exeArgs}'.rstrip()
 
     print('executing command:', exeCommand)
@@ -146,7 +164,7 @@ def execute_target(target:dict):
     execResult = subprocess.run(shlex.split(exeCommand), cwd=srcDir, timeout=60, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
 
-    csvCommand = f'ncu --import {basename}-report.ncu-rep --csv --print-units base --page raw'
+    csvCommand = f'ncu --import {basename}-[{kernelName}]-report.ncu-rep --csv --print-units base --page raw'
     print('executing command:', csvCommand)
 
     rooflineResults = subprocess.run(shlex.split(csvCommand), cwd=srcDir, timeout=60, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -240,54 +258,75 @@ def calc_roofline_data(df):
     return kdf
 
 
+def has_already_been_sampled(basename:str, kernelName:str, df:pd.DataFrame): 
 
-def execute_targets(targets:list):
+    if df.shape[0] == 0:
+        return False
+
+    subset = df[(df['targetName'] == basename) & (df['kernelName'] == kernelName)]
+
+    return subset.shape[0] > 0
+
+
+def execute_targets(targets:list, dfFilename:str):
     # this will gather the data for the targets into a dataframe for saving
     # if a code can not be executed, we will skip it
 
     assert len(targets) != 0
-    df = pd.DataFrame()
+
+    if os.path.isfile(dfFilename):
+        df = pd.read_csv(dfFilename)
+    else:
+        df = pd.DataFrame()
 
     for target in tqdm(targets, desc='Executing programs!'):
-        result, rooflineResult = execute_target(target)
+        basename = target['basename']
+        kernelNames = target['kernelNames']
+        exeArgs = target['exeArgs']
+        
+        # if the program doesn't define any kernels locally
+        if len(kernelNames) == 0:
+            print(f'Skipping {basename} due to having no internal defined CUDA kernels!')
+            continue
 
-        if result.returncode != 0:
-            print(result.stdout)
+        # we perform one invocation for each kernel
+        for kernelName in kernelNames:
 
-        stdout = result.stdout.decode('UTF-8')
-        #pprint(stdout)
+            if has_already_been_sampled(basename, kernelName, df):
+                print(f'Skipping {basename} {kernelName} due to having already been sampled!')
+                continue
 
-        rawDF = roofline_results_to_df(rooflineResult)
-        #pprint(rawDF)
+            execResult, rooflineResult = execute_target(target, kernelName)
+            stdout = execResult.stdout.decode('UTF-8')
+            assert execResult.returncode == 0, f'error in execution!\n {stdout}'
 
-        roofDF = calc_roofline_data(rawDF)
+            #pprint(stdout)
+            rawDF = roofline_results_to_df(rooflineResult)
+            #pprint(rawDF)
 
-        #subset = roofDF[['Kernel Name', 'dpWork', 'spWork', 'traffic', 'dpAI', 'spAI', 'xtime', 'dpPerf', 'spPerf']]
-        subset = roofDF[['Kernel Name', 'traffic', 'dpAI', 'spAI', 'dpPerf', 'spPerf', 'xtime', 'Block Size', 'Grid Size', 'device']].copy()
-        subset['targetName'] = target['basename']
-        subset['exeArgs'] = target['exeArgs']
+            roofDF = calc_roofline_data(rawDF)
 
-        #pprint(subset)
+            #subset = roofDF[['Kernel Name', 'dpWork', 'spWork', 'traffic', 'dpAI', 'spAI', 'xtime', 'dpPerf', 'spPerf']]
+            subset = roofDF[['Kernel Name', 'traffic', 'dpAI', 'spAI', 'dpPerf', 'spPerf', 'xtime', 'Block Size', 'Grid Size', 'device']].copy()
+            subset['targetName'] = basename
+            subset['exeArgs'] = exeArgs
+            subset['kernelName'] = kernelName
 
-        df = pd.concat([df, subset], ignore_index=True)
+            #pprint(subset)
+
+            df = pd.concat([df, subset], ignore_index=True)
 
 
     # save the dataframe
-    dfFilename = './roofline-data.csv'
+    #dfFilename = './roofline-data.csv'
     print(f'Saving dataframe! {dfFilename}')
     df.to_csv(dfFilename, quoting=csv.QUOTE_NONNUMERIC, quotechar='"', index=False)
 
     return df
 
-# the metrics that we maybe want to gather from ncu 
-'''
-gpu__time_duration.sum [ms]
-device__attribute_display_name
-device__attribute_l2_cache_size
-'''
-
 '''
 Here is the formula Nsight Compute (ncu) uses for calculating arithmetic intensity (single-precision):
+These formulas are for each cache level. For now, we focus only on DRAM.
 
 DRAM -- DRAM -- DRAM -- DRAM
     Achieved Work: (smsp__sass_thread_inst_executed_op_fadd_pred_on.sum.per_cycle_elapsed + smsp__sass_thread_inst_executed_op_fmul_pred_on.sum.per_cycle_elapsed + derived__smsp__sass_thread_inst_executed_op_ffma_pred_on_x2) * smsp__cycles_elapsed.avg.per_second
@@ -380,7 +419,7 @@ def main():
     parser.add_argument('--srcDir', type=str, required=False, default='./src', help='Directory containing all the source files for the target executables')
     parser.add_argument('--outfile', type=str, required=False, default='roofline-data.csv', help='Output CSV file with gathered data')
     parser.add_argument('--targets', type=list, required=False, default=None, help='Optional subset of targets to run')
-    parser.add_argument('--forceRerun', action=argparse.BooleanOptionalAction, help='Whether to forcibly re-run already-executed functions')
+    parser.add_argument('--forceRerun', action=argparse.BooleanOptionalAction, help='Whether to forcibly re-run already-gathered programs')
 
 
     args = parser.parse_args()
@@ -394,10 +433,10 @@ def main():
     #        pprint(target)
     #        execute_targets([target])
 
-    targets = targets[:2]
+    targets = targets[:10]
     pprint(targets)
 
-    #results = execute_targets(targets)
+    results = execute_targets(targets)
 
     return
 
