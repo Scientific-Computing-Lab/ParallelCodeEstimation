@@ -34,13 +34,36 @@ def has_rodinia_datasets(srcDir):
 def download_rodinia_and_extract(srcDir):
     print('Downloading Rodinia Data...')
 
-    command = f'wget http://www.cs.virginia.edu/~skadron/lava/Rodinia/Packages/rodinia_3.1.tar.bz2 && tar -xzf ./rodinia_3.1.tar.bz2 rodinia_3.1/data && mv ./rodinia_3.1/data {srcDir}/data'
+    command = f'wget http://www.cs.virginia.edu/~skadron/lava/Rodinia/Packages/rodinia_3.1.tar.bz2 && tar -xf ./rodinia_3.1.tar.bz2 rodinia_3.1/data && mv ./rodinia_3.1/data {srcDir}/data'
     result = subprocess.run(command, shell=True)
 
     assert result.returncode == 0
     assert has_rodinia_datasets(srcDir)
 
     print('Rodinia download and unzip complete!')
+
+    return
+
+
+def run_setup_scripts_for_some_targets(targets):
+    for target in targets:
+        basename = target['basename']
+        srcDir = target['src']
+
+        # required data files are unable to be downloaded due to broken links :(
+        # leaving this in here for future
+        if basename == 'lzss-cuda':
+            if not os.path.isfile(f'{srcDir}/tpch.zip'):
+                command = f'./get_sample_data.sh'
+                result = subprocess.run(command, cwd=srcDir, shell=True)
+                assert result.returncode == 0
+
+        elif basename == 'gc-cuda':
+            if not os.path.isfile(f'{srcDir}/../mis-cuda/internet.egr'):
+                command = f'wget --no-check-certificate https://userweb.cs.txstate.edu/~burtscher/research/ECLgraph/internet.egr && mv ./internet.egr {srcDir}/../mis-cuda/'
+                result = subprocess.run(command, shell=True)
+                assert result.returncode == 0
+
 
     return
 
@@ -71,7 +94,7 @@ def get_runnable_targets(buildDir:str, srcDir:str):
 def search_and_extract_file(inFile):
     # if the file doesn't exist, let's unpack any tar files
     # in the specified directory
-    if not os.path.exists(inFile):
+    if not (os.path.isfile(inFile) or os.path.islink(inFile)):
         dirToSearch = os.path.dirname(inFile)
 
         print('searching dir', dirToSearch)
@@ -115,24 +138,16 @@ def search_and_extract_file(inFile):
 def get_exec_command_from_makefile(makefile):
     assert os.path.isfile(makefile)
 
-    srcDir = os.path.dirname(makefile)
-
     with open(makefile, 'r') as file:
         for line in file:
             if './$(program) ' in line:
                 matches = re.findall(r'(?<=\.\/\$\(program\)).*', line)
                 assert len(matches) == 1
-                args = matches[0]
 
-                # if there are any input files, let's try to find them
-                inputFiles = re.findall(r'\.+\/[0-9a-zA-Z_\-\/\.]*', args)
-                if len(inputFiles) > 0:
-                    for inFile in inputFiles:
-                        search_and_extract_file(f'{srcDir}/{inFile}')
+                return matches[0]
 
-                return args
+    return ''
 
-    return
 
 
 def get_exe_args(targets:list):
@@ -146,6 +161,30 @@ def get_exe_args(targets:list):
         exeArgs = get_exec_command_from_makefile(f'{srcDir}/Makefile')
         target['exeArgs'] = exeArgs
     return targets
+
+def modify_exe_args_for_some_targets(targets:list):
+    for target in targets:
+        basename = target['basename']
+
+        if basename == 'dxtc1-cuda':
+            target['exeArgs'] = target['exeArgs'].replace('dxtc1-sycl', 'dxtc2-sycl')
+
+    return targets
+
+def check_and_get_input_files(targets:list):
+    for target in tqdm(targets, desc='Checking input files exist'):
+        args = target['exeArgs']
+        srcDir = target['src']
+
+        print(target)
+
+        # if there are any input files, let's try to find them
+        inputFiles = re.findall(r'\.+\/[0-9a-zA-Z_\-\/\.]*', args)
+        if len(inputFiles) > 0:
+            for inFile in inputFiles:
+                search_and_extract_file(f'{srcDir}/{inFile}')
+
+    return 
 
 
 '''
@@ -518,8 +557,16 @@ def main():
     print('Starting data gathering process!')
 
     targets = get_runnable_targets(buildDir=args.buildDir, srcDir=args.srcDir)
+
+    run_setup_scripts_for_some_targets(targets)
+
     targets = get_exe_args(targets)
+    targets = modify_exe_args_for_some_targets(targets)
+
+    check_and_get_input_files(targets)
+
     targets = get_kernel_names(targets)
+
 
     #for target in targets:
     #    if target['basename'] == 'lulesh-cuda':

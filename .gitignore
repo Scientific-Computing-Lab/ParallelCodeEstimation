@@ -23,3 +23,7 @@ dpct_output
 *.mtx
 *.hdr
 *.bmp
+*.fna
+**/src/**
+*.tar.bz2
+internet.egr

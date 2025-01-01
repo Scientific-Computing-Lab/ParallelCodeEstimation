@@ -105,10 +105,12 @@ ENDIF()
 # slit-cude missing a file it needs to work -- can't default build
 # sss-cuda uses gsl
 # testSNAP-cuda is missing an include
+# lzss-cuda is unable to download required data files -- broken links
+# cmp-cuda is unable to download required data files -- files not online need to contact eborin
 set(IGNORE_TARGETS allreduce-cuda ccl-cuda diamond-cuda fresnel-cuda langford-cuda 
                    merkle-cuda miniWeather-cuda minibude-cuda pingpong-cuda
                    qkv-cuda rowwiseMoments-cuda saxpy-ompt-cuda slit-cuda sparkler-cuda
-                   sss-cuda streamUM-cuda stsg-cuda testSNAP-cuda)
+                   lzss-cuda cmp-cuda sss-cuda streamUM-cuda stsg-cuda testSNAP-cuda)
 set(TARGETS "")
 
 FOREACH(TARGET_DIR ${TARGET_DIRS})
