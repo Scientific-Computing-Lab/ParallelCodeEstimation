@@ -32,11 +32,15 @@ def has_rodinia_datasets(srcDir):
 
 
 def download_rodinia_and_extract(srcDir):
+    print('Downloading Rodinia Data...')
 
-    command = 'wget http://www.cs.virginia.edu/~skadron/lava/Rodinia/Packages/rodinia_3.1.tar.bz2 && tar -xzf ./rodinia_3.1'
+    command = f'wget http://www.cs.virginia.edu/~skadron/lava/Rodinia/Packages/rodinia_3.1.tar.bz2 && tar -xzf ./rodinia_3.1.tar.bz2 rodinia_3.1/data && mv ./rodinia_3.1/data {srcDir}/data'
     result = subprocess.run(command, shell=True)
 
     assert result.returncode == 0
+    assert has_rodinia_datasets(srcDir)
+
+    print('Rodinia download and unzip complete!')
 
     return
 
@@ -500,9 +504,16 @@ def main():
     parser.add_argument('--outfile', type=str, required=False, default='./roofline-data.csv', help='Output CSV file with gathered data')
     parser.add_argument('--targets', type=list, required=False, default=None, help='Optional subset of targets to run')
     parser.add_argument('--forceRerun', action=argparse.BooleanOptionalAction, help='Whether to forcibly re-run already-gathered programs')
+    parser.add_argument('--skipRodiniaDownload', action=argparse.BooleanOptionalAction, help='Skip downloading rodinia dataset')
 
 
     args = parser.parse_args()
+
+    # let's check if rodinia has been downloaded, if not, download it
+    if not has_rodinia_datasets(args.srcDir):
+        if not args.skipRodiniaDownload:
+            download_rodinia_and_extract(args.srcDir)
+
 
     print('Starting data gathering process!')
 
