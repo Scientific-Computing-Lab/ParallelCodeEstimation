@@ -16,11 +16,41 @@ This will automatically `make` all the programs, you'll NEED to edit the `runBui
 source ./runBuild.sh
 ```
 
-## Gathering Data
+## Gathering Roofline Data
 
 Once all the codes are built, we can start the data collection process. We have our own script called `gatherData.py` which can be invoked to gather the roofline benchmarking data of each of the built programs.
 
+```
+python3 ./gatherData.py
+```
+
+This will automatically invoke each of the built executables, using `ncu` (NVIDIA Nsight Compute) to profile each of the kernels in the executable. Some of the codes require files to be downloaded proir, this script takes care of the downloading process and makes sure that all the requested files are in place.
+
+The internal workflow at a high leve looks like the following:
+1. Download rodinia dataset (skip if requested with `--skipRodiniaDownload`)
+2. Gather runnable targets by scanning for executables in the `./build` directory
+3. From the gathered targets, find the ones that need extra files to be downloaded, and download them.
+4. Extract the execution arguments of each executable from their respective Makefiles
+5. Correct the malformed execution arguments for some targets 
+6. Search for (and confirm) the existence of required input files for some programs. Unzip and extract any files that are zipped.
+7. Use `cuobjdump` and `cu++filt` to extract kernel names from each executable. These are used when invoking `ncu` to profile a particular kernel.
+8. Run each of the executables and gather their roofline performance data with `ncu`
+9. Write gathered data to output `roofline-data.csv` file
+
+
+The `gatherData.py` script will emit a CSV file containing all the benchmarking data.
+
+## Building the LLM Dataset (TODO)
+
+Once all the roofline benchmarking data is collected, we will need to use another script that will automatically scrape the CUDA kernels from the source files to create the final dataset we can use in LLM training.
+
+## Dataset Visualization (TODO)
+
+Once we've gathered hundreds of data samples, we want to check the data to be sure it's alright. We have some visualization scripts to help with seeing the data we collected at a high level. 
+
+
 ---
+
 
 # HeCBench
 This repository contains a collection of heterogeneous computing benchmarks written with CUDA, HIP, SYCL/DPC++, and OpenMP-4.5 target offloading for studying performance, portability, and productivity. 
