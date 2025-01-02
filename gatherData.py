@@ -64,6 +64,13 @@ def run_setup_scripts_for_some_targets(targets):
                 result = subprocess.run(command, shell=True)
                 assert result.returncode == 0
 
+        elif basename == 'cc-cuda':
+            if not os.path.isfile(f'{srcDir}/delaunay_n24.egr'):
+                command = f'wget --no-check-certificate https://userweb.cs.txstate.edu/~burtscher/research/ECLgraph/delaunay_n24.egr && mv ./delaunay_n24.egr {srcDir}/'
+                result = subprocess.run(command, shell=True)
+                assert result.returncode == 0
+
+
 
     return
 
@@ -562,6 +569,8 @@ def main():
     if not has_rodinia_datasets(args.srcDir):
         if not args.skipRodiniaDownload:
             download_rodinia_and_extract(args.srcDir)
+        else:
+            print('[WARN] Rodinia not detected! User requested to skip rodinia dataset download! Some codes may fail on invocation!')
 
 
     print('Starting data gathering process!')
@@ -583,7 +592,7 @@ def main():
     #        pprint(target)
     #        execute_targets([target])
 
-    targets = targets[:40]
+    targets = targets[:70]
     #pprint(targets)
 
     results = execute_targets(targets, args.outfile)
