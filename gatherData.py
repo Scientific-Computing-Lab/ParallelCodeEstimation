@@ -197,6 +197,12 @@ able to differentiate the executions at runtime either. Leaving it for future wo
 
 Some kernels make ALL external kernel calls. Because most of the time these are to cuSPARSE
 (or some other closed-source NVIDIA library), we end up skipping these codes for execution. 
+
+Another note to make is that this returns all the kernel names from the binary. Sometimes the program
+will have conditional logic which prevents the program from ever executing a kernel, thus we wont
+have any data on said kernel. (example: deredundancy-cuda). We can't know exactly how the logic will
+execute ahead-of-time, thus we'll trigger a profiling of the un-executed kernel. This is okay, we
+just need to catch ourselves when no `ncu-rep` file is generated.
 '''
 def get_kernel_names_from_target(target:dict):
 
@@ -213,7 +219,7 @@ def get_kernel_names_from_target(target:dict):
     toRegex = knamesResult.stdout.decode('UTF-8')
     #print(target, 'toRegex', toRegex)
 
-    matches = re.findall(r'(?<= : x-).*(?=\(.*\)\.sm_.*\.elf\.bin)', toRegex)
+    matches = re.findall(r'(?<= : x-)[\w\-]*(?=\(.*\)\.sm_.*\.elf\.bin)', toRegex)
 
     # check if any matches are templated, so we drop the return type and angle brackets
     cleanNames = []
@@ -233,6 +239,7 @@ def get_kernel_names_from_target(target:dict):
     # this program as the source code is usually some external private
     # library.
     return list(set(cleanNames))
+
 
 def get_kernel_names(targets:list):
     assert len(targets) != 0
@@ -278,7 +285,9 @@ def execute_target(target:dict, kernelName:str):
     basename = target['basename']
     exeArgs = target['exeArgs']
     srcDir = target['src']
-    ncuCommand = f'ncu -f -o {basename}-[{kernelName}]-report --section SpeedOfLight_RooflineChart -c 2 -k "regex:{kernelName}"'
+
+    reportFileName = f'{basename}-[{kernelName}]-report'
+    ncuCommand = f'ncu -f -o {reportFileName} --section SpeedOfLight_RooflineChart -c 2 -k "regex:{kernelName}"'
     exeCommand = f'{ncuCommand} ../../build/{basename} {exeArgs}'.rstrip()
 
     print('executing command:', exeCommand)
@@ -287,13 +296,21 @@ def execute_target(target:dict, kernelName:str):
     # 5 minute timeout for now?
     execResult = subprocess.run(shlex.split(exeCommand), cwd=srcDir, timeout=300, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
+    assert execResult.returncode == 0
 
-    csvCommand = f'ncu --import {basename}-[{kernelName}]-report.ncu-rep --csv --print-units base --page raw'
-    print('executing command:', csvCommand)
+    # check that the ncu-rep was generated. We'll still get a 0 returncode when it doesn't generate an ncu-rep file
+    if os.path.isfile(f'{srcDir}/{reportFileName}.ncu-rep'):
+        csvCommand = f'ncu --import {reportFileName}.ncu-rep --csv --print-units base --page raw'
+        print('executing command:', csvCommand)
+        rooflineResults = subprocess.run(shlex.split(csvCommand), cwd=srcDir, timeout=60, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        assert rooflineResults.returncode == 0
 
-    rooflineResults = subprocess.run(shlex.split(csvCommand), cwd=srcDir, timeout=60, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        return (execResult, rooflineResults)
 
-    return (execResult, rooflineResults)
+    else:
+        print(f'No report file generated! -- Kernel [{kernelName}] must not have been invoked during execution!')
+        # if the report file didn't get generated, return null, indicating the kernel doesn't exist
+        return (None, None)
 
 
 def roofline_results_to_df(rooflineResults):
@@ -366,18 +383,7 @@ def calc_roofline_data(df):
     kdf['device'] = kdf['device__attribute_display_name']
 
     timeUnits = df.iloc[0]['gpu__time_duration.sum']
-    #print('time units', timeUnits)
-
     assert timeUnits == 'ns'
-
-    #timeUnits = df.iloc[0]['smsp__cycles_elapsed.avg.per_second']
-    #print('units', timeUnits)
-
-    #units = df.iloc[0]['dram__bytes.sum.per_second']
-    #print('dram units', units)
-
-    #kdf['dpPerf'] = kdf['dpWork'] / kdf['xtime']
-    #kdf['spPerf'] = kdf['spWork'] / kdf['xtime']
 
     return kdf
 
@@ -421,22 +427,26 @@ def execute_targets(targets:list, dfFilename:str):
                 continue
 
             execResult, rooflineResult = execute_target(target, kernelName)
-            stdout = execResult.stdout.decode('UTF-8')
-            assert execResult.returncode == 0, f'error in execution!\n {stdout}'
+            
+            if execResult != None:
+                stdout = execResult.stdout.decode('UTF-8')
+                assert execResult.returncode == 0, f'error in execution!\n {stdout}'
 
-            #pprint(stdout)
-            rawDF = roofline_results_to_df(rooflineResult)
-            #pprint(rawDF)
+                rawDF = roofline_results_to_df(rooflineResult)
+                roofDF = calc_roofline_data(rawDF)
 
-            roofDF = calc_roofline_data(rawDF)
+                subset = roofDF[['Kernel Name', 'traffic', 'dpAI', 'spAI', 'dpPerf', 'spPerf', 'xtime', 'Block Size', 'Grid Size', 'device']].copy()
+                subset['targetName'] = basename
+                subset['exeArgs'] = exeArgs
+                subset['kernelName'] = kernelName
 
-            #subset = roofDF[['Kernel Name', 'dpWork', 'spWork', 'traffic', 'dpAI', 'spAI', 'xtime', 'dpPerf', 'spPerf']]
-            subset = roofDF[['Kernel Name', 'traffic', 'dpAI', 'spAI', 'dpPerf', 'spPerf', 'xtime', 'Block Size', 'Grid Size', 'device']].copy()
-            subset['targetName'] = basename
-            subset['exeArgs'] = exeArgs
-            subset['kernelName'] = kernelName
-
-            #pprint(subset)
+            # if the return value is None, the kernel wasn't executed,
+            # so we will add it to the database, but with all NaN values to
+            # indicate the kernel doesn't get executed and so we skip it
+            # if we try to re-run data gathering
+            else:
+                dataDict = {'targetName':[basename], 'exeArgs':[exeArgs], 'kernelName':[kernelName]}
+                subset = pd.DataFrame(dataDict)
 
             df = pd.concat([df, subset], ignore_index=True)
 
@@ -444,7 +454,7 @@ def execute_targets(targets:list, dfFilename:str):
     # save the dataframe
     #dfFilename = './roofline-data.csv'
     print(f'Saving dataframe! {dfFilename}')
-    df.to_csv(dfFilename, quoting=csv.QUOTE_NONNUMERIC, quotechar='"', index=False)
+    df.to_csv(dfFilename, quoting=csv.QUOTE_NONNUMERIC, quotechar='"', index=False, na_rep='NULL')
 
     return df
 
