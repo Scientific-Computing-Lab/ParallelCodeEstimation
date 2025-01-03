@@ -80,7 +80,7 @@ def download_rodinia_and_extract():
     return
 
 
-def run_setup_scripts_for_some_targets(targets):
+def download_files_for_some_targets(targets):
     for target in targets:
         basename = target['basename']
         srcDir = target['src']
@@ -106,6 +106,12 @@ def run_setup_scripts_for_some_targets(targets):
         elif basename == 'gd-cuda':
             if not os.path.isfile(f'{srcDir}/gisette_scale'):
                 command = f'wget --no-check-certificate https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/gisette_scale.bz2 && bzip2 -dk ./gisette_scale.bz2 && mv ./gisette_scale {srcDir}/'
+                result = subprocess.run(command, cwd=DOWNLOAD_DIR, shell=True)
+                assert result.returncode == 0
+
+        elif basename == 'svd3x3-cuda':
+            if not os.path.isfile(f'{srcDir}/Dataset_1M.txt'):
+                command = f'wget --no-check-certificate https://github.com/kuiwuchn/3x3_SVD_CUDA/blob/master/svd3x3/svd3x3/Dataset_1M.txt && mv ./Dataset_1M.txt {srcDir}/'
                 result = subprocess.run(command, cwd=DOWNLOAD_DIR, shell=True)
                 assert result.returncode == 0
 
@@ -220,15 +226,34 @@ def modify_exe_args_for_some_targets(targets:list):
 
         if basename == 'dxtc1-cuda':
             target['exeArgs'] = target['exeArgs'].replace('dxtc1-sycl', 'dxtc2-sycl')
+        elif basename == 'softmax-cuda':
+            target['exeArgs'] = target['exeArgs'].replace('784 ', '784 1 ')
+        # just manually set the kmeans -- it doesn't use the $(program) substring in it's makefile
+        # so we don't rip any arguments out for it
+        elif basename == 'kmeans-cuda':
+            target['exeArgs'] = ' -r -n 5 -m 15 -l 10 -o -i ../data/kmeans/kdd_cup'
 
     return targets
 
-def check_and_get_input_files(targets:list):
+
+
+def modify_kernel_names_for_some_targets(targets:list):
+    for target in targets:
+        basename = target['basename']
+
+        if basename == 'assert-cuda':
+            target['kernelNames'].remove('testKernel')
+
+
+    return targets
+
+
+def check_and_unzip_input_files(targets:list):
     for target in tqdm(targets, desc='Checking input files exist'):
         args = target['exeArgs']
         srcDir = target['src']
 
-        print(target)
+        #print(target)
 
         # if there are any input files, let's try to find them
         inputFiles = re.findall(r'\.+\/[0-9a-zA-Z_\-\/\.]*', args)
@@ -629,14 +654,16 @@ def main():
 
     targets = get_runnable_targets()
 
-    run_setup_scripts_for_some_targets(targets)
+    download_files_for_some_targets(targets)
 
     targets = get_exe_args(targets)
     targets = modify_exe_args_for_some_targets(targets)
 
-    check_and_get_input_files(targets)
+    check_and_unzip_input_files(targets)
 
     targets = get_kernel_names(targets)
+
+    targets = modify_kernel_names_for_some_targets(targets)
 
 
     #for target in targets:
