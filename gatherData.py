@@ -6,7 +6,7 @@ Here we will run each of the codes using the default `make run` arguments.
 We were able to build at least 400 codes, so we will rip their `make run` arguments
 and then execute them with the same args.
 
-We will use `nsys` to record the roofline data of each run.
+We will use `ncu` to record the roofline data of each run.
 
 We don't really put much error checking in here because we are mainly trying to 
 get something that works. Later on we may build this program up some more.
@@ -25,20 +25,55 @@ from io import StringIO
 import numpy as np
 import csv
 
+# these will be used globally in this program
+# mainly for consistency. They are absoule (full) paths
+DOWNLOAD_DIR = ''
+ROOT_DIR = ''
+SRC_DIR = ''
+BUILD_DIR = ''
 
+def setup_dirs(buildDir, srcDir):
+    global DOWNLOAD_DIR
+    global ROOT_DIR
+    global SRC_DIR
+    global BUILD_DIR
 
-def has_rodinia_datasets(srcDir):
-    return os.path.isdir(f'{srcDir}/data')
+    ROOT_DIR = os.path.abspath(f'{srcDir}/../')
+    assert os.path.exists(ROOT_DIR)
 
+    DOWNLOAD_DIR = os.path.abspath(f'{ROOT_DIR}/downloads')
 
-def download_rodinia_and_extract(srcDir):
+    if not os.path.exists(DOWNLOAD_DIR):
+        os.mkdir(DOWNLOAD_DIR)
+
+    SRC_DIR = os.path.abspath(f'{srcDir}')
+    BUILD_DIR = os.path.abspath(f'{buildDir}')
+
+    assert os.path.exists(DOWNLOAD_DIR)
+    assert os.path.exists(SRC_DIR)
+    assert os.path.exists(BUILD_DIR)
+
+    print('Using the following directories:')
+    print(f'ROOT_DIR     = [{ROOT_DIR}]')
+    print(f'DOWNLOAD_DIR = [{DOWNLOAD_DIR}]')
+    print(f'SRC_DIR      = [{SRC_DIR}]')
+    print(f'BUILD_DIR    = [{BUILD_DIR}]')
+
+    return
+
+def has_rodinia_datasets():
+    return os.path.isdir(f'{SRC_DIR}/data')
+
+# because so many codes depend on rodinia, it gets its own setup function
+def download_rodinia_and_extract():
     print('Downloading Rodinia Data...')
 
-    command = f'wget http://www.cs.virginia.edu/~skadron/lava/Rodinia/Packages/rodinia_3.1.tar.bz2 && tar -xf ./rodinia_3.1.tar.bz2 rodinia_3.1/data && mv ./rodinia_3.1/data {srcDir}/data'
-    result = subprocess.run(command, shell=True)
+    command = f'wget http://www.cs.virginia.edu/~skadron/lava/Rodinia/Packages/rodinia_3.1.tar.bz2 && tar -xf ./rodinia_3.1.tar.bz2 rodinia_3.1/data && mv ./rodinia_3.1/data {SRC_DIR}/data'
+    print('executing command', command)
+    result = subprocess.run(command, cwd=DOWNLOAD_DIR, shell=True)
 
     assert result.returncode == 0
-    assert has_rodinia_datasets(srcDir)
+    assert has_rodinia_datasets()
 
     print('Rodinia download and unzip complete!')
 
@@ -50,30 +85,28 @@ def run_setup_scripts_for_some_targets(targets):
         basename = target['basename']
         srcDir = target['src']
 
-        # required data files are unable to be downloaded due to broken links :(
-        # leaving this in here for future
-        if basename == 'lzss-cuda':
-            if not os.path.isfile(f'{srcDir}/tpch.zip'):
-                command = f'./get_sample_data.sh'
-                result = subprocess.run(command, cwd=srcDir, shell=True)
-                assert result.returncode == 0
-
-        elif basename == 'gc-cuda':
+        if basename == 'gc-cuda':
             if not os.path.isfile(f'{srcDir}/../mis-cuda/internet.egr'):
                 command = f'wget --no-check-certificate https://userweb.cs.txstate.edu/~burtscher/research/ECLgraph/internet.egr && mv ./internet.egr {srcDir}/../mis-cuda/'
-                result = subprocess.run(command, shell=True)
+                result = subprocess.run(command, cwd=DOWNLOAD_DIR, shell=True)
                 assert result.returncode == 0
 
         elif basename == 'cc-cuda':
             if not os.path.isfile(f'{srcDir}/delaunay_n24.egr'):
                 command = f'wget --no-check-certificate https://userweb.cs.txstate.edu/~burtscher/research/ECLgraph/delaunay_n24.egr && mv ./delaunay_n24.egr {srcDir}/'
-                result = subprocess.run(command, shell=True)
+                result = subprocess.run(command, cwd=DOWNLOAD_DIR, shell=True)
                 assert result.returncode == 0
 
         elif basename == 'mriQ-cuda':
             if not os.path.isfile(f'{srcDir}/datasets/128x128x128/input/128x128x128.bin'):
                 command = f'wget --no-check-certificate https://www.cs.ucr.edu/~nael/217-f19/labs/mri-q.tgz && tar -xf ./mri-q.tgz mri-q/datasets && mv ./mri-q/datasets {srcDir}/datasets'
-                result = subprocess.run(command, shell=True)
+                result = subprocess.run(command, cwd=DOWNLOAD_DIR, shell=True)
+                assert result.returncode == 0
+
+        elif basename == 'gd-cuda':
+            if not os.path.isfile(f'{srcDir}/gisette_scale'):
+                command = f'wget --no-check-certificate https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/gisette_scale.bz2 && bzip2 -dk ./gisette_scale.bz2 && mv ./gisette_scale {srcDir}/'
+                result = subprocess.run(command, cwd=DOWNLOAD_DIR, shell=True)
                 assert result.returncode == 0
 
 
@@ -81,16 +114,16 @@ def run_setup_scripts_for_some_targets(targets):
 
 
 
-def get_runnable_targets(buildDir:str, srcDir:str):
+def get_runnable_targets():
     # gather a list of dictionaries storing executable names and source directories
     # the list of dicts will later have run command information added to them
-    files = glob.glob(f'{buildDir}/*')
+    files = glob.glob(f'{BUILD_DIR}/*')
     execs = []
     for entry in files:
         # check we have a file and it's an executable
         if os.path.isfile(entry) and os.access(entry, os.X_OK):
             basename = os.path.basename(entry)
-            execSrcDir = f'{srcDir}/{basename}'
+            execSrcDir = os.path.abspath(f'{SRC_DIR}/{basename}')
 
             # check we have the source code too
             assert os.path.isdir(execSrcDir)
@@ -228,7 +261,7 @@ def get_kernel_names_from_target(target:dict):
     basename = target['basename']
     srcDir = target['src']
 
-    cuobjdumpCommand = f'cuobjdump --list-text ../../build/{basename} | cu++filt'
+    cuobjdumpCommand = f'cuobjdump --list-text {BUILD_DIR}/{basename} | cu++filt'
     #print(shlex.split(cuobjdumpCommand))
     knamesResult = subprocess.run(cuobjdumpCommand, cwd=srcDir, shell=True, 
                                   timeout=60, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -307,7 +340,7 @@ def execute_target(target:dict, kernelName:str):
 
     reportFileName = f'{basename}-[{kernelName}]-report'
     ncuCommand = f'ncu -f -o {reportFileName} --section SpeedOfLight_RooflineChart -c 2 -k "regex:{kernelName}"'
-    exeCommand = f'{ncuCommand} ../../build/{basename} {exeArgs}'.rstrip()
+    exeCommand = f'{ncuCommand} {BUILD_DIR}/{basename} {exeArgs}'.rstrip()
 
     print('executing command:', exeCommand)
 
@@ -582,17 +615,19 @@ def main():
 
     args = parser.parse_args()
 
+    setup_dirs(args.buildDir, args.srcDir)
+
     # let's check if rodinia has been downloaded, if not, download it
-    if not has_rodinia_datasets(args.srcDir):
+    if not has_rodinia_datasets():
         if not args.skipRodiniaDownload:
-            download_rodinia_and_extract(args.srcDir)
+            download_rodinia_and_extract()
         else:
             print('[WARN] Rodinia not detected! User requested to skip rodinia dataset download! Some codes may fail on invocation!')
 
 
     print('Starting data gathering process!')
 
-    targets = get_runnable_targets(buildDir=args.buildDir, srcDir=args.srcDir)
+    targets = get_runnable_targets()
 
     run_setup_scripts_for_some_targets(targets)
 

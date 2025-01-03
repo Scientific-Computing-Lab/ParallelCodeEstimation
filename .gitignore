@@ -28,3 +28,5 @@ dpct_output
 *.tar.bz2
 internet.egr
 *.tgz
+*.bz2
+/downloads/
