@@ -107,10 +107,12 @@ ENDIF()
 # testSNAP-cuda is missing an include
 # lzss-cuda is unable to download required data files -- broken links
 # cmp-cuda is unable to download required data files -- files not online need to contact eborin
+# cc-cuda has some segfault caused by a stack overflow
+# bincount-cuda only makes external CUDA library calls (we can't get the source code)
 set(IGNORE_TARGETS allreduce-cuda ccl-cuda diamond-cuda fresnel-cuda langford-cuda 
                    merkle-cuda miniWeather-cuda minibude-cuda pingpong-cuda
                    qkv-cuda rowwiseMoments-cuda saxpy-ompt-cuda slit-cuda sparkler-cuda
-                   lzss-cuda cmp-cuda sss-cuda streamUM-cuda stsg-cuda testSNAP-cuda)
+                   lzss-cuda cmp-cuda cc-cuda sss-cuda streamUM-cuda stsg-cuda testSNAP-cuda)
 set(TARGETS "")
 
 FOREACH(TARGET_DIR ${TARGET_DIRS})

@@ -70,6 +70,11 @@ def run_setup_scripts_for_some_targets(targets):
                 result = subprocess.run(command, shell=True)
                 assert result.returncode == 0
 
+        elif basename == 'mriQ-cuda':
+            if not os.path.isfile(f'{srcDir}/datasets/128x128x128/input/128x128x128.bin'):
+                command = f'wget --no-check-certificate https://www.cs.ucr.edu/~nael/217-f19/labs/mri-q.tgz && tar -xf ./mri-q.tgz mri-q/datasets && mv ./mri-q/datasets {srcDir}/datasets'
+                result = subprocess.run(command, shell=True)
+                assert result.returncode == 0
 
 
     return
@@ -149,6 +154,13 @@ def get_exec_command_from_makefile(makefile):
         for line in file:
             if './$(program) ' in line:
                 matches = re.findall(r'(?<=\.\/\$\(program\)).*', line)
+                assert len(matches) == 1
+
+                return matches[0]
+
+            elif './$(EXE) ' in line:
+                # streamcluster has its makefile written like this
+                matches = re.findall(r'(?<=\.\/\$\(EXE\)).*', line)
                 assert len(matches) == 1
 
                 return matches[0]
@@ -303,14 +315,15 @@ def execute_target(target:dict, kernelName:str):
     # 5 minute timeout for now?
     execResult = subprocess.run(shlex.split(exeCommand), cwd=srcDir, timeout=300, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
-    assert execResult.returncode == 0
+    assert execResult.returncode == 0, f'Execution error: {execResult.stdout.decode("UTF-8")}'
 
     # check that the ncu-rep was generated. We'll still get a 0 returncode when it doesn't generate an ncu-rep file
     if os.path.isfile(f'{srcDir}/{reportFileName}.ncu-rep'):
         csvCommand = f'ncu --import {reportFileName}.ncu-rep --csv --print-units base --page raw'
         print('executing command:', csvCommand)
         rooflineResults = subprocess.run(shlex.split(csvCommand), cwd=srcDir, timeout=60, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        assert rooflineResults.returncode == 0
+
+        assert rooflineResults.returncode == 0, f'Roofline parsing error: {rooflineResults.stdout.decode("UTF-8")}'
 
         return (execResult, rooflineResults)
 
@@ -456,12 +469,16 @@ def execute_targets(targets:list, dfFilename:str):
                 subset = pd.DataFrame(dataDict)
 
             df = pd.concat([df, subset], ignore_index=True)
+            # this does do a lot of redundant writing, but we only expect at most 10k samples, so 
+            # it's not too much of a slowdown to write out each time.
+            # if it proves too slow, we could switch to parquet format, although this is good for now.
+            df.to_csv(dfFilename, quoting=csv.QUOTE_NONNUMERIC, quotechar='"', index=False, na_rep='NULL')
 
 
     # save the dataframe
     #dfFilename = './roofline-data.csv'
-    print(f'Saving dataframe! {dfFilename}')
-    df.to_csv(dfFilename, quoting=csv.QUOTE_NONNUMERIC, quotechar='"', index=False, na_rep='NULL')
+    #print(f'Saving dataframe! {dfFilename}')
+    print('Sample gathering complete!')
 
     return df
 
@@ -592,7 +609,8 @@ def main():
     #        pprint(target)
     #        execute_targets([target])
 
-    targets = targets[:70]
+    #targets = targets[:70]
+
     #pprint(targets)
 
     results = execute_targets(targets, args.outfile)

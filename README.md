@@ -48,6 +48,9 @@ Once all the roofline benchmarking data is collected, we will need to use anothe
 
 Once we've gathered hundreds of data samples, we want to check the data to be sure it's alright. We have some visualization scripts to help with seeing the data we collected at a high level. 
 
+## Limitations + TODO
+
+
 
 ---
 

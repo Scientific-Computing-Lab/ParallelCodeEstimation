@@ -27,3 +27,4 @@ dpct_output
 **/src/**
 *.tar.bz2
 internet.egr
+*.tgz
