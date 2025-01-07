@@ -102,17 +102,20 @@ ENDIF()
 # openmp-cuda, qkv-cuda has a malloc visibility bug in clang
 # miniWeather-cuda, pingpong-cuda, sparkler-cuda is mpi
 # saxpy-ompt-cude, streamUM-cuda having problems with finding omp.h correctly -- also doesn't build by default
-# slit-cude missing a file it needs to work -- can't default build
+# slit-cuda missing a file it needs to work -- can't default build
 # sss-cuda uses gsl
 # testSNAP-cuda is missing an include
 # lzss-cuda is unable to download required data files -- broken links
 # cmp-cuda is unable to download required data files -- files not online need to contact eborin
 # cc-cuda has some segfault caused by a stack overflow
 # bincount-cuda only makes external CUDA library calls (we can't get the source code)
+# bscan-cuda gets out-of-memory error during execution
+# feynman-kac-cuda gets out-of-memory error during execution
 set(IGNORE_TARGETS allreduce-cuda ccl-cuda diamond-cuda fresnel-cuda langford-cuda 
                    merkle-cuda miniWeather-cuda minibude-cuda pingpong-cuda
                    qkv-cuda rowwiseMoments-cuda saxpy-ompt-cuda slit-cuda sparkler-cuda
-                   lzss-cuda cmp-cuda cc-cuda sss-cuda streamUM-cuda stsg-cuda testSNAP-cuda)
+                   lzss-cuda cmp-cuda cc-cuda sss-cuda streamUM-cuda stsg-cuda testSNAP-cuda
+                   bscan-cuda feynman-kac-cuda)
 set(TARGETS "")
 
 FOREACH(TARGET_DIR ${TARGET_DIRS})

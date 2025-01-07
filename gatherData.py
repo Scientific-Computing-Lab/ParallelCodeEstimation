@@ -79,6 +79,12 @@ def download_rodinia_and_extract():
 
     return
 
+def run_setup_command_for_file(targetFile, command, targetDir=DOWNLOAD_DIR):
+    if not os.path.isfile(targetFile):
+        result = subprocess.run(command, cwd=targetDir, shell=True)
+        assert result.returncode == 0
+    return
+
 
 def download_files_for_some_targets(targets):
     for target in targets:
@@ -86,10 +92,9 @@ def download_files_for_some_targets(targets):
         srcDir = target['src']
 
         if basename == 'gc-cuda':
-            if not os.path.isfile(f'{srcDir}/../mis-cuda/internet.egr'):
-                command = f'wget --no-check-certificate https://userweb.cs.txstate.edu/~burtscher/research/ECLgraph/internet.egr && mv ./internet.egr {srcDir}/../mis-cuda/'
-                result = subprocess.run(command, cwd=DOWNLOAD_DIR, shell=True)
-                assert result.returncode == 0
+            tFile = f'{srcDir}/../mis-cuda/internet.egr'
+            command = f'wget --no-check-certificate https://userweb.cs.txstate.edu/~burtscher/research/ECLgraph/internet.egr && mv ./internet.egr {srcDir}/../mis-cuda/'
+            run_setup_command_for_file(tFile, command)
 
         elif basename == 'cc-cuda':
             if not os.path.isfile(f'{srcDir}/delaunay_n24.egr'):
@@ -111,11 +116,48 @@ def download_files_for_some_targets(targets):
 
         elif basename == 'svd3x3-cuda':
             if not os.path.isfile(f'{srcDir}/Dataset_1M.txt'):
-                command = f'wget --no-check-certificate https://github.com/kuiwuchn/3x3_SVD_CUDA/blob/master/svd3x3/svd3x3/Dataset_1M.txt && mv ./Dataset_1M.txt {srcDir}/'
+                command = f'wget --no-check-certificate https://raw.githubusercontent.com/kuiwuchn/3x3_SVD_CUDA/refs/heads/master/svd3x3/svd3x3/Dataset_1M.txt && mv ./Dataset_1M.txt {srcDir}/'
                 result = subprocess.run(command, cwd=DOWNLOAD_DIR, shell=True)
                 assert result.returncode == 0
 
+        elif basename == 'tsp-cuda':
+            if not os.path.isfile(f'{srcDir}/d493.tsp'):
+                command = f'wget --no-check-certificate http://comopt.ifi.uni-heidelberg.de/software/TSPLIB95/tsp/d493.tsp.gz && gunzip ./d493.tsp.gz && mv ./d493.tsp {srcDir}/'
+                result = subprocess.run(command, cwd=DOWNLOAD_DIR, shell=True)
+                assert result.returncode == 0
 
+        elif basename == 'hogbom-cuda':
+            command = f'mkdir -p ./data'
+            result = subprocess.run(command, cwd=srcDir, shell=True)
+            assert result.returncode == 0
+
+            if not os.path.isfile(f'{srcDir}/data/dirty_4096.img'):
+                command = f'wget --no-check-certificate https://github.com/ATNF/askap-benchmarks/raw/refs/heads/master/data/dirty_4096.img && mv ./dirty_4096.img {srcDir}/data/'
+                result = subprocess.run(command, cwd=DOWNLOAD_DIR, shell=True)
+                assert result.returncode == 0
+
+            if not os.path.isfile(f'{srcDir}/data/psf_4096.img'):
+                command = f'wget --no-check-certificate https://github.com/ATNF/askap-benchmarks/raw/refs/heads/master/data/psf_4096.img && mv ./psf_4096.img {srcDir}/data/'
+                result = subprocess.run(command, cwd=DOWNLOAD_DIR, shell=True)
+                assert result.returncode == 0
+
+        elif basename == 'lr-cuda':
+            if not os.path.isfile(f'{srcDir}/assets/data2_arrival.txt'):
+                command = f'cp ../lr-sycl/assets.tar.gz ./ && tar -xf assets.tar.gz'
+                result = subprocess.run(command, cwd=srcDir, shell=True)
+                assert result.returncode == 0
+
+        elif (basename == 'haversine-cuda') or (basename == 'geodesic-cuda'):
+            if not os.path.isfile(f'{srcDir}/../geodesic-sycl/locations.txt'):
+                command = f'tar -xf ../geodesic-sycl/locations.tar.gz'
+                result = subprocess.run(command, cwd=srcDir, shell=True)
+                assert result.returncode == 0
+
+        elif basename == 'word2vec-cuda':
+            if not os.path.isfile(f'{srcDir}/text8'):
+                command = f'wget --no-check-certificate https://mattmahoney.net/dc/text8.zip && unzip ./text8.zip && mv ./text8 {srcDir}/'
+                result = subprocess.run(command, cwd=DOWNLOAD_DIR, shell=True)
+                assert result.returncode == 0
     return
 
 
@@ -190,19 +232,23 @@ def get_exec_command_from_makefile(makefile):
     assert os.path.isfile(makefile)
 
     with open(makefile, 'r') as file:
-        for line in file:
-            if './$(program) ' in line:
-                matches = re.findall(r'(?<=\.\/\$\(program\)).*', line)
-                assert len(matches) == 1
+        data = file.read()
+        # crazy regex program, but pretty much captures multiline invocations
+        # and special makefile cases we've encountered
+        matches = re.findall(r'(?:(?<=\.\/\$\(EXE\))|(?<=\.\/\$\(program\)))(?:[ \n])(?:[^\n\\]*)(?:(?:\\\n[^\n\\]*)+|(?:))', data, re.DOTALL)
 
-                return matches[0]
+        if len(matches) == 0:
+            # let's just double-check that the program takes no arguments
+            return ''
+        else:
+            # sometimes we'll have multiple matches due to multiple invocations
+            # for now we just take the first one
 
-            elif './$(EXE) ' in line:
-                # streamcluster has its makefile written like this
-                matches = re.findall(r'(?<=\.\/\$\(EXE\)).*', line)
-                assert len(matches) == 1
-
-                return matches[0]
+            # let's clean up the string
+            exeArgs = matches[0].lstrip().rstrip()
+            exeArgs = exeArgs.replace('\n', '').replace('\\','')
+            exeArgs = ' '.join(exeArgs.split())
+            return exeArgs
 
     return ''
 
@@ -370,8 +416,8 @@ def execute_target(target:dict, kernelName:str):
     print('executing command:', exeCommand)
 
     # we print the stderr to the stdout for analysis
-    # 5 minute timeout for now?
-    execResult = subprocess.run(shlex.split(exeCommand), cwd=srcDir, timeout=300, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    # 10 minute timeout for now?
+    execResult = subprocess.run(shlex.split(exeCommand), cwd=srcDir, timeout=600, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
     assert execResult.returncode == 0, f'Execution error: {execResult.stdout.decode("UTF-8")}'
 
