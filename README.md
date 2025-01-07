@@ -21,35 +21,53 @@ source ./runBuild.sh
 Once all the codes are built, we can start the data collection process. We have our own script called `gatherData.py` which can be invoked to gather the roofline benchmarking data of each of the built programs.
 
 ```
-python3 ./gatherData.py
+DATAPATH=/home/gbolet/HeCBench-roofline/src/prna-cuda/data_tables python3 ./gatherData.py
 ```
 
 This will automatically invoke each of the built executables, using `ncu` (NVIDIA Nsight Compute) to profile each of the kernels in the executable. Some of the codes require files to be downloaded proir, this script takes care of the downloading process and makes sure that all the requested files are in place.
+The `DATAPATH` environment variable is only needed by `frna-cuda` and `prna-cuda`, so if you're not running those, you can drop it.
 
 The internal workflow at a high leve looks like the following:
-1. Download rodinia dataset (skip if requested with `--skipRodiniaDownload`)
-2. Gather runnable targets by scanning for executables in the `./build` directory
-3. From the gathered targets, find the ones that need extra files to be downloaded, and download them.
-4. Extract the execution arguments of each executable from their respective Makefiles
-5. Correct the malformed execution arguments for some targets 
-6. Search for (and confirm) the existence of required input files for some programs. Unzip and extract any files that are zipped.
+1. Download rodinia dataset (skip if requested with `--skipRodiniaDownload`).
+2. Gather runnable targets by scanning for executables in the `./build` directory.
+3. From the gathered targets, find the ones that need extra files to be downloaded, and download/unzip them.
+4. Extract the first-found execution arguments of each executable from their respective Makefiles.
+5. Correct the malformed execution arguments for some targets.
+6. Search for (and confirm) the existence of required input files for some programs. Unzip and extract any files that are zipped and came with HeCBench.
 7. Use `cuobjdump` and `cu++filt` to extract kernel names from each executable. These are used when invoking `ncu` to profile a particular kernel.
-8. Run each of the executables and gather their roofline performance data with `ncu`
-9. Write gathered data to output `roofline-data.csv` file
+8. Run each of the executables and gather their roofline performance data with `ncu`.
+9. Write gathered data to output `roofline-data.csv` file.
 
 
-The `gatherData.py` script will emit a CSV file containing all the benchmarking data.
+The `gatherData.py` script will emit a CSV file containing all the benchmarking data. After each kernel is run, the data is written out to the last line of the CSV file.
 
 ## Building the LLM Dataset (TODO)
 
-Once all the roofline benchmarking data is collected, we will need to use another script that will automatically scrape the CUDA kernels from the source files to create the final dataset we can use in LLM training.
+Once all the roofline benchmarking data is collected, we will need to use another script that will automatically scrape the CUDA kernels from the source files to create the final dataset we can use in LLM training. We do this with another python script called `createLLMDataset.py`.
+A design decision was made to make the LLM dataset into a JSON format, following a chat style. This is because lots of the current models are trained in this manner.
 
 ## Dataset Visualization (TODO)
 
-Once we've gathered hundreds of data samples, we want to check the data to be sure it's alright. We have some visualization scripts to help with seeing the data we collected at a high level. 
+Once we've gathered hundreds of data samples, we want to check the data to be sure it's alright. We have some visualization scripts to help with seeing the data we collected at a high level. We do this with a Jupyter Notebook called `visualizeGatheredData.ipynb` and `visualizeLLMDataset.ipynb`. 
 
-## Limitations + TODO
+## Limitations
 
+1. We're not profiling all the possible kernel invocations, only the first two invocations of each kernel. There are some codes like `bitpermute-cuda` which make multiple increasing calls to its kernels, we only profile the first two.
+
+
+### Future (less-important) Features (TODO)
+These are features we would like to have, but they're not a priority at the moment because what we have so far is giving us a good amount of data.
+
+- update `has_already_been_sampled` to include `exeArgs` when checking
+- get remaining OMP codes building correctly
+- for targets with multiple `run` makefile invocations, store all to invocations run (instead of just the first)
+- support for weird precisions? -- what CUDA counters do we need?
+- support for integer data type roofline? (we only have single and double precision float roofline)
+- can we do the `ncu` regex with all the kernels -- so we just need to do one run instead of a run for each kernel
+- perform a trial run with `nvprof`, gather all kernel launches with different launch bounds, use `ncu` `-skip` flag to target profiling each launch
+  - this will gather more data as some kernels change grid-size and block-size between calls
+  - this may be slower to gather data though
+- figure out why some programs are having memory allocation issues (can we give different input?) 
 
 
 ---

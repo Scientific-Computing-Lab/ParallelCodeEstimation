@@ -111,11 +111,18 @@ ENDIF()
 # bincount-cuda only makes external CUDA library calls (we can't get the source code)
 # bscan-cuda gets out-of-memory error during execution
 # feynman-kac-cuda gets out-of-memory error during execution
+# lrn-cuda gets out-of-memory error during execution
+# cm-cuda requires user-input during execution -- need to support
+# voxelization-cuda missing required input files -- can't find a link
+# mpc-cuda gets out-of-memory error during execution
+# stencil3d-cuda gets out-of-memory error during execution (although it runs fine whout `ncu`) -- need to look into this...
+# tridiagonal-cuda segfaults during execution
 set(IGNORE_TARGETS allreduce-cuda ccl-cuda diamond-cuda fresnel-cuda langford-cuda 
                    merkle-cuda miniWeather-cuda minibude-cuda pingpong-cuda
                    qkv-cuda rowwiseMoments-cuda saxpy-ompt-cuda slit-cuda sparkler-cuda
                    lzss-cuda cmp-cuda cc-cuda sss-cuda streamUM-cuda stsg-cuda testSNAP-cuda
-                   bscan-cuda feynman-kac-cuda)
+                   bscan-cuda feynman-kac-cuda lrn-cuda cm-cuda voxelization-cuda mpc-cuda
+                   stencil3d-cuda tridiagonal-cuda)
 set(TARGETS "")
 
 FOREACH(TARGET_DIR ${TARGET_DIRS})
@@ -237,7 +244,8 @@ target_sources(boxfilter-cuda PRIVATE "${HECBENCH_SRC_DIR}/boxfilter-sycl/shrUti
 target_sources(boxfilter-cuda PRIVATE "${HECBENCH_SRC_DIR}/boxfilter-sycl/cmd_arg_reader.cpp")
 target_sources(boxfilter-cuda PRIVATE "${HECBENCH_SRC_DIR}/boxfilter-sycl/reference.cpp")
 
-target_include_directories(cc-cuda PRIVATE "${HECBENCH_SRC_DIR}/mis-cuda")
+# excluded
+#target_include_directories(cc-cuda PRIVATE "${HECBENCH_SRC_DIR}/mis-cuda")
 
 target_include_directories(debayer-cuda PRIVATE "${HECBENCH_SRC_DIR}/debayer-sycl")
 

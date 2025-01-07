@@ -158,6 +158,43 @@ def download_files_for_some_targets(targets):
                 command = f'wget --no-check-certificate https://mattmahoney.net/dc/text8.zip && unzip ./text8.zip && mv ./text8 {srcDir}/'
                 result = subprocess.run(command, cwd=DOWNLOAD_DIR, shell=True)
                 assert result.returncode == 0
+
+        elif basename == 'multimaterial-cuda':
+            if not os.path.isfile(f'{srcDir}/volfrac.dat'):
+                command = f'tar -xf volfrac.dat.tgz'
+                result = subprocess.run(command, cwd=srcDir, shell=True)
+                assert result.returncode == 0
+
+        elif basename == 'mcpr-cuda':
+            if not os.path.isfile(f'{srcDir}/alphas.csv'):
+                command = f'bunzip2 alphas.csv.bz2'
+                result = subprocess.run(command, cwd=srcDir, shell=True)
+                assert result.returncode == 0
+
+        elif basename == 'sa-cuda':
+            if not os.path.isfile(f'{srcDir}/genome.txt'):
+                command = f'wget --no-check-certificate https://github.com/gmzang/Parallel-Suffix-Array-on-GPU/raw/refs/heads/master/dc3_gpu/genome.txt && mv ./genome.txt {srcDir}/'
+                result = subprocess.run(command, cwd=DOWNLOAD_DIR, shell=True)
+                assert result.returncode == 0
+
+        elif basename == 'mpc-cuda':
+            if not os.path.isfile(f'{srcDir}/msg_sp.trace.fpc'):
+                command = f'wget --no-check-certificate http://www.cs.txstate.edu/~burtscher/research/datasets/FPdouble/msg_sp.trace.fpc && mv ./msg_sp.trace.fpc {srcDir}/ && cd {srcDir} && make process'
+                result = subprocess.run(command, cwd=DOWNLOAD_DIR, shell=True)
+                assert result.returncode == 0
+
+        # need to have python2 installed for this to work
+        elif basename == 'heat2d-cuda':
+            if not os.path.isfile(f'{srcDir}/data.txt'):
+                command = f'python2 mkinit.py 4096 8192 data.txt'
+                result = subprocess.run(command, cwd=srcDir, shell=True)
+                assert result.returncode == 0
+
+        elif (basename == 'frna-cuda') or (basename == 'prna-cuda'):
+            if not os.path.isfile(f'{srcDir}/../prna-cuda/HIV1-NL43.seq'):
+                command = f'tar -xf ./HIV1-NL43.tar.gz && tar -xf ./data_tables.tar.gz'
+                result = subprocess.run(command, cwd=f'{srcDir}/../prna-cuda', shell=True)
+                assert result.returncode == 0
     return
 
 
@@ -266,6 +303,8 @@ def get_exe_args(targets:list):
         target['exeArgs'] = exeArgs
     return targets
 
+
+
 def modify_exe_args_for_some_targets(targets:list):
     for target in targets:
         basename = target['basename']
@@ -277,7 +316,9 @@ def modify_exe_args_for_some_targets(targets:list):
         # just manually set the kmeans -- it doesn't use the $(program) substring in it's makefile
         # so we don't rip any arguments out for it
         elif basename == 'kmeans-cuda':
-            target['exeArgs'] = ' -r -n 5 -m 15 -l 10 -o -i ../data/kmeans/kdd_cup'
+            target['exeArgs'] = '-r -n 5 -m 15 -l 10 -o -i ../data/kmeans/kdd_cup'
+        elif basename == 'frna-cuda':
+            target['exeArgs'] = '../prna-cuda/HIV1-NL43.seq hiv1-nl43.out'
 
     return targets
 
@@ -416,8 +457,9 @@ def execute_target(target:dict, kernelName:str):
     print('executing command:', exeCommand)
 
     # we print the stderr to the stdout for analysis
-    # 10 minute timeout for now?
-    execResult = subprocess.run(shlex.split(exeCommand), cwd=srcDir, timeout=600, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    # 15 minute timeout for now?
+    # cm-cuda goes over 10 mins to run!
+    execResult = subprocess.run(shlex.split(exeCommand), cwd=srcDir, timeout=900, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
     assert execResult.returncode == 0, f'Execution error: {execResult.stdout.decode("UTF-8")}'
 
@@ -512,6 +554,8 @@ def calc_roofline_data(df):
     return kdf
 
 
+# should include exeArgs as input so we can do multiple
+# runs of the same code with different cmdline args
 def has_already_been_sampled(basename:str, kernelName:str, df:pd.DataFrame): 
 
     if df.shape[0] == 0:
