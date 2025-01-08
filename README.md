@@ -41,9 +41,19 @@ The internal workflow at a high leve looks like the following:
 
 The `gatherData.py` script will emit a CSV file containing all the benchmarking data. After each kernel is run, the data is written out to the last line of the CSV file.
 
+## Scraping the CUDA kernels
+
+Once all the roofline benchmarking data has been collected, we can go ahead and scrape the sampled targets for their CUDA kernels. We do this with a script called `analysis/scrapeCUDAKernels.py`, which will do the following:
+
+1. Check if there exists already-gathered CUDA kernels
+2. Go through all the executables in the `build` dir and extract their kernel names
+3. Search through each executable's directories for the source function definition 
+
+The scraped output will be in JSON format, with a nesting structure of `executable/target --> kernel --> code`. 
+
 ## Building the LLM Dataset (TODO)
 
-Once all the roofline benchmarking data is collected, we will need to use another script that will automatically scrape the CUDA kernels from the source files to create the final dataset we can use in LLM training. We do this with another python script called `createLLMDataset.py`.
+Once both the roofline data and CUDA kernels are collected, we will amalgamate the data with another script. We use the script called `analysis/createLLMDataset.py`.
 A design decision was made to make the LLM dataset into a JSON format, following a chat style. This is because lots of the current models are trained in this manner.
 
 ## Dataset Visualization (TODO)
