@@ -191,44 +191,23 @@ def get_kernel_names(targets:list):
     return targets
 
 
-def has_already_been_sampled(basename:str, kernelName:str, df:pd.DataFrame): 
-    return False
-
-
-def load_exisiting_data(targets:list, outfileName:str):
-
-    if os.path.isfile(outfileName):
-        with open(outfileName, 'r') as file:
-            data = json.load(file) 
-            assert type(data) == list
-
-        # let's merge the two lists
-        for dtarg in data:
-            dname = dtarg['basename']
-            for target in targets:
-                name = target['basename']
-                if dname == name: 
-                    pass
-
-
-
-    else:
-        return targets
-
-    return
 
 
 def read_file_section(file_path, start_line, start_column, end_line, end_column):
-    with open(file_path, 'r') as file:
-
-        if start_line != end_line:
-            lines = file.readlines()[start_line - 1:end_line]
+    with open(file_path, 'r', errors='ignore') as file:
+        print(f'opening file {file_path} {start_line}:{end_line}')
+        lines = file.readlines()
+        # if for some reason they are asking for an index out of range
+        if (start_line > len(lines)) | (end_line-1 > len(lines)):
+            return ''
+        elif start_line != end_line:
+            lines = lines[start_line - 1:end_line]
             result = [lines[0][start_column-1:]]
             result = result + lines[1:len(lines)-1]
             result = result + [lines[-1][:end_column]]
             return ''.join(result).rstrip().lstrip()
         else:
-            result = file.readlines()[start_line - 1]
+            result = lines[start_line - 1]
             return result.rstrip().lstrip()
 
 
@@ -254,10 +233,11 @@ def get_source_lines_of_kernel(filename:str, kernelName:str):
     try:
         tu = index.parse(filename)
     except:
-        print(f'error in clang reading file [{filename}]')
+        # sometimes the files are not C/C++, this will skip these
+        #print(f'error in clang reading file [{filename}]')
         return []
 
-    print(f'searching in file {filename}')
+    #print(f'searching in file {filename}')
     cursor = tu.cursor
     matches = search_ast_for_matches(cursor, kernelName)
 
@@ -269,7 +249,10 @@ def get_source_lines_of_kernel(filename:str, kernelName:str):
             start = match.extent.start
             end = match.extent.end
             kernelSource = read_file_section(filename, start.line, start.column, end.line, end.column)
-            kernelSources.append(kernelSource)
+            # sometimes the clang ast will give the wrong file lines? Not sure if it's expanding source lines unintentionally
+            # instead we just check and make sure that the lines that were grabbed contain the kernel name
+            if kernelName in kernelSource:
+                kernelSources.append(kernelSource)
 
     return kernelSources
 
@@ -286,8 +269,13 @@ def find_files_with_kernel_name(dir:str, kernelName:str):
     assert grepOutput.returncode == 0
 
     foundFiles = grepOutput.stdout.decode('UTF-8').replace('\n', ' ').split()
-    print('foundFiles', foundFiles)
+
+    # drop any that end in 'ncu-rep' or 'sqlite'
+    foundFiles = [filename for filename in foundFiles if not(('-report.ncu-rep' in filename) | ('.sqlite' in filename))]
+
     result = [f'{dir}/{filename}' for filename in foundFiles]
+
+    print('foundFiles', foundFiles)
     return result 
 
 
@@ -320,14 +308,41 @@ def gather_kernels(targets:list, outfileName:str):
                 if len(srcCode) > len(selected):
                     selected = srcCode
 
-            print(f'biggest code candidate for kernel: [{kernelName}] [{basename}]: \n[{selected}]')
+            print(f'total code candidates for kernel: [{kernelName}] in [{basename}]: {len(codeCandidates)}')
+            print(f'biggest code candidate for kernel: [{kernelName}] in [{basename}]: \n[{selected}]')
             kernels[kernelName] = selected
 
         target['kernels'] = kernels
 
 
-    return
+    return targets
 
+
+def has_already_been_sampled(basename:str, kernelName:str, df:pd.DataFrame): 
+    return False
+
+
+def load_exisiting_data(targets:list, outfileName:str):
+
+    if os.path.isfile(outfileName):
+        with open(outfileName, 'r') as file:
+            data = json.load(file) 
+            assert type(data) == list
+
+        # let's merge the two lists
+        for dtarg in data:
+            dname = dtarg['basename']
+            for target in targets:
+                name = target['basename']
+                if dname == name: 
+                    pass
+
+
+
+    else:
+        return targets
+
+    return
 
 def main():
 
@@ -349,11 +364,11 @@ def main():
     targets = modify_kernel_names_for_some_targets(targets)
     #targets = load_exisiting_data(targets, args.outfile)
 
-    targets = targets[0:3]
+    #targets = targets[0:100]
 
     results = gather_kernels(targets, args.outfile)
 
-    print(results)
+    pprint(results)
 
     return
 
