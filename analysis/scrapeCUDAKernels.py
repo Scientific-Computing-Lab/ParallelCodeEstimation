@@ -278,6 +278,10 @@ def find_files_with_kernel_name(dir:str, kernelName:str):
     print('foundFiles', foundFiles)
     return result 
 
+def regex_search_for_kernel_in_file(filename:str, kernelName:str):
+
+
+    return 
 
 def gather_kernels(targets:list, outfileName:str):
 
@@ -299,6 +303,16 @@ def gather_kernels(targets:list, outfileName:str):
             for filename in finds:
                 srcCodes = get_source_lines_of_kernel(filename, kernelName)
                 codeCandidates = codeCandidates + srcCodes
+
+            # in the rare event that we can't find any code candidates 
+            # (this happens to particles-cuda for some reason...)
+            # we will grep search the function declaration candidates, include a couple lines before
+            # then manually push/pop curly braces of the source file till we complete the
+            # function text. From here we push this extracted text to a temporary file
+            # for clang to parse
+            if len(codeCandidates) == 0:
+                print(f'skipping kernel {kernelName} in {basename}')
+                continue
 
             assert len(codeCandidates) != 0, f'Unable to find source for kernel [{kernelName}] of [{basename}]'
 
