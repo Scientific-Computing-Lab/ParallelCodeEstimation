@@ -515,6 +515,20 @@ Formulas for Single-Precision Roofline values:
     Arithmetic Intensity: Achieved Work / Achieved Traffic
 
 It should be noted that these measurements are all on the level of DRAM. We plan to extend this to L1 + L2 later.
+
+There is only one integer instruction counter: smsp__sass_thread_inst_executed_op_integer_pred_on.sum
+In order to use it we need to find a way to request it with NCU.
+The `check_connect` kernel of `depixel-cuda` has both INTOPS and FLOPS, but NCU only reports the FLOPS.
+
+
+This was in the NCU documentation:
+ncu --query-metrics-mode suffix --metrics sm__inst_executed --chip ga100
+
+We can get the INTOP metrics like so:
+ncu -f -o deleteme --set roofline -c 2 -k "regex:check_connect" --metrics smsp__sass_thread_inst_executed_op_integer_pred_on ../../build/depixel-cuda 2048 2048 10
+
+The problem is that we need to then create the INTOP roofline, which NCU doesn't do, but we can technically empirically get. 
+
 '''
 def calc_roofline_data(df):
 
