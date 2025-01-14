@@ -14,7 +14,8 @@ cmake -DCMAKE_C_COMPILER=clang \
       -DCMAKE_CXX_COMPILER=clang++ \
       -DCMAKE_CUDA_HOST_COMPILER=clang++ \
       -DBUILD_ALL=ON \
-      -DBUILD_CUDA=ON \
+      -DBUILD_OMP=ON \
+      -DBUILD_CUDA=OFF \
       -DCMAKE_CUDA_COMPILER=/usr/local/cuda-12.6/bin/nvcc \
       -DCUDAToolkit_ROOT=/usr/local/cuda-12.6 \
       -DCMAKE_C_FLAGS="${CXX_FLAGS}" \
@@ -23,6 +24,8 @@ cmake -DCMAKE_C_COMPILER=clang \
       -DOMP_INCLUDE_DIR="/usr/lib/llvm-18/lib/clang/18/include" \
       -DOMP_LINKER_FLAGS="-L/usr/lib/llvm-18/lib;-lgomp" \
       -S../ -B./
+
+      #-DBUILD_CUDA=ON \
 
 #make -j1 VERBOSE=1 streamUM-cuda
 #make -j14 VERBOSE=1 all

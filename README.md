@@ -7,11 +7,19 @@ We might change our automated build and data gathering process in the future, fo
 
 Target codes thus-far:
 - CUDA (omitted MPI-based for now)
+  - We are able to build 453/491 (92%) of the CUDA targets
+  - We purposely skip building 33/491 due to MPI requirements or execution errors (mainly segfaults and out-of-memory errors)
+  - You should be able to switch between `g++` and `clang++` for these builds, although I haven't tested with `g++`.
+- OMP
+  - Working on this. Plan to use openmp offloading via `clang++`.
+  - You're most-likely bound to `clang++` for this.  
+  
 
 ## Building
 
 Execute the following command to get the Makefile generated and to start the build process.
-This will automatically `make` all the programs, you'll NEED to edit the `runBuild.sh` script to properly set any compilers/options for the codes to build.
+This will automatically `make` all the programs, **you'll NEED to edit the `runBuild.sh` script to properly set any compilers/options for the codes to build**.
+By default, we have everything building with `clang++` and `nvcc`, this should mostly work out-of-the-box but some include paths may need to be set.
 ```
 source ./runBuild.sh
 ```
