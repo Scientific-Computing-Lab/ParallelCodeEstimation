@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.28)
 
 project("HeCBench-roofline")
 
+
 option(OMP_INCLUDE_DIR "OpenMP Include Directory (contains omp.h)" "")
 
 
@@ -45,15 +46,22 @@ MACRO(SUBDIRLIST result curdir)
   SET(${result} ${dirlist})
 ENDMACRO()
 
+
+
 # this is used to find the files that need to get built
 # we essentially call `make clean` and extract the object file names
 # of the files that need to be built
-MACRO(FINDFILESTOBUILD result curdir)
+MACRO(FINDFILESTOBUILD result makefile)
+
+    #message("makefile using ${makefile}")
+    GET_FILENAME_COMPONENT(MAKEFILE_DIR "${makefile}" DIRECTORY)
+
     # lets call the `make clean` because we can extract the filenames of the object files that get deleted
     execute_process(
-        COMMAND /bin/bash -c "make clean | grep -oP '\\b[a-zA-Z0-9._-]+(?=\\.\\w+)\\b' | sed 's/\\.o$//' | xargs -I{} find . -type f -name '{}.c' -o -name '{}.cpp' -o -name '{}.cu' -o -name '{}.cc' -o -name '{}.cxx' -o -name '{}.c++' | sed 's|^\\./||' | sed -z 's/\\n/ /g'"
+        COMMAND /bin/bash -c "make -f ${makefile} clean | grep -oP '\\b[a-zA-Z0-9._-]+(?=\\.\\w+)\\b' | sed 's/\\.o$//' | xargs -I{} find . -type f -name '{}.c' -o -name '{}.cpp' -o -name '{}.cu' -o -name '{}.cc' -o -name '{}.cxx' -o -name '{}.c++' | sed 's|^\\./||' | sed -z 's/\\n/ /g'"
         OUTPUT_VARIABLE MATCHED_FILES
-        WORKING_DIRECTORY ${curdir}
+        RESULT_VARIABLE RESULT_CODE
+        WORKING_DIRECTORY ${MAKEFILE_DIR}
     )
 
     string(REPLACE " " ";" MATCHED_FILES_LIST "${MATCHED_FILES}")
@@ -61,15 +69,124 @@ MACRO(FINDFILESTOBUILD result curdir)
 
     FOREACH(match ${MATCHED_FILES_LIST})
         #message("Matched file: ${match}")
-        LIST(APPEND FULLPATH_FILES "${curdir}/${match}")
+        LIST(APPEND FULLPATH_FILES "${MAKEFILE_DIR}/${match}")
     ENDFOREACH()
   SET(${result} ${FULLPATH_FILES})
 ENDMACRO()
+
+
+FUNCTION(ISZIPFILE filename)
+    GET_FILENAME_COMPONENT(FILEEXT "${zipfile}" EXT)
+
+    set(result false)
+
+    IF(FILEEXT MATCHES "\.bz2")
+        set(result true)
+    ELSEIF(FILEEXT MATCHES "\.tar")
+        set(result true)
+    ELSEIF(FILEEXT MATCHES "\.zip")
+        set(result true)
+    ENDIF()
+
+    return(${result})
+ENDFUNCTION()
+
+
+MACRO(UNZIPFILE zipfile)
+    
+    # get the filetype extension
+    GET_FILENAME_COMPONENT(FILEEXT "${zipfile}" EXT)
+    GET_FILENAME_COMPONENT(FILEDIR "${zipfile}" DIRECTORY)
+
+    IF(FILEEXT MATCHES "\.bz2")
+        set(TOEXEC "bzip2 -dkf ${zipfile}")
+    ELSEIF(FILEEXT MATCHES "\.tar")
+        set(TOEXEC "tar -xf ${zipfile}")
+    ELSEIF(FILEEXT MATCHES "\.zip")
+        set(TOEXEC "unzip ${zipfile}")
+    ENDIF()
+
+    execute_process(
+        COMMAND /bin/bash -c "${TOEXEC}"
+        OUTPUT_VARIABLE EXEC_OUTPUT
+        RESULT_VARIABLE RESULT_CODE
+        WORKING_DIRECTORY ${FILEDIR}
+    )
+
+    # if the result code was not 0
+    IF (NOT(RESULT_CODE EQUAL 0))
+        message("Problem unzipping file ${zipfile}!!") 
+    ENDIF()
+ENDMACRO()
+
+
+
+
+MACRO(GETALLSUBDIRS result curdir)
+  FILE(GLOB_RECURSE children LIST_DIRECTORIES true "${curdir}/*")
+  SET(dirlist "")
+  FOREACH(child ${children})
+    IF(IS_DIRECTORY ${child})
+        LIST(APPEND dirlist ${child})
+    ENDIF()
+  ENDFOREACH()
+  SET(${result} ${dirlist})
+ENDMACRO()
+
+
+
+MACRO(FINDMAKEFILE result curdir)
+    # all of the directories have a capital "M" makefile
+    # there should only be one for each source 
+    execute_process(
+        COMMAND /bin/bash -c "find ./ -name \"Makefile*\""
+        OUTPUT_VARIABLE MATCHED_FILES
+        WORKING_DIRECTORY ${curdir}
+    )
+
+    string(REPLACE "./" "" MATCHED_FILES "${MATCHED_FILES}")
+    string(REPLACE "\n" " " MATCHED_FILES "${MATCHED_FILES}")
+    string(REPLACE " " ";" MATCHED_FILES_LIST "${MATCHED_FILES}")
+    #set(FULLPATH_FILES "")
+    #set(MAKEFILE "")
+
+    #message("matched files ${MATCHED_FILES_LIST}, ${curdir}")
+    
+    # if there are no matches, it's probably a CMAKE build system
+    LIST(LENGTH MATCHED_FILES_LIST NUM_MATCHED_FILES)
+    IF (NUM_MATCHED_FILES EQUAL 0)
+        message("skipping ${curdir}!")
+        SET(${result} "NONE")
+    ELSE()
+        # only grab the first element -- it conveniently happens that in the dirs with
+        # multiple Makefiles, the first element is the desired makefile
+        LIST(GET MATCHED_FILES_LIST 0 MATCHED)
+        #message("we have some matches! ${MATCHED}")
+        #GET_FILENAME_COMPONENT(MAKEFILE "${curdir}/${MATCH}" DIRECTORY)
+        #SET(result ${MAKEFILE})
+        SET(${result} "${curdir}/${MATCHED}")
+    ENDIF()
+
+
+    # there should only be one iteration in this for loop, except for 3 codes
+    #FOREACH(match ${MATCHED_FILES_LIST})
+    #    #message("Matched file: ${match}")
+    #    #LIST(APPEND FULLPATH_FILES "${curdir}/${match}")
+    #    GET_FILENAME_COMPONENT(MAKEFILEDIR "${curdir}/${match}" DIRECTORY)
+    #ENDFOREACH()
+    #message("Makefiledir ${MAKEFILEDIR}, curdir ${curdir}, match ${match}")
+    #message("Makefiledir ${MAKEFILEDIR}, curdir ${curdir}, match ${MATCH}")
+ENDMACRO()
+
+
+
+
 
 # this is the build include list, by default we just build what's in this list
 # unless otherwise instructed
 IF(NOT BUILD_ALL)
     message("Only building specific targets!")
+    # set the targets you want built here!
     set(TARGET_NAMES atomicReduction attention attentionMultiHead axhelm babelstream backprop)
 
     SET(TARGET_DIRS "")
@@ -92,6 +209,8 @@ ELSE()
     SET(TARGET_NAMES "")
 ENDIF()
 
+
+LIST(LENGTH TARGET_DIRS NUM_CUDA_CODES)
 
 #set(IGNORE_TARGETS adv-cuda amgmk-cuda aop-cuda aes-cuda asmooth-cuda allreduce-cuda atomicSystemWide-cuda atomicIntrinsics-cuda atomicPerf-cuda)
 # some of these are MPI codes we don't want to concern ourselves with yet
@@ -117,12 +236,27 @@ ENDIF()
 # mpc-cuda gets out-of-memory error during execution
 # stencil3d-cuda gets out-of-memory error during execution (although it runs fine whout `ncu`) -- need to look into this...
 # tridiagonal-cuda segfaults during execution
-set(IGNORE_TARGETS allreduce-cuda ccl-cuda diamond-cuda fresnel-cuda langford-cuda 
-                   merkle-cuda miniWeather-cuda minibude-cuda pingpong-cuda
+# dwconv1d-cuda has no makefile -- it's "run" by a python script
+# convolutionDeformable requires pytorch be installed
+# halo-finder-cuda is mpi-based
+# local-ht-cuda has a type definition error that's also fails with regular makefile
+set(IGNORE_TARGETS allreduce-cuda ccl-cuda diamond-cuda langford-cuda 
+                   miniWeather-cuda minibude-cuda pingpong-cuda
                    qkv-cuda rowwiseMoments-cuda saxpy-ompt-cuda slit-cuda sparkler-cuda
                    lzss-cuda cmp-cuda cc-cuda sss-cuda streamUM-cuda stsg-cuda testSNAP-cuda
                    bscan-cuda feynman-kac-cuda lrn-cuda cm-cuda voxelization-cuda mpc-cuda
-                   stencil3d-cuda tridiagonal-cuda)
+                   stencil3d-cuda tridiagonal-cuda dwconv1d-cuda convolutionDeformable-cuda
+                   halo-finder-cuda local-ht-cuda)
+
+# for now we are ignoring this because it requires files
+# to be downloaded
+set(EXISTING_CMAKE_TARGETS si-cuda)
+
+# manually unzip files needed for building of some codes
+UNZIPFILE("${HECBENCH_SRC_DIR}/slu-cuda/src/nicslu.tar.bz2")
+UNZIPFILE("${HECBENCH_SRC_DIR}/slu-cuda/src/nicslu.tar")
+UNZIPFILE("${HECBENCH_SRC_DIR}/axhelm-cuda/BlasLapack.tar.gz")
+
 set(TARGETS "")
 
 FOREACH(TARGET_DIR ${TARGET_DIRS})
@@ -130,6 +264,9 @@ FOREACH(TARGET_DIR ${TARGET_DIRS})
 
     # skip undesired builds
     IF(${TARGET_NAME} IN_LIST IGNORE_TARGETS)
+        continue()
+    ENDIF()
+    IF(${TARGET_NAME} IN_LIST EXISTING_CMAKE_TARGETS)
         continue()
     ENDIF()
 
@@ -145,34 +282,47 @@ FOREACH(TARGET_DIR ${TARGET_DIRS})
         IF (IS_DIRECTORY ${elem})
             LIST(APPEND SUBDIRS ${elem})
         # if we find a zip file or gz file, this is a complicated code, so let's skip building it
-        ELSEIF ((${elem} MATCHES ".tar.gz") OR (${elem} MATCHES ".zip") )
-            set(HAS_ZIP true)
-            break()
+        #ELSEIF (ISZIPFILE(${elem}))
+        #    UNZIPFILE(${elem})
         ENDIF()
     ENDFOREACH()
     LIST(LENGTH SUBDIRS NUM_SUBDIRS)
 
     # if it has a zip file, let's skip this target
-    IF(HAS_ZIP)
-        continue()
-    ENDIF()
+    #IF(HAS_ZIP)
+    #    continue()
+    #ENDIF()
     #message("subdirs ${SUBDIRS}")
 
     #FILE(GLOB SOURCES_H LIST_DIRECTORIES false "${TARGET_DIR}/*.h")
     #FILE(GLOB SOURCES_HPP LIST_DIRECTORIES false "${TARGET_DIR}/*.hpp")
-    FILE(GLOB SOURCES_CU LIST_DIRECTORIES false "${TARGET_DIR}/*.cu")
+    FILE(GLOB SOURCES_CU LIST_DIRECTORIES false "${TARGET_DIR}/*.c?")
     FILE(GLOB SOURCES_CPP LIST_DIRECTORIES false "${TARGET_DIR}/*.cpp")
     FILE(GLOB SOURCES_C LIST_DIRECTORIES false "${TARGET_DIR}/*.c")
     set(SOURCES ${SOURCES_CU} ${SOURCES_CPP} ${SOURCES_C})
+    #set(SOURCES ${SOURCES_CPP} ${SOURCES_C})
+
+    # add any nested dir files too
+    FILE(GLOB SOURCES_CU LIST_DIRECTORIES false "${TARGET_DIR}/**/*.c?")
+    FILE(GLOB SOURCES_CPP LIST_DIRECTORIES false "${TARGET_DIR}/**/*.cpp")
+    FILE(GLOB SOURCES_C LIST_DIRECTORIES false "${TARGET_DIR}/**/*.c")
+    LIST(APPEND SOURCES ${SOURCES_CU})
+    LIST(APPEND SOURCES ${SOURCES_CPP})
+    LIST(APPEND SOURCES ${SOURCES_C})
 
     # if SOURCES didn't pick anything up, the program probably is large and complex
     # so we're going to omit those files for now. If there are other subdirectories,
     # we will also skip the program for now.
     LIST(LENGTH SOURCES NUM_SOURCES)
-    IF ((NUM_SOURCES GREATER 0) AND (NUM_SUBDIRS EQUAL 0))
+    #IF ((NUM_SOURCES GREATER 0) AND (NUM_SUBDIRS EQUAL 0))
+    IF (NUM_SOURCES GREATER 0)
         #message("sources: [${SOURCES}]")
 
-        FINDFILESTOBUILD(BUILDABLE_FILES ${TARGET_DIR})
+        FINDMAKEFILE(MAKEFILE ${TARGET_DIR})
+        #message("makefile [${MAKEFILE}]")
+        #FINDFILESTOBUILD(BUILDABLE_FILES ${TARGET_DIR})
+        FINDFILESTOBUILD(BUILDABLE_FILES ${MAKEFILE})
+
         LIST(LENGTH BUILDABLE_FILES BUILDFILESNUM)
 
         IF(BUILDFILESNUM EQUAL 0)
@@ -185,7 +335,18 @@ FOREACH(TARGET_DIR ${TARGET_DIRS})
         #add_executable(${TARGET_NAME} ${SOURCES})
 
         # add its own directory to be included during build
-        target_include_directories(${TARGET_NAME} PRIVATE "${TARGET_DIR}")
+        target_include_directories(${TARGET_NAME} PUBLIC "${TARGET_DIR}")
+        
+        # add all subdirectories as include dirs
+        GETALLSUBDIRS(INC_SUBDIRS ${TARGET_DIR})
+        LIST(LENGTH INC_SUBDIRS NUM_SUBDIRS)
+
+        IF (NUM_SUBDIRS GREATER 0)
+            message("including extra subdirs for ${TARGET_NAME}, ${INC_SUBDIRS}\n")
+            FOREACH(SUBDIR ${INC_SUBDIRS})
+                target_include_directories(${TARGET_NAME} PUBLIC "${SUBDIR}")
+            ENDFOREACH()
+        ENDIF()
 
         # add the target to the targets list 
         LIST(APPEND TARGETS ${TARGET_NAME})
@@ -193,9 +354,15 @@ FOREACH(TARGET_DIR ${TARGET_DIRS})
 
 ENDFOREACH()
 
+get_target_property(SOURCES_LIST b+tree-cuda SOURCES)
+message("b+tree-cuda sources: ${SOURCES_LIST}")
+
+
 LIST(LENGTH TARGETS NUM_TARGETS)
+LIST(LENGTH IGNORE_TARGETS NUM_IGNORE_TARGETS)
 message("TARGETS: [${TARGETS}]")
-message("Building [${NUM_TARGETS}] targets!")
+message("Building [${NUM_TARGETS}/${NUM_CUDA_CODES}] targets!")
+message("Manually ignored [${NUM_IGNORE_TARGETS}/${NUM_CUDA_CODES}] targets!")
 #set_target_properties(${TARGETS} PROPERTIES LINKER_LANGUAGE CXX)
 
 set_target_properties(${TARGETS} PROPERTIES CUDA_ARCHITECTURES "86")
@@ -209,6 +376,21 @@ target_include_directories(aes-cuda PRIVATE "${HECBENCH_SRC_DIR}/include")
 
 FILE(GLOB AMGMK_C_FILES "${HECBENCH_SRC_DIR}/amgmk-cuda/*.c")
 set_source_files_properties(${AMGMK_C_FILES} PROPERTIES HEADER_FILE_ONLY ON)
+
+set_target_properties(axhelm-cuda PROPERTIES COMPILE_FLAGS "-Ddfloat=float -Ddlong=int")
+FILE(GLOB BL_FORTRAN_SOURCES "${HECBENCH_SRC_DIR}/axhelm-cuda/BlasLapack/*.f")
+enable_language(Fortran)
+add_library(BlasLapack STATIC ${BL_FORTRAN_SOURCES})
+add_dependencies(axhelm-cuda BlasLapack)
+target_link_libraries(axhelm-cuda BlasLapack)
+
+# don't build these files
+FILE(GLOB BPTREE_IGNORE "${HECBENCH_SRC_DIR}/b+tree-cuda/kernel/kernel.cu")
+set_source_files_properties(${BPTREE_IGNORE} PROPERTIES HEADER_FILE_ONLY ON)
+FILE(GLOB BPTREE_IGNORE "${HECBENCH_SRC_DIR}/b+tree-cuda/kernel/kernel2.cu")
+set_source_files_properties(${BPTREE_IGNORE} PROPERTIES HEADER_FILE_ONLY ON)
+target_sources(b+tree-cuda PRIVATE "${HECBENCH_SRC_DIR}/b+tree-cuda/util/num/num.c")
+target_sources(b+tree-cuda PRIVATE "${HECBENCH_SRC_DIR}/b+tree-cuda/util/timer/timer.c")
 
 target_include_directories(bfs-cuda PRIVATE "${HECBENCH_SRC_DIR}/bfs-sycl")
 
@@ -239,6 +421,11 @@ target_include_directories(blockexchange-cuda PRIVATE "${HECBENCH_SRC_DIR}/warpe
 set_target_properties(bm3d-cuda PROPERTIES LINK_FLAGS "-lpthread")
 set_target_properties(bm3d-cuda PROPERTIES CUDA_ARCHITECTURES "60")
 
+target_compile_options(bmf-cuda BEFORE PRIVATE "-DUSE_GPU")
+target_compile_options(bmf-cuda PRIVATE "-fopenmp=libomp")
+target_compile_options(bmf-cuda PRIVATE "-I${OMP_INCLUDE_DIR}" )
+target_link_options(bmf-cuda PRIVATE "${OMP_LINKER_FLAGS}")
+
 target_include_directories(boxfilter-cuda PRIVATE "${HECBENCH_SRC_DIR}/boxfilter-sycl")
 target_sources(boxfilter-cuda PRIVATE "${HECBENCH_SRC_DIR}/boxfilter-sycl/shrUtils.cpp")
 target_sources(boxfilter-cuda PRIVATE "${HECBENCH_SRC_DIR}/boxfilter-sycl/cmd_arg_reader.cpp")
@@ -246,6 +433,9 @@ target_sources(boxfilter-cuda PRIVATE "${HECBENCH_SRC_DIR}/boxfilter-sycl/refere
 
 # excluded
 #target_include_directories(cc-cuda PRIVATE "${HECBENCH_SRC_DIR}/mis-cuda")
+target_link_libraries(ced-cuda pthread)
+FILE(GLOB CED_IGNORE "${HECBENCH_SRC_DIR}/ced-cuda/main.cpp")
+set_source_files_properties(${CED_IGNORE} PROPERTIES HEADER_FILE_ONLY ON)
 
 target_include_directories(debayer-cuda PRIVATE "${HECBENCH_SRC_DIR}/debayer-sycl")
 
@@ -263,6 +453,8 @@ target_include_directories(extend2-cuda PRIVATE "${HECBENCH_SRC_DIR}/extend2-syc
 target_sources(extend2-cuda PRIVATE "${HECBENCH_SRC_DIR}/extend2-sycl/read_data.cpp")
 
 set_target_properties(f16sp-cuda PROPERTIES LINK_FLAGS "-lcublas")
+
+target_include_directories(floydwarshall2-cuda PRIVATE "${HECBENCH_SRC_DIR}/mis-cuda")
 
 target_include_directories(fluidSim-cuda PRIVATE "${HECBENCH_SRC_DIR}/fluidSim-sycl")
 target_sources(fluidSim-cuda PRIVATE "${HECBENCH_SRC_DIR}/fluidSim-sycl/reference.cpp")
@@ -292,8 +484,12 @@ set_source_files_properties(${FRECHET_CPP_FILES} PROPERTIES HEADER_FILE_ONLY ON)
 ##target_link_options(fresnel-cuda PRIVATE "-fuse-ld=nvlink")
 ##target_link_options(fresnel-cuda PRIVATE "--offload-link=nvlink")
 ##target_compile_options(fresnel-cuda BEFORE PRIVATE "-fuse-ld=nvlink")
+set_target_properties(fresnel-cuda PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
 target_compile_options(frna-cuda BEFORE PRIVATE "-use_fast_math" "-DINT")
+
+FILE(GLOB GC_IGNORE "${HECBENCH_SRC_DIR}/gamma-correction-cuda/main.cpp")
+set_source_files_properties(${GC_IGNORE} PROPERTIES HEADER_FILE_ONLY ON)
 
 target_link_options(geam-cuda PRIVATE "-lcublas")
 
@@ -309,12 +505,49 @@ target_compile_options(hausdorff-cuda PRIVATE "--expt-relaxed-constexpr")
 get_target_property(HAVERSINE_SOURCES haversine-cuda SOURCES)
 set_source_files_properties(${HAVERSINE_SOURCES} PROPERTIES LANGUAGE CUDA)
 
+target_sources(heartwall-cuda PRIVATE "${HECBENCH_SRC_DIR}/heartwall-cuda/util/avi/avilib.c")
+target_sources(heartwall-cuda PRIVATE "${HECBENCH_SRC_DIR}/heartwall-cuda/util/avi/avimod.c")
+target_sources(heartwall-cuda PRIVATE "${HECBENCH_SRC_DIR}/heartwall-cuda/util/timer/timer.c")
+target_sources(heartwall-cuda PRIVATE "${HECBENCH_SRC_DIR}/heartwall-cuda/util/file/file.c")
+
+FILE(GLOB HS_IGNORE "${HECBENCH_SRC_DIR}/hybridsort-cuda/tmp/*.cpp")
+set_source_files_properties(${HS_IGNORE} PROPERTIES HEADER_FILE_ONLY ON)
 
 # this technically makes it so that nvcc in invoked to build these files instead of clang++
 #get_target_property(KMC_SOURCES kmc-cuda SOURCES)
 #set_source_files_properties(${KMC_SOURCES} PROPERTIES LANGUAGE CUDA)
 set_source_files_properties("${HECBENCH_SRC_DIR}/kmc-cuda/driver.c" PROPERTIES HEADER_FILE_ONLY ON)
 target_link_options(kmc-cuda PRIVATE "-lcublas" "-lcudart")
+
+
+# need to remove the MESCHACH_LIB files from the leukocyte source files 
+# but it's okay since they don't get used in the final linking
+FILE(GLOB MESCHACH_LIB "${HECBENCH_SRC_DIR}/leukocyte-cuda/meschach_lib/*.c")
+add_library(meschach STATIC ${MESCHACH_LIB})
+set_target_properties(meschach PROPERTIES C_STANDARD "90")
+target_compile_options(meschach BEFORE PUBLIC "-DHAVE_CONFIG_H" "-DANSI_C")
+set_source_files_properties("${HECBENCH_SRC_DIR}/leukocyte-cuda/meschach_lib/tutadv.c" PROPERTIES HEADER_FILE_ONLY ON)
+add_dependencies(leukocyte-cuda meschach)
+target_link_libraries(leukocyte-cuda meschach)
+
+
+#target_compile_definitions(local-ht-cuda PUBLIC "-Dunsigned=uint32_t")
+#set_target_properties(local-ht-cuda PROPERTIES COMPILE_FLAGS "-Uuint32_t -Duint32_t=unsigned")
+#set_target_properties(local-ht-cuda PROPERTIES COMPILE_FLAGS "--include=bits/stdint-uintn.h")
+#set_target_properties(local-ht-cuda PROPERTIES COMPILE_FLAGS "--include=bits/types.h")
+
+target_compile_options(logan-cuda BEFORE PUBLIC "-DADAPTABLE" "-maxrregcount=32")
+set_target_properties(logan-cuda PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+FILE(GLOB LOGAN_INC "${HECBENCH_SRC_DIR}/logan-cuda/src/*.cuh")
+set_source_files_properties(${LOGAN_INC} PROPERTIES HEADER_FILE_ONLY ON)
+target_compile_options(logan-cuda PRIVATE "-fopenmp=libomp" "-I${OMP_INCLUDE_DIR}")
+target_link_options(logan-cuda PRIVATE "${OMP_LINKER_FLAGS}")
+
+# manually fixing a mispelling in thier cuda code
+target_compile_definitions(lsqt-cuda PUBLIC "__syncwrap=__syncwarp")
+
+target_sources(lud-cuda PRIVATE "${HECBENCH_SRC_DIR}/lud-cuda/common/common.cu")
+set_source_files_properties("${HECBENCH_SRC_DIR}/lud-cuda/lud_kernels.cu" PROPERTIES HEADER_FILE_ONLY ON)
 
 target_link_options(ludb-cuda PRIVATE "-lcublas")
 
@@ -349,6 +582,9 @@ target_compile_options(rotary-cuda PRIVATE "--expt-relaxed-constexpr" "--extende
 target_include_directories(scan3-cuda PRIVATE "${HECBENCH_SRC_DIR}/scan2-cuda")
 
 target_link_options(sddmm-batch-cuda PRIVATE "-lcusparse")
+
+# copied si-cuda CMakeLists commands
+
 
 #target_link_options(slit-cuda PRIVATE "-lcufft")
 

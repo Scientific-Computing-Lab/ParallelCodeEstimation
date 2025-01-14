@@ -26,7 +26,9 @@ cmake -DCMAKE_C_COMPILER=clang \
 
 #make -j1 VERBOSE=1 streamUM-cuda
 #make -j14 VERBOSE=1 all
-make -j14 all
+#make -j14 all
+#make -j1 VERBOSE=1 all
+make -j4 VERBOSE=1 heartwall-cuda
 
 cd ..
 
