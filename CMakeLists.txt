@@ -216,11 +216,13 @@ LIST(LENGTH TARGET_DIRS NUM_CUDA_CODES)
 # some of these are MPI codes we don't want to concern ourselves with yet
 # some have zip files or complicated build filestructures that we will avoid for simplicity right now
 # Overall, there are 491 cuda codes in HeCBench, this setup is able to build 417 of them (417/491=0.8492 --> 85%)
+# allreduce-cuda uses MPI
+# ccl-cuda assumes a multi-gpu setup
 # langford-cuda, minibude-cuda can't be built even with default script
 # fresnel-cuda is doing wonky things with relocatable code -- not linking correctly
 # openmp-cuda, qkv-cuda has a malloc visibility bug in clang
 # miniWeather-cuda, pingpong-cuda, sparkler-cuda is mpi
-# saxpy-ompt-cude, streamUM-cuda having problems with finding omp.h correctly -- also doesn't build by default
+# saxpy-ompt-cuda, streamUM-cuda having problems with finding omp.h correctly -- also doesn't build by default
 # slit-cuda missing a file it needs to work -- can't default build
 # sss-cuda uses gsl
 # testSNAP-cuda is missing an include
@@ -240,13 +242,15 @@ LIST(LENGTH TARGET_DIRS NUM_CUDA_CODES)
 # convolutionDeformable requires pytorch be installed
 # halo-finder-cuda is mpi-based
 # local-ht-cuda has a type definition error that's also fails with regular makefile
+# miniDGS-cuda uses MPI
+# xlqc-cuda needs to install GNU scientific library to work
 set(IGNORE_TARGETS allreduce-cuda ccl-cuda diamond-cuda langford-cuda 
                    miniWeather-cuda minibude-cuda pingpong-cuda
                    qkv-cuda rowwiseMoments-cuda saxpy-ompt-cuda slit-cuda sparkler-cuda
                    lzss-cuda cmp-cuda cc-cuda sss-cuda streamUM-cuda stsg-cuda testSNAP-cuda
                    bscan-cuda feynman-kac-cuda lrn-cuda cm-cuda voxelization-cuda mpc-cuda
                    stencil3d-cuda tridiagonal-cuda dwconv1d-cuda convolutionDeformable-cuda
-                   halo-finder-cuda local-ht-cuda)
+                   halo-finder-cuda local-ht-cuda miniDGS-cuda xlqc-cuda)
 
 # for now we are ignoring this because it requires files
 # to be downloaded
@@ -342,7 +346,7 @@ FOREACH(TARGET_DIR ${TARGET_DIRS})
         LIST(LENGTH INC_SUBDIRS NUM_SUBDIRS)
 
         IF (NUM_SUBDIRS GREATER 0)
-            message("including extra subdirs for ${TARGET_NAME}, ${INC_SUBDIRS}\n")
+            #message("including extra subdirs for ${TARGET_NAME}, ${INC_SUBDIRS}\n")
             FOREACH(SUBDIR ${INC_SUBDIRS})
                 target_include_directories(${TARGET_NAME} PUBLIC "${SUBDIR}")
             ENDFOREACH()
@@ -353,9 +357,6 @@ FOREACH(TARGET_DIR ${TARGET_DIRS})
     ENDIF()
 
 ENDFOREACH()
-
-get_target_property(SOURCES_LIST b+tree-cuda SOURCES)
-message("b+tree-cuda sources: ${SOURCES_LIST}")
 
 
 LIST(LENGTH TARGETS NUM_TARGETS)
@@ -553,6 +554,35 @@ target_link_options(ludb-cuda PRIVATE "-lcublas")
 
 set_source_files_properties("${HECBENCH_SRC_DIR}/md5hash-cuda/MD5Hash.cpp" PROPERTIES HEADER_FILE_ONLY ON)
 
+set_target_properties(meanshift-cuda PROPERTIES CXX_STANDARD "17")
+
+set_target_properties(merkle-cuda PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+target_compile_options(merkle-cuda PRIVATE "--expt-relaxed-constexpr") #"--extended-lambda")
+
+target_link_options(mf-sgd-cuda PRIVATE "-lpthread" )
+# not allowed to use the __shfl() operation on compute version 7X and higher
+set_target_properties(mf-sgd-cuda PROPERTIES CUDA_ARCHITECTURES "60")
+
+
+execute_process(
+    COMMAND /bin/bash -c "make common_files && make generate_info"
+    RESULT_VARIABLE RESULT_CODE
+    WORKING_DIRECTORY "${HECBENCH_SRC_DIR}/miniFE-cuda/src"
+)
+target_compile_options(miniFE-cuda BEFORE PUBLIC "-DMINIFE_SCALAR=double" "-DMINIFE_LOCAL_ORDINAL=int" "-DMINIFE_GLOBAL_ORDINAL=int" "-DMINIFE_RESTRICT=__restrict__" "-DMINIFE_CSR_MATRIX" "-DMINIFE_INFO=1" "-DMINIFE_KERNELS=0")
+#target_sources(lud-cuda PRIVATE "${HECBENCH_SRC_DIR}/miniFE-cuda/src/miniFE_info.hpp")
+#set_source_files_properties("${HECBENCH_SRC_DIR}/miniFE-cuda/src/miniFE_info.hpp" PROPERTIES HEADER_FILE_ONLY ON)
+set_source_files_properties("${HECBENCH_SRC_DIR}/miniFE-cuda/basic/utest.cpp" PROPERTIES HEADER_FILE_ONLY ON)
+set_source_files_properties("${HECBENCH_SRC_DIR}/miniFE-cuda/basic/main.cpp" PROPERTIES HEADER_FILE_ONLY ON)
+FILE(GLOB MINIFE_INC "${HECBENCH_SRC_DIR}/miniFE-cuda/basic/*")
+set_source_files_properties(${MINIFE_INC} PROPERTIES HEADER_FILE_ONLY ON)
+target_include_directories(miniFE-cuda BEFORE PUBLIC "${HECBENCH_SRC_DIR}/miniFE-cuda/utils")
+target_include_directories(miniFE-cuda BEFORE PUBLIC "${HECBENCH_SRC_DIR}/miniFE-cuda/src")
+target_include_directories(miniFE-cuda BEFORE PUBLIC "${HECBENCH_SRC_DIR}/miniFE-cuda/fem")
+get_target_property(MINIFE_SRC miniFE-cuda SOURCES)
+set_source_files_properties(${MINIFE_SRC} PROPERTIES LANGUAGE CUDA)
+#set_target_properties(miniFE-cuda PROPERTIES CXX_STANDARD "11")
+
 target_link_options(mrg32k3a-cuda PRIVATE "-lcurand")
 
 target_link_options(norm2-cuda PRIVATE "-lcurand" "-lcublas")
@@ -565,6 +595,39 @@ target_link_options(pcc-cuda PRIVATE "-lcublas")
 
 target_include_directories(permute-cuda PRIVATE "${HECBENCH_SRC_DIR}/qkv-cuda")
 
+target_compile_options(prna-cuda BEFORE PUBLIC "-DFLOAT")
+
+execute_process(
+    COMMAND /bin/bash -c "tar -xf data.tar.gz"
+    RESULT_VARIABLE RESULT_CODE
+    WORKING_DIRECTORY "${HECBENCH_SRC_DIR}/sad-cuda"
+)
+
+execute_process(
+    COMMAND /bin/bash -c "tar -xf image.tar.gz"
+    RESULT_VARIABLE RESULT_CODE
+    WORKING_DIRECTORY "${HECBENCH_SRC_DIR}/seam-carving-cuda"
+)
+
+target_compile_options(segsort-cuda PRIVATE "--expt-relaxed-constexpr")
+
+target_compile_options(slu-cuda BEFORE PUBLIC "-DNO_ATOMIC" "-DSSE2" "-msse2" "-fPIE")
+FILE(GLOB NICSLU_LIB "${HECBENCH_SRC_DIR}/slu-cuda/src/nicslu/source/*.c")
+add_library(nicslu STATIC ${NICSLU_LIB})
+add_dependencies(slu-cuda nicslu)
+target_link_libraries(slu-cuda nicslu)
+FILE(GLOB NICSLU_UTIL "${HECBENCH_SRC_DIR}/slu-cuda/src/nicslu/util/nicslu_readfile.c")
+add_library(nicslu-util STATIC ${NICSLU_UTIL})
+add_dependencies(slu-cuda nicslu-util)
+target_link_libraries(slu-cuda nicslu-util)
+target_include_directories(nicslu-util PRIVATE "${HECBENCH_SRC_DIR}/slu-cuda/src/nicslu/include")
+target_include_directories(slu-cuda BEFORE PUBLIC "${HECBENCH_SRC_DIR}/slu-cuda/include")
+target_include_directories(slu-cuda BEFORE PUBLIC "${HECBENCH_SRC_DIR}/slu-cuda/src")
+target_link_options(slu-cuda PRIVATE "-lm" "-lpthread" "-lrt")
+set_source_files_properties("${HECBENCH_SRC_DIR}/slu-cuda/src/nicslu/demo/test.c" PROPERTIES C_STANDARD "90")
+set_source_files_properties("${HECBENCH_SRC_DIR}/slu-cuda/src/nicslu/demo/test.c" PROPERTIES COMPILE_FLAGS "-ansi")
+FILE(GLOB NICSLU_DEMO "${HECBENCH_SRC_DIR}/slu-cuda/src/nicslu/demo/*.c")
+set_source_files_properties(${NICSLU_DEMO} PROPERTIES HEADER_FILE_ONLY ON)
 
 #target_compile_options(rowwiseMoments-cuda PRIVATE "-I${CUDA_THRUST_INCLUDE_DIR}")
 
@@ -653,6 +716,8 @@ target_include_directories(urng-cuda PRIVATE "${HECBENCH_SRC_DIR}/include")
 target_compile_options(vol2col-cuda PRIVATE "--expt-relaxed-constexpr")
 
 target_include_directories(warpexchange-cuda PRIVATE "${HECBENCH_SRC_DIR}/blockAccess-cuda")
+
+target_compile_options(warpsort-cuda BEFORE PUBLIC "-DWARP_SIZE=32" "-DHALF_WARP_SIZE=16")
 
 target_sources(wordcount-cuda PRIVATE "${HECBENCH_SRC_DIR}/wordcount-sycl/main.cpp")
 
