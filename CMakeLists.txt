@@ -194,7 +194,7 @@ MACRO(INC_ADD_ALL_SUBDIRS TARGET_DIR TARGET_NAME)
         target_include_directories(${TARGET_NAME} PRIVATE ${TARGET_DIR})
 
         IF (NUM_SUBDIRS GREATER 0)
-            message("including extra subdirs for ${TARGET_NAME}, ${INC_SUBDIRS}\n")
+            #message("including extra subdirs for ${TARGET_NAME}, ${INC_SUBDIRS}\n")
             FOREACH(SUBDIR ${INC_SUBDIRS})
                 target_include_directories(${TARGET_NAME} PUBLIC "${SUBDIR}")
                 target_include_directories(${TARGET_NAME} PRIVATE "${SUBDIR}")
@@ -268,13 +268,16 @@ LIST(LENGTH TARGET_DIRS NUM_CUDA_CODES)
 # local-ht-cuda has a type definition error that's also fails with regular makefile
 # miniDGS-cuda uses MPI
 # xlqc-cuda needs to install GNU scientific library to work
+# blas-gemm-omp assumes mkl is installed
+# cm-omp having a matching function call error during build
 set(IGNORE_TARGETS allreduce-cuda ccl-cuda diamond-cuda langford-cuda 
                    miniWeather-cuda minibude-cuda pingpong-cuda
                    qkv-cuda rowwiseMoments-cuda saxpy-ompt-cuda slit-cuda sparkler-cuda
                    lzss-cuda cmp-cuda cc-cuda sss-cuda streamUM-cuda stsg-cuda testSNAP-cuda
                    bscan-cuda feynman-kac-cuda lrn-cuda cm-cuda voxelization-cuda mpc-cuda
                    stencil3d-cuda tridiagonal-cuda dwconv1d-cuda convolutionDeformable-cuda
-                   halo-finder-cuda local-ht-cuda miniDGS-cuda xlqc-cuda)
+                   halo-finder-cuda local-ht-cuda miniDGS-cuda xlqc-cuda
+                   blas-gemm-omp cm-omp)
 
 # for now we are ignoring this because it requires files
 # to be downloaded
@@ -356,6 +359,7 @@ FOREACH(TARGET_DIR ${TARGET_DIRS})
 
         IF(BUILD_OMP)
             INC_ADD_ALL_SUBDIRS("${HECBENCH_SRC_DIR}/${TARGET_BASENAME}-cuda" ${TARGET_NAME})
+            INC_ADD_ALL_SUBDIRS("${HECBENCH_SRC_DIR}/${TARGET_BASENAME}-sycl" ${TARGET_NAME})
         ENDIF()
 
         # add the target to the targets list 
@@ -385,7 +389,7 @@ IF(BUILD_OMP)
     set_target_properties(${TARGETS} PROPERTIES COMPILE_FLAGS "-fopenmp -fopenmp-targets=nvptx64-nvidia-cuda -fopenmp-offload-mandatory")
     set_target_properties(${TARGETS} PROPERTIES LINK_FLAGS "-fopenmp -fopenmp-targets=nvptx64-nvidia-cuda --offload-link -fopenmp-offload-mandatory")
 
-    target_compile_options(accuracy-omp BEFORE PRIVATE "-D__STRICT_ANSI__")
+    #target_compile_options(accuracy-omp BEFORE PRIVATE "-D__STRICT_ANSI__")
 
     target_compile_options(adv-omp BEFORE PRIVATE "-Ddfloat=float" "-Ddlong=int")
 
@@ -404,8 +408,113 @@ IF(BUILD_OMP)
 
     target_include_directories(bfs-omp PRIVATE "${HECBENCH_SRC_DIR}/bfs-sycl")
 
-    target_link_options(blas-gemm-omp BEFORE PRIVATE "-lcublas")
-    set_target_properties(blas-gemm-omp PROPERTIES CXX_STANDARD "17")
+    target_include_directories(bonds-omp PRIVATE "${HECBENCH_SRC_DIR}/bonds-sycl")
+    #target_link_options(blas-gemm-omp BEFORE PRIVATE "-lcublas")
+    #set_target_properties(blas-gemm-omp PROPERTIES CXX_STANDARD "17")
+
+    #target_compile_options(boxfilter-omp BEFORE PRIVATE "-D__STRICT_ANSI__")
+
+    target_sources(boxfilter-omp PRIVATE "${HECBENCH_SRC_DIR}/boxfilter-sycl/reference.cpp")
+    target_sources(boxfilter-omp PRIVATE "${HECBENCH_SRC_DIR}/boxfilter-sycl/shrUtils.cpp")
+
+    #target_compile_options(bwt-omp BEFORE PRIVATE "-D__STRICT_ANSI__")
+    target_sources(bwt-omp PRIVATE "${HECBENCH_SRC_DIR}/bwt-cuda/main.cpp")
+
+    #target_compile_options(cm-omp BEFORE PRIVATE "-D__STRICT_ANSI__")
+    #target_sources(cm-omp PRIVATE "${HECBENCH_SRC_DIR}/cm-cuda/main.cpp")
+    #target_sources(cm-omp PRIVATE "${HECBENCH_SRC_DIR}/cm-cuda/io.cpp")
+
+    target_sources(cmp-omp PRIVATE "${HECBENCH_SRC_DIR}/cmp-cuda/reference.cpp")
+    target_sources(cmp-omp PRIVATE "${HECBENCH_SRC_DIR}/cmp-cuda/su_cdp.cpp")
+    target_sources(cmp-omp PRIVATE "${HECBENCH_SRC_DIR}/cmp-cuda/su_gather.cpp")
+    target_sources(cmp-omp PRIVATE "${HECBENCH_SRC_DIR}/cmp-cuda/su_trace.cpp")
+    target_sources(cmp-omp PRIVATE "${HECBENCH_SRC_DIR}/cmp-cuda/log.cpp")
+    target_sources(cmp-omp PRIVATE "${HECBENCH_SRC_DIR}/cmp-cuda/parser.cpp")
+
+    #target_compile_options(crs-omp BEFORE PUBLIC "-D__STRICT_ANSI__")
+    target_sources(crs-omp PRIVATE "${HECBENCH_SRC_DIR}/crs-sycl/galois.cpp")
+    target_sources(crs-omp PRIVATE "${HECBENCH_SRC_DIR}/crs-sycl/jerasure.cpp")
+    target_sources(crs-omp PRIVATE "${HECBENCH_SRC_DIR}/crs-sycl/GCRSMatrix.cpp")
+    set_source_files_properties("${HECBENCH_SRC_DIR}/crs-omp/kernels.cpp" PROPERTIES HEADER_FILE_ONLY ON)
+
+    target_compile_options(degrid-omp BEFORE PUBLIC "-DPRECISION=double")
+    set_source_files_properties("${HECBENCH_SRC_DIR}/degrid-omp/kernels.cpp" PROPERTIES HEADER_FILE_ONLY ON)
+
+    FILE(GLOB DIA_SYCL_C_FILES "${HECBENCH_SRC_DIR}/diamond-sycl/src/blast/*.c")
+    target_sources(diamond-omp PRIVATE ${DIA_SYCL_C_FILES})
+    set(DMND_PATH "${HECBENCH_SRC_DIR}/diamond-sycl/")
+    set(DIA_SYCL_CPP_FILES 
+        ${DMND_PATH}/src/run/main.cpp
+        ${DMND_PATH}/src/basic/config.cpp
+        ${DMND_PATH}/src/util/tinythread.cpp
+        ${DMND_PATH}/src/util/compressed_stream.cpp
+        ${DMND_PATH}/src/basic/score_matrix.cpp
+        ${DMND_PATH}/src/blast/blast_filter.cpp
+        ${DMND_PATH}/src/blast/blast_seg.cpp
+        ${DMND_PATH}/src/data/queries.cpp
+        ${DMND_PATH}/src/data/reference.cpp
+        ${DMND_PATH}/src/data/seed_histogram.cpp
+        ${DMND_PATH}/src/output/daa_record.cpp
+        ${DMND_PATH}/src/search/search.cpp
+        ${DMND_PATH}/src/util/command_line_parser.cpp
+        ${DMND_PATH}/src/util/seq_file_format.cpp
+        ${DMND_PATH}/src/util/util.cpp 
+        ${DMND_PATH}/src/util/Timer.cpp
+        ${DMND_PATH}/src/basic/basic.cpp
+        ${DMND_PATH}/src/dp/floating_sw.cpp
+        ${DMND_PATH}/src/basic/hssp.cpp
+        ${DMND_PATH}/src/dp/ungapped_align.cpp
+        ${DMND_PATH}/src/run/tools.cpp
+        ${DMND_PATH}/src/dp/greedy_align.cpp
+        ${DMND_PATH}/src/run/benchmark.cpp
+        ${DMND_PATH}/src/search/stage2.cpp
+        ${DMND_PATH}/src/output/output_format.cpp
+        ${DMND_PATH}/src/output/join_blocks.cpp
+        ${DMND_PATH}/src/data/frequent_seeds.cpp
+        ${DMND_PATH}/src/align/query_mapper.cpp
+        ${DMND_PATH}/src/align/align_target.cpp
+        ${DMND_PATH}/src/output/blast_tab_format.cpp
+        ${DMND_PATH}/src/dp/padded_banded_sw.cpp
+        ${DMND_PATH}/src/dp/needleman_wunsch.cpp
+        ${DMND_PATH}/src/output/blast_pairwise_format.cpp
+        ${DMND_PATH}/src/extra/roc.cpp
+        ${DMND_PATH}/src/dp/comp_based_stats.cpp
+        ${DMND_PATH}/src/extra/model_sim.cpp
+        ${DMND_PATH}/src/run/double_indexed.cpp
+        ${DMND_PATH}/src/search/collision.cpp
+        ${DMND_PATH}/src/output/sam_format.cpp
+        ${DMND_PATH}/src/align/align.cpp
+        ${DMND_PATH}/src/search/setup.cpp
+        ${DMND_PATH}/src/extra/opt.cpp
+        ${DMND_PATH}/src/dp/diag_scores.cpp
+        ${DMND_PATH}/src/data/taxonomy.cpp
+        ${DMND_PATH}/src/lib/tantan/tantan.cpp
+        ${DMND_PATH}/src/lib/tantan/tantale.cpp
+        ${DMND_PATH}/src/dp/swipe.cpp
+        ${DMND_PATH}/src/dp/banded_sw.cpp
+        ${DMND_PATH}/src/data/sorted_list.cpp
+        ${DMND_PATH}/src/data/seed_set.cpp
+        ${DMND_PATH}/src/util/binary_file.cpp
+        ${DMND_PATH}/src/output/taxon_format.cpp
+        ${DMND_PATH}/src/output/view.cpp
+        ${DMND_PATH}/src/output/output_sink.cpp
+        ${DMND_PATH}/src/output/target_culling.cpp
+    )
+    target_sources(diamond-omp PRIVATE ${DIA_SYCL_CPP_FILES})
+    target_link_options(diamond-omp BEFORE PRIVATE "-lz" "-lpthread")
+
+
+    target_sources(extend2-omp PRIVATE "${HECBENCH_SRC_DIR}/extend2-sycl/read_data.cpp")
+
+    target_compile_options(face-omp BEFORE PUBLIC "-DOMP_TARGET")
+    target_sources(face-omp PRIVATE "${HECBENCH_SRC_DIR}/face-sycl/stdio-wrapper.cpp")
+    target_sources(face-omp PRIVATE "${HECBENCH_SRC_DIR}/face-sycl/rectangles.cpp")
+    target_sources(face-omp PRIVATE "${HECBENCH_SRC_DIR}/face-sycl/image.cpp")
+    target_sources(face-omp PRIVATE "${HECBENCH_SRC_DIR}/face-sycl/main.cpp")
+
+    target_sources(fluidSim-omp PRIVATE "${HECBENCH_SRC_DIR}/fluidSim-sycl/reference.cpp")
+    target_sources(fluidSim-omp PRIVATE "${HECBENCH_SRC_DIR}/fluidSim-cuda/main.cpp")
+    set_source_files_properties("${HECBENCH_SRC_DIR}/fluidSim-cuda/main.cpp" PROPERTIES COMPILER_OPTIONS "-I${HECBENCH_SRC_DIR}/fluidSim-omp/utils.h")
 
 ENDIF()
 

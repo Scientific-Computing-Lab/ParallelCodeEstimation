@@ -22,9 +22,10 @@ cmake -DCMAKE_C_COMPILER=clang \
       -DCMAKE_CXX_FLAGS="${CXX_FLAGS}" \
       -DCMAKE_CUDA_FLAGS="${CXX_FLAGS}" \
       -DOMP_INCLUDE_DIR="/usr/lib/llvm-18/lib/clang/18/include" \
-      -DOMP_LINKER_FLAGS="-L/usr/lib/llvm-18/lib;-lgomp" \
+      -DOMP_LINKER_FLAGS="-L/usr/lib/llvm-18/lib" \
       -S../ -B./
 
+      #-DOMP_LINKER_FLAGS="-L/usr/lib/llvm-18/lib;-lgomp" \
       #-DBUILD_CUDA=ON \
 
 #make -j1 VERBOSE=1 streamUM-cuda
