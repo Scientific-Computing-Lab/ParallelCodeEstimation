@@ -6,7 +6,12 @@ mkdir -p ./build
 cd ./build
 
 #CXX_FLAGS="-v -I/usr/local/cuda-12.6/targets/x86_64-linux/include -I/usr/local/cuda-12.6/targets/x86_64-linux/include/cuda/std/__cuda -O3"
-CXX_FLAGS="-I/usr/local/cuda-12.6/targets/x86_64-linux/include -L/usr/local/cuda-12.6/targets/x86_64-linux/lib -O3"
+
+# used when building CUDA codes
+#CXX_FLAGS="-I/usr/local/cuda-12.6/targets/x86_64-linux/include -L/usr/local/cuda-12.6/targets/x86_64-linux/lib -O3"
+
+# used when building OMP codes
+CXX_FLAGS="-O3"
 
 # now sure why clang isn't automatically linking openmp, so we include some extra flags
 

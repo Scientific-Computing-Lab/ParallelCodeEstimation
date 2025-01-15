@@ -270,6 +270,9 @@ LIST(LENGTH TARGET_DIRS NUM_CUDA_CODES)
 # xlqc-cuda needs to install GNU scientific library to work
 # blas-gemm-omp assumes mkl is installed
 # cm-omp having a matching function call error during build
+# fsm-omp has critical regions in target region -- not allowed
+# interval-omp has a linking error I couldn't figure out, undefined reference -- nvlink 255 errorcode XD
+# langford-omp having same mysterious issues as langford-cuda -- can't be built
 set(IGNORE_TARGETS allreduce-cuda ccl-cuda diamond-cuda langford-cuda 
                    miniWeather-cuda minibude-cuda pingpong-cuda
                    qkv-cuda rowwiseMoments-cuda saxpy-ompt-cuda slit-cuda sparkler-cuda
@@ -277,7 +280,7 @@ set(IGNORE_TARGETS allreduce-cuda ccl-cuda diamond-cuda langford-cuda
                    bscan-cuda feynman-kac-cuda lrn-cuda cm-cuda voxelization-cuda mpc-cuda
                    stencil3d-cuda tridiagonal-cuda dwconv1d-cuda convolutionDeformable-cuda
                    halo-finder-cuda local-ht-cuda miniDGS-cuda xlqc-cuda
-                   blas-gemm-omp cm-omp)
+                   blas-gemm-omp cm-omp fsm-omp interval-omp langford-omp)
 
 # for now we are ignoring this because it requires files
 # to be downloaded
@@ -386,8 +389,10 @@ IF(BUILD_OMP OR BUILD_CUDA)
 ENDIF()
 
 IF(BUILD_OMP)
-    set_target_properties(${TARGETS} PROPERTIES COMPILE_FLAGS "-fopenmp -fopenmp-targets=nvptx64-nvidia-cuda -fopenmp-offload-mandatory")
+    set_target_properties(${TARGETS} PROPERTIES COMPILE_FLAGS "-fopenmp -fopenmp-targets=nvptx64-nvidia-cuda")
+    #set_target_properties(${TARGETS} PROPERTIES COMPILE_FLAGS "-fopenmp -fopenmp-targets=nvptx64-nvidia-cuda -fopenmp-offload-mandatory")
     set_target_properties(${TARGETS} PROPERTIES LINK_FLAGS "-fopenmp -fopenmp-targets=nvptx64-nvidia-cuda --offload-link -fopenmp-offload-mandatory")
+    #set_target_properties(${TARGETS} PROPERTIES LINK_FLAGS "-fopenmp -fopenmp-targets=nvptx64-nvidia-cuda")
 
     #target_compile_options(accuracy-omp BEFORE PRIVATE "-D__STRICT_ANSI__")
 
@@ -514,9 +519,81 @@ IF(BUILD_OMP)
 
     target_sources(fluidSim-omp PRIVATE "${HECBENCH_SRC_DIR}/fluidSim-sycl/reference.cpp")
     target_sources(fluidSim-omp PRIVATE "${HECBENCH_SRC_DIR}/fluidSim-cuda/main.cpp")
-    set_source_files_properties("${HECBENCH_SRC_DIR}/fluidSim-cuda/main.cpp" PROPERTIES COMPILER_OPTIONS "-I${HECBENCH_SRC_DIR}/fluidSim-omp/utils.h")
+    #set_source_files_properties("${HECBENCH_SRC_DIR}/fluidSim-cuda/main.cpp" PROPERTIES COMPILER_OPTIONS "-I${HECBENCH_SRC_DIR}/fluidSim-omp/utils.h")
+    target_compile_options(fluidSim-omp PRIVATE "-DVERIFY")
+    target_compile_options(fluidSim-omp PUBLIC "-includeutils.h")
 
+    target_compile_options(frna-omp PRIVATE "-DINT")
+
+    target_include_directories(gc-omp PRIVATE "${HECBENCH_SRC_DIR}/mis-cuda")
+
+    target_sources(gd-omp PRIVATE "${HECBENCH_SRC_DIR}/gd-sycl/utils.cpp")
+    set_target_properties(gd-omp PROPERTIES CXX_STANDARD "17")
+
+    target_sources(haversine-omp PRIVATE "${HECBENCH_SRC_DIR}/haversine-cuda/main.cpp")
+
+    set_target_properties(heartwall-omp PROPERTIES CXX_STANDARD "11")
+    target_sources(heartwall-omp PRIVATE "${HECBENCH_SRC_DIR}/heartwall-omp/util/avi/avilib.c")
+    target_sources(heartwall-omp PRIVATE "${HECBENCH_SRC_DIR}/heartwall-omp/util/avi/avimod.c")
+    target_sources(heartwall-omp PRIVATE "${HECBENCH_SRC_DIR}/heartwall-omp/util/timer/timer.c")
+    target_sources(heartwall-omp PRIVATE "${HECBENCH_SRC_DIR}/heartwall-omp/util/file/file.c")
+    set_source_files_properties("${HECBENCH_SRC_DIR}/heartwall-omp/main.c" PROPERTIES HEADER_FILE_ONLY ON)
+
+    target_sources(hogbom-omp PRIVATE "${HECBENCH_SRC_DIR}/hogbom-cuda/main.cpp")
+    target_sources(hogbom-omp PRIVATE "${HECBENCH_SRC_DIR}/hogbom-cuda/reference.cpp")
+    target_sources(hogbom-omp PRIVATE "${HECBENCH_SRC_DIR}/hogbom-cuda/timer.cpp")
+
+    set_target_properties(hybridsort-omp PROPERTIES CXX_STANDARD "11")
+    target_link_options(hybridsort-omp BEFORE PRIVATE "-lm")
+
+    target_sources(hypterm-omp PRIVATE "${HECBENCH_SRC_DIR}/hypterm-cuda/main.cpp")
+    target_sources(hypterm-omp PRIVATE "${HECBENCH_SRC_DIR}/hypterm-cuda/reference.cpp")
+
+    FILE(GLOB KMEANS_C_FILES "${HECBENCH_SRC_DIR}/kmeans-omp/*.c")
+    set_source_files_properties(${KMEANS_C_FILES} PROPERTIES LANGUAGE CXX)
+
+
+    #target_include_directories(langford-omp PRIVATE "${HECBENCH_SRC_DIR}/include")
+    #target_compile_options(langford-omp PUBLIC "-includecommon.h")
+    #target_compile_options(langford-omp PUBLIC "-Dpos=fpos" "-DPositions=PositionsGPU")
+
+    target_sources(lebesgue-omp PRIVATE "${HECBENCH_SRC_DIR}/lebesgue-cuda/main.cpp")
+    target_sources(lebesgue-omp PRIVATE "${HECBENCH_SRC_DIR}/lebesgue-cuda/utils.cpp")
+
+
+    set_target_properties(leukocyte-omp PROPERTIES CXX_STANDARD "11")
+    set_target_properties(leukocyte-omp PROPERTIES LANGUAGE CXX)
+    FILE(GLOB MESCHACH_LIB "${HECBENCH_SRC_DIR}/leukocyte-omp/meschach_lib/*.c")
+    add_library(meschach STATIC ${MESCHACH_LIB})
+    set_target_properties(meschach PROPERTIES C_STANDARD "90")
+    set_source_files_properties("${HECBENCH_SRC_DIR}/leukocyte-omp/meschach_lib/tutadv.c" PROPERTIES HEADER_FILE_ONLY ON)
+    add_dependencies(leukocyte-omp meschach)
+    target_link_libraries(leukocyte-omp meschach)
+
+
+    target_sources(lud-omp PRIVATE "${HECBENCH_SRC_DIR}/lud-omp/common/common.c")
+    set_source_files_properties("${HECBENCH_SRC_DIR}/lud-omp/common/common.c" PROPERTIES LANGUAGE CXX)
+    #set_target_properties(lud-omp PROPERTIES LANGUAGE CXX)
+    #set_source_files_properties("${HECBENCH_SRC_DIR}/lud-cuda/lud_kernels.cu" PROPERTIES HEADER_FILE_ONLY ON)
+
+
+    target_compile_options(mcmd-omp PUBLIC "-D_MWAITXINTRIN_H_INCLUDED" "-D_FORCE_INLINES" "-D__STRICT_ANSI__" "-DGPU")
+    target_sources(mcmd-omp PRIVATE "${HECBENCH_SRC_DIR}/mcmd-cuda/main.cpp")
+
+    set_target_properties(meanshift-omp PROPERTIES CXX_STANDARD "17")
+
+    
+    
 ENDIF()
+
+
+
+
+
+
+
+
+
 
 IF(BUILD_CUDA)
     set_target_properties(adv-cuda PROPERTIES COMPILE_FLAGS "-Ddfloat=float -Ddlong=int")
