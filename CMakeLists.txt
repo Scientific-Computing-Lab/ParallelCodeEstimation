@@ -273,6 +273,9 @@ LIST(LENGTH TARGET_DIRS NUM_CUDA_CODES)
 # fsm-omp has critical regions in target region -- not allowed
 # interval-omp has a linking error I couldn't figure out, undefined reference -- nvlink 255 errorcode XD
 # langford-omp having same mysterious issues as langford-cuda -- can't be built
+# memcpy-omp abuses the `auto` keyword and we get a not-assignable error
+# miniWeather-omp is MPI-based
+# saxpy-ompt-hip/sycl are HIP and SYCL based -- we don't support building this for now
 set(IGNORE_TARGETS allreduce-cuda ccl-cuda diamond-cuda langford-cuda 
                    miniWeather-cuda minibude-cuda pingpong-cuda
                    qkv-cuda rowwiseMoments-cuda saxpy-ompt-cuda slit-cuda sparkler-cuda
@@ -280,7 +283,8 @@ set(IGNORE_TARGETS allreduce-cuda ccl-cuda diamond-cuda langford-cuda
                    bscan-cuda feynman-kac-cuda lrn-cuda cm-cuda voxelization-cuda mpc-cuda
                    stencil3d-cuda tridiagonal-cuda dwconv1d-cuda convolutionDeformable-cuda
                    halo-finder-cuda local-ht-cuda miniDGS-cuda xlqc-cuda
-                   blas-gemm-omp cm-omp fsm-omp interval-omp langford-omp)
+                   blas-gemm-omp cm-omp fsm-omp interval-omp langford-omp memcpy-omp
+                   miniWeather-omp saxpy-ompt-hip saxpy-ompt-sycl)
 
 # for now we are ignoring this because it requires files
 # to be downloaded
@@ -582,8 +586,81 @@ IF(BUILD_OMP)
 
     set_target_properties(meanshift-omp PROPERTIES CXX_STANDARD "17")
 
+    execute_process(
+        COMMAND /bin/bash -c "make common_files && make generate_info"
+        RESULT_VARIABLE RESULT_CODE
+        WORKING_DIRECTORY "${HECBENCH_SRC_DIR}/miniFE-omp/src"
+    )
+    target_compile_options(miniFE-omp BEFORE PUBLIC "-DMINIFE_SCALAR=double" "-DMINIFE_LOCAL_ORDINAL=int" "-DMINIFE_GLOBAL_ORDINAL=int" "-DMINIFE_RESTRICT=__restrict__" "-DMINIFE_CSR_MATRIX" "-DMINIFE_INFO=1" "-DMINIFE_KERNELS=0")
+    #target_sources(lud-cuda PRIVATE "${HECBENCH_SRC_DIR}/miniFE-cuda/src/miniFE_info.hpp")
+    #set_source_files_properties("${HECBENCH_SRC_DIR}/miniFE-cuda/src/miniFE_info.hpp" PROPERTIES HEADER_FILE_ONLY ON)
+    set_source_files_properties("${HECBENCH_SRC_DIR}/miniFE-omp/basic/utest.cpp" PROPERTIES HEADER_FILE_ONLY ON)
+    set_source_files_properties("${HECBENCH_SRC_DIR}/miniFE-omp/basic/main.cpp" PROPERTIES HEADER_FILE_ONLY ON)
+    FILE(GLOB MINIFE_INC "${HECBENCH_SRC_DIR}/miniFE-omp/basic/*")
+    set_source_files_properties(${MINIFE_INC} PROPERTIES HEADER_FILE_ONLY ON)
+    # keeps getting positive header file matches in the /basic dir and we don't want that
+    target_include_directories(miniFE-omp BEFORE PUBLIC "${HECBENCH_SRC_DIR}/miniFE-omp/utils")
+    target_include_directories(miniFE-omp BEFORE PUBLIC "${HECBENCH_SRC_DIR}/miniFE-omp/src")
+    target_include_directories(miniFE-omp BEFORE PUBLIC "${HECBENCH_SRC_DIR}/miniFE-omp/fem")
+    get_target_property(MINIFE_SRC miniFE-omp SOURCES)
+    set_source_files_properties(${MINIFE_SRC} PROPERTIES LANGUAGE CXX)
+
+    set_target_properties(minibude-omp PROPERTIES CXX_STANDARD "17")
+
+
+    target_sources(mriQ-omp PRIVATE "${HECBENCH_SRC_DIR}/mriQ-cuda/file.cc")
+    set_source_files_properties("${HECBENCH_SRC_DIR}/mriQ-cuda/file.cc" PROPERTIES LANGUAGE CXX)
     
-    
+    set_source_files_properties("${HECBENCH_SRC_DIR}/myocyte-omp/kernel/master.c" PROPERTIES HEADER_FILE_ONLY ON)
+    set_source_files_properties("${HECBENCH_SRC_DIR}/myocyte-omp/kernel/embedded_fehlberg_7_8.c" PROPERTIES HEADER_FILE_ONLY ON)
+    set_source_files_properties("${HECBENCH_SRC_DIR}/myocyte-omp/kernel/solver.c" PROPERTIES HEADER_FILE_ONLY ON)
+    set_source_files_properties("${HECBENCH_SRC_DIR}/myocyte-omp/kernel/kernel_fin.c" PROPERTIES HEADER_FILE_ONLY ON)
+    target_sources(myocyte-omp PRIVATE "${HECBENCH_SRC_DIR}/myocyte-omp/util/file/file.c")
+    target_sources(myocyte-omp PRIVATE "${HECBENCH_SRC_DIR}/myocyte-omp/util/num/num.c")
+    target_sources(myocyte-omp PRIVATE "${HECBENCH_SRC_DIR}/myocyte-omp/kernel/kernel_wrapper.c")
+    target_include_directories(myocyte-omp BEFORE PUBLIC "${HECBENCH_SRC_DIR}/myocyte-omp/util/file")
+    target_include_directories(myocyte-omp BEFORE PUBLIC "${HECBENCH_SRC_DIR}/myocyte-omp/util/num")
+    get_target_property(MYOCYCTE_SRCS myocyte-omp SOURCES)
+    set_source_files_properties(${MYOCYCTE_SRCS} PROPERTIES LANGUAGE CXX)
+
+
+    target_include_directories(permutate-omp BEFORE PUBLIC "${HECBENCH_SRC_DIR}/include")
+    FILE(GLOB PERM_FILES "${HECBENCH_SRC_DIR}/permutate-cuda/*.cpp")
+    target_sources(permutate-omp PRIVATE ${PERM_FILES})
+    FILE(GLOB PERM_FILES "${HECBENCH_SRC_DIR}/permutate-cuda/bzip/*.cpp")
+    target_sources(permutate-omp PRIVATE ${PERM_FILES})
+    set_target_properties(permutate-omp PROPERTIES CXX_STANDARD "17")
+
+    target_compile_options(prna-omp BEFORE PUBLIC "-DFLOAT" "-DOMP_TARGET")
+
+    target_sources(pso-omp PRIVATE "${HECBENCH_SRC_DIR}/pso-cuda/kernel_cpu.cpp")
+    target_sources(pso-omp PRIVATE "${HECBENCH_SRC_DIR}/pso-cuda/main.cpp")
+
+    target_link_options(rsbench-omp BEFORE PRIVATE "-lm")
+
+    target_sources(rsc-omp PRIVATE "${HECBENCH_SRC_DIR}/rsc-cuda/model_fitting.cpp")
+    target_link_options(rsc-omp BEFORE PRIVATE "-lpthread")
+
+    target_sources(simpleSpmv-omp PRIVATE "${HECBENCH_SRC_DIR}/simpleSpmv-cuda/utils.cpp")
+    target_sources(simpleSpmv-omp PRIVATE "${HECBENCH_SRC_DIR}/simpleSpmv-cuda/main.cpp")
+
+    target_compile_options(slu-omp BEFORE PUBLIC "-DNO_ATOMIC" "-DSSE2" "-msse2" "-fPIE")
+    FILE(GLOB NICSLU_LIB "${HECBENCH_SRC_DIR}/slu-cuda/src/nicslu/source/*.c")
+    add_library(nicslu STATIC ${NICSLU_LIB})
+    add_dependencies(slu-cuda nicslu)
+    target_link_libraries(slu-cuda nicslu)
+    FILE(GLOB NICSLU_UTIL "${HECBENCH_SRC_DIR}/slu-cuda/src/nicslu/util/nicslu_readfile.c")
+    add_library(nicslu-util STATIC ${NICSLU_UTIL})
+    add_dependencies(slu-cuda nicslu-util)
+    target_link_libraries(slu-cuda nicslu-util)
+    target_include_directories(nicslu-util PRIVATE "${HECBENCH_SRC_DIR}/slu-cuda/src/nicslu/include")
+    target_include_directories(slu-cuda BEFORE PUBLIC "${HECBENCH_SRC_DIR}/slu-cuda/include")
+    target_include_directories(slu-cuda BEFORE PUBLIC "${HECBENCH_SRC_DIR}/slu-cuda/src")
+    target_link_options(slu-cuda PRIVATE "-lm" "-lpthread" "-lrt")
+    set_source_files_properties("${HECBENCH_SRC_DIR}/slu-cuda/src/nicslu/demo/test.c" PROPERTIES C_STANDARD "90")
+    set_source_files_properties("${HECBENCH_SRC_DIR}/slu-cuda/src/nicslu/demo/test.c" PROPERTIES COMPILE_FLAGS "-ansi")
+    FILE(GLOB NICSLU_DEMO "${HECBENCH_SRC_DIR}/slu-cuda/src/nicslu/demo/*.c")
+    set_source_files_properties(${NICSLU_DEMO} PROPERTIES HEADER_FILE_ONLY ON)
 ENDIF()
 
 
