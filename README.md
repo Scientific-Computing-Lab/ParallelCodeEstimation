@@ -7,12 +7,12 @@ We might change our automated build and data gathering process in the future, fo
 
 Target codes thus-far:
 - CUDA (omitted MPI-based for now)
-  - We are able to build 453/491 (92%) of the CUDA targets
-  - We purposely skip building 33/491 due to MPI requirements or execution errors (mainly segfaults and out-of-memory errors)
+  - We are able to build 453/492 (92%) of the CUDA targets
+  - We purposely skip building 33/491 due to MPI requirements, missing dependencies, or execution errors (mainly segfaults and out-of-memory errors)
   - You should be able to switch between `g++` and `clang++` for these builds, although I haven't tested with `g++`.
 - OMP
-  - Working on this. Plan to use openmp offloading via `clang++`.
-  - You're most-likely bound to `clang++` for this.  
+  - We are able to build 312/320 (97.5%) of the OMP targets
+  - We purposely skip building 8/320 due to MPI requirements or missing build dependencies
   
 
 ## Building
@@ -23,6 +23,18 @@ By default, we have everything building with `clang++` and `nvcc`, this should m
 ```
 source ./runBuild.sh
 ```
+
+# Common Build Issues
+
+Here's a list of common build issues that might help if you're encountering errors in the build process.
+
+- .c files intended to be interpreted as C++
+- .c/.cpp files included as headers
+- sources files that needed to be added (because our script didn't catch them)
+- missing includes
+- missing preprocessor defines
+- missing libs to link
+- putting some search/include dirs before others when compiling (duplicate filenames can cause header include mixups)
 
 ## Gathering Roofline Data
 

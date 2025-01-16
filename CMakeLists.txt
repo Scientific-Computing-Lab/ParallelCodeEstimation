@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.28)
 project("HeCBench-roofline")
 
 
-option(OMP_INCLUDE_DIR "OpenMP Include Directory (contains omp.h)" "")
+#option(OMP_INCLUDE_DIR "OpenMP Include Directory (contains omp.h)" "")
 
 
 IF (NOT DEFINED HECBENCH_SRC_DIR)
@@ -234,7 +234,7 @@ ELSE()
 ENDIF()
 
 
-LIST(LENGTH TARGET_DIRS NUM_CUDA_CODES)
+#LIST(LENGTH TARGET_DIRS NUM_RAW_TARGETS)
 
 #set(IGNORE_TARGETS adv-cuda amgmk-cuda aop-cuda aes-cuda asmooth-cuda allreduce-cuda atomicSystemWide-cuda atomicIntrinsics-cuda atomicPerf-cuda)
 # some of these are MPI codes we don't want to concern ourselves with yet
@@ -276,6 +276,7 @@ LIST(LENGTH TARGET_DIRS NUM_CUDA_CODES)
 # memcpy-omp abuses the `auto` keyword and we get a not-assignable error
 # miniWeather-omp is MPI-based
 # saxpy-ompt-hip/sycl are HIP and SYCL based -- we don't support building this for now
+# xlqc-omp requires GSL lib to be installed
 set(IGNORE_TARGETS allreduce-cuda ccl-cuda diamond-cuda langford-cuda 
                    miniWeather-cuda minibude-cuda pingpong-cuda
                    qkv-cuda rowwiseMoments-cuda saxpy-ompt-cuda slit-cuda sparkler-cuda
@@ -284,7 +285,7 @@ set(IGNORE_TARGETS allreduce-cuda ccl-cuda diamond-cuda langford-cuda
                    stencil3d-cuda tridiagonal-cuda dwconv1d-cuda convolutionDeformable-cuda
                    halo-finder-cuda local-ht-cuda miniDGS-cuda xlqc-cuda
                    blas-gemm-omp cm-omp fsm-omp interval-omp langford-omp memcpy-omp
-                   miniWeather-omp saxpy-ompt-hip saxpy-ompt-sycl)
+                   miniWeather-omp saxpy-ompt-hip saxpy-ompt-sycl xlqc-omp)
 
 # for now we are ignoring this because it requires files
 # to be downloaded
@@ -299,9 +300,12 @@ ENDIF()
 
 IF(BUILD_OMP)
     UNZIPFILE("${HECBENCH_SRC_DIR}/axhelm-omp/BlasLapack.tar.gz")
+    UNZIPFILE("${HECBENCH_SRC_DIR}/testSNAP-omp/refdata.tar.gz")
 ENDIF()
 
 set(TARGETS "")
+set(OMP_TARGETS "")
+set(CUDA_TARGETS "")
 
 FOREACH(TARGET_DIR ${TARGET_DIRS})
     GET_FILENAME_COMPONENT(TARGET_NAME ${TARGET_DIR} NAME)
@@ -364,9 +368,14 @@ FOREACH(TARGET_DIR ${TARGET_DIRS})
 
         INC_ADD_ALL_SUBDIRS(${TARGET_DIR} ${TARGET_NAME})
 
-        IF(BUILD_OMP)
+        #IF(BUILD_OMP)
+        IF(${TARGET_NAME} MATCHES "\-omp")
             INC_ADD_ALL_SUBDIRS("${HECBENCH_SRC_DIR}/${TARGET_BASENAME}-cuda" ${TARGET_NAME})
             INC_ADD_ALL_SUBDIRS("${HECBENCH_SRC_DIR}/${TARGET_BASENAME}-sycl" ${TARGET_NAME})
+            LIST(APPEND OMP_TARGETS ${TARGET_NAME})
+        ENDIF()
+        IF(${TARGET_NAME} MATCHES "\-cuda")
+            LIST(APPEND CUDA_TARGETS ${TARGET_NAME})
         ENDIF()
 
         # add the target to the targets list 
@@ -376,27 +385,55 @@ FOREACH(TARGET_DIR ${TARGET_DIRS})
 ENDFOREACH()
 
 
+LIST(LENGTH TARGET_DIRS NUM_RAW_TARGETS)
 LIST(LENGTH TARGETS NUM_TARGETS)
 LIST(LENGTH IGNORE_TARGETS NUM_IGNORE_TARGETS)
-message("TARGETS: [${TARGETS}]")
-message("Building [${NUM_TARGETS}/${NUM_CUDA_CODES}] targets!")
-message("Manually ignored [${NUM_IGNORE_TARGETS}/${NUM_CUDA_CODES}] targets!")
+LIST(LENGTH CUDA_TARGETS NUM_CUDA_TARGETS)
+LIST(LENGTH OMP_TARGETS NUM_OMP_TARGETS)
+#message("TARGETS: [${TARGETS}]")
+message("Building [${NUM_TARGETS}/${NUM_RAW_TARGETS}] targets!")
+message("OMP targets: [${NUM_OMP_TARGETS}] \t CUDA targets: [${NUM_CUDA_TARGETS}]")
+message("Manually ignored [${NUM_IGNORE_TARGETS}/${NUM_RAW_TARGETS}] targets!")
 #set_target_properties(${TARGETS} PROPERTIES LINKER_LANGUAGE CXX)
 
-set_target_properties(${TARGETS} PROPERTIES CUDA_ARCHITECTURES "86")
+
+set_target_properties(${CUDA_TARGETS} PROPERTIES CUDA_ARCHITECTURES "86")
 set_target_properties(${TARGETS} PROPERTIES CXX_STANDARD "14")
 
 
 # set target-specific properties
 IF(BUILD_OMP OR BUILD_CUDA)
 
+    FILE(GLOB NICSLU_LIB "${HECBENCH_SRC_DIR}/slu-cuda/src/nicslu/source/*.c")
+    add_library(nicslu STATIC ${NICSLU_LIB})
+    FILE(GLOB NICSLU_UTIL "${HECBENCH_SRC_DIR}/slu-cuda/src/nicslu/util/nicslu_readfile.c")
+    add_library(nicslu-util STATIC ${NICSLU_UTIL})
+
+    FILE(GLOB MESCHACH_LIB "${HECBENCH_SRC_DIR}/leukocyte-cuda/meschach_lib/*.c")
+    add_library(meschach STATIC ${MESCHACH_LIB})
+    set_source_files_properties("${HECBENCH_SRC_DIR}/leukocyte-omp/meschach_lib/tutadv.c" PROPERTIES HEADER_FILE_ONLY ON)
+    set_source_files_properties("${HECBENCH_SRC_DIR}/leukocyte-cuda/meschach_lib/tutadv.c" PROPERTIES HEADER_FILE_ONLY ON)
+    set_source_files_properties("${HECBENCH_SRC_DIR}/leukocyte-cuda/meschach_lib/torture.c" PROPERTIES HEADER_FILE_ONLY ON)
+    set_source_files_properties("${HECBENCH_SRC_DIR}/leukocyte-cuda/meschach_lib/sptort.c" PROPERTIES HEADER_FILE_ONLY ON)
+    set_source_files_properties("${HECBENCH_SRC_DIR}/leukocyte-cuda/meschach_lib/ztorture.c" PROPERTIES HEADER_FILE_ONLY ON)
+    set_source_files_properties("${HECBENCH_SRC_DIR}/leukocyte-cuda/meschach_lib/memtort.c" PROPERTIES HEADER_FILE_ONLY ON)
+    set_source_files_properties("${HECBENCH_SRC_DIR}/leukocyte-cuda/meschach_lib/itertort.c" PROPERTIES HEADER_FILE_ONLY ON)
+    set_source_files_properties("${HECBENCH_SRC_DIR}/leukocyte-cuda/meschach_lib/mfuntort.c" PROPERTIES HEADER_FILE_ONLY ON)
+    set_source_files_properties("${HECBENCH_SRC_DIR}/leukocyte-cuda/meschach_lib/iotort.c" PROPERTIES HEADER_FILE_ONLY ON)
+    set_target_properties(meschach PROPERTIES C_STANDARD "90")
+    target_compile_options(meschach BEFORE PUBLIC "-DHAVE_CONFIG_H" "-DANSI_C")
+    target_link_options(meschach BEFORE PRIVATE "-lm")
+
+    enable_language(Fortran)
+    FILE(GLOB BL_FORTRAN_SOURCES "${HECBENCH_SRC_DIR}/axhelm-omp/BlasLapack/*.f")
+    add_library(BlasLapack STATIC ${BL_FORTRAN_SOURCES})
 ENDIF()
 
 IF(BUILD_OMP)
-    set_target_properties(${TARGETS} PROPERTIES COMPILE_FLAGS "-fopenmp -fopenmp-targets=nvptx64-nvidia-cuda")
+    set_target_properties(${OMP_TARGETS} PROPERTIES COMPILE_FLAGS "-fopenmp -fopenmp-targets=nvptx64-nvidia-cuda")
     #set_target_properties(${TARGETS} PROPERTIES COMPILE_FLAGS "-fopenmp -fopenmp-targets=nvptx64-nvidia-cuda -fopenmp-offload-mandatory")
-    set_target_properties(${TARGETS} PROPERTIES LINK_FLAGS "-fopenmp -fopenmp-targets=nvptx64-nvidia-cuda --offload-link -fopenmp-offload-mandatory")
-    #set_target_properties(${TARGETS} PROPERTIES LINK_FLAGS "-fopenmp -fopenmp-targets=nvptx64-nvidia-cuda")
+    #set_target_properties(${TARGETS} PROPERTIES LINK_FLAGS "-fopenmp -fopenmp-targets=nvptx64-nvidia-cuda --offload-link -fopenmp-offload-mandatory")
+    set_target_properties(${OMP_TARGETS} PROPERTIES LINK_FLAGS "-fopenmp -fopenmp-targets=nvptx64-nvidia-cuda")
 
     #target_compile_options(accuracy-omp BEFORE PRIVATE "-D__STRICT_ANSI__")
 
@@ -405,9 +442,6 @@ IF(BUILD_OMP)
     target_include_directories(aes-omp PRIVATE "${HECBENCH_SRC_DIR}/include")
 
     target_compile_options(axhelm-omp BEFORE PRIVATE "-Ddfloat=float" "-Ddlong=int")
-    FILE(GLOB BL_FORTRAN_SOURCES "${HECBENCH_SRC_DIR}/axhelm-omp/BlasLapack/*.f")
-    enable_language(Fortran)
-    add_library(BlasLapack STATIC ${BL_FORTRAN_SOURCES})
     add_dependencies(axhelm-omp BlasLapack)
     target_link_libraries(axhelm-omp BlasLapack)
 
@@ -521,11 +555,18 @@ IF(BUILD_OMP)
     target_sources(face-omp PRIVATE "${HECBENCH_SRC_DIR}/face-sycl/image.cpp")
     target_sources(face-omp PRIVATE "${HECBENCH_SRC_DIR}/face-sycl/main.cpp")
 
+    # need to move this file so that we get a correct build
+    execute_process(
+        COMMAND /bin/bash -c "cp ${HECBENCH_SRC_DIR}/fluidSim-cuda/main.cpp ./"
+        RESULT_VARIABLE RESULT_CODE
+        WORKING_DIRECTORY "${HECBENCH_SRC_DIR}/fluidSim-omp"
+    )
     target_sources(fluidSim-omp PRIVATE "${HECBENCH_SRC_DIR}/fluidSim-sycl/reference.cpp")
-    target_sources(fluidSim-omp PRIVATE "${HECBENCH_SRC_DIR}/fluidSim-cuda/main.cpp")
-    #set_source_files_properties("${HECBENCH_SRC_DIR}/fluidSim-cuda/main.cpp" PROPERTIES COMPILER_OPTIONS "-I${HECBENCH_SRC_DIR}/fluidSim-omp/utils.h")
+    target_sources(fluidSim-omp PRIVATE "${HECBENCH_SRC_DIR}/fluidSim-omp/main.cpp")
+    get_target_property(FLUIDSIM_SOURCES fluidSim-omp SOURCES)
+    set_source_files_properties(${FLUIDSIM_SOURCES} PROPERTIES LANGUAGE CXX)
     target_compile_options(fluidSim-omp PRIVATE "-DVERIFY")
-    target_compile_options(fluidSim-omp PUBLIC "-includeutils.h")
+    target_compile_options(fluidSim-omp PRIVATE "-includeutils.h")
 
     target_compile_options(frna-omp PRIVATE "-DINT")
 
@@ -534,7 +575,13 @@ IF(BUILD_OMP)
     target_sources(gd-omp PRIVATE "${HECBENCH_SRC_DIR}/gd-sycl/utils.cpp")
     set_target_properties(gd-omp PROPERTIES CXX_STANDARD "17")
 
-    target_sources(haversine-omp PRIVATE "${HECBENCH_SRC_DIR}/haversine-cuda/main.cpp")
+    # need to make this copy for correct building
+    execute_process(
+        COMMAND /bin/bash -c "cp ${HECBENCH_SRC_DIR}/haversine-cuda/main.cpp ./"
+        RESULT_VARIABLE RESULT_CODE
+        WORKING_DIRECTORY "${HECBENCH_SRC_DIR}/haversine-omp"
+    )
+    target_sources(haversine-omp PRIVATE "${HECBENCH_SRC_DIR}/haversine-omp/main.cpp")
 
     set_target_properties(heartwall-omp PROPERTIES CXX_STANDARD "11")
     target_sources(heartwall-omp PRIVATE "${HECBENCH_SRC_DIR}/heartwall-omp/util/avi/avilib.c")
@@ -567,8 +614,6 @@ IF(BUILD_OMP)
 
     set_target_properties(leukocyte-omp PROPERTIES CXX_STANDARD "11")
     set_target_properties(leukocyte-omp PROPERTIES LANGUAGE CXX)
-    FILE(GLOB MESCHACH_LIB "${HECBENCH_SRC_DIR}/leukocyte-omp/meschach_lib/*.c")
-    add_library(meschach STATIC ${MESCHACH_LIB})
     set_target_properties(meschach PROPERTIES C_STANDARD "90")
     set_source_files_properties("${HECBENCH_SRC_DIR}/leukocyte-omp/meschach_lib/tutadv.c" PROPERTIES HEADER_FILE_ONLY ON)
     add_dependencies(leukocyte-omp meschach)
@@ -644,23 +689,53 @@ IF(BUILD_OMP)
     target_sources(simpleSpmv-omp PRIVATE "${HECBENCH_SRC_DIR}/simpleSpmv-cuda/utils.cpp")
     target_sources(simpleSpmv-omp PRIVATE "${HECBENCH_SRC_DIR}/simpleSpmv-cuda/main.cpp")
 
-    target_compile_options(slu-omp BEFORE PUBLIC "-DNO_ATOMIC" "-DSSE2" "-msse2" "-fPIE")
-    FILE(GLOB NICSLU_LIB "${HECBENCH_SRC_DIR}/slu-cuda/src/nicslu/source/*.c")
-    add_library(nicslu STATIC ${NICSLU_LIB})
-    add_dependencies(slu-cuda nicslu)
-    target_link_libraries(slu-cuda nicslu)
-    FILE(GLOB NICSLU_UTIL "${HECBENCH_SRC_DIR}/slu-cuda/src/nicslu/util/nicslu_readfile.c")
-    add_library(nicslu-util STATIC ${NICSLU_UTIL})
-    add_dependencies(slu-cuda nicslu-util)
-    target_link_libraries(slu-cuda nicslu-util)
+    # for slu - we manually build the necessary files
+    # too many include directories from auto-adding, so we manually clear it
+    set_target_properties(slu-omp PROPERTIES INCLUDE_DIRECTORIES "")
+    add_dependencies(slu-omp nicslu)
+    target_link_libraries(slu-omp nicslu)
+    add_dependencies(slu-omp nicslu-util)
+    target_link_libraries(slu-omp nicslu-util)
     target_include_directories(nicslu-util PRIVATE "${HECBENCH_SRC_DIR}/slu-cuda/src/nicslu/include")
-    target_include_directories(slu-cuda BEFORE PUBLIC "${HECBENCH_SRC_DIR}/slu-cuda/include")
-    target_include_directories(slu-cuda BEFORE PUBLIC "${HECBENCH_SRC_DIR}/slu-cuda/src")
-    target_link_options(slu-cuda PRIVATE "-lm" "-lpthread" "-lrt")
-    set_source_files_properties("${HECBENCH_SRC_DIR}/slu-cuda/src/nicslu/demo/test.c" PROPERTIES C_STANDARD "90")
-    set_source_files_properties("${HECBENCH_SRC_DIR}/slu-cuda/src/nicslu/demo/test.c" PROPERTIES COMPILE_FLAGS "-ansi")
+    target_include_directories(slu-omp BEFORE PUBLIC "${HECBENCH_SRC_DIR}/slu-cuda/include")
+    target_include_directories(slu-omp BEFORE PUBLIC "${HECBENCH_SRC_DIR}/slu-cuda/src/nicslu/include")
+    target_include_directories(slu-omp BEFORE PUBLIC "${HECBENCH_SRC_DIR}/slu-cuda/src/nicslu/util")
     FILE(GLOB NICSLU_DEMO "${HECBENCH_SRC_DIR}/slu-cuda/src/nicslu/demo/*.c")
     set_source_files_properties(${NICSLU_DEMO} PROPERTIES HEADER_FILE_ONLY ON)
+    target_sources(slu-omp PRIVATE "${HECBENCH_SRC_DIR}/slu-cuda/src/Timer.cpp")
+    target_sources(slu-omp PRIVATE "${HECBENCH_SRC_DIR}/slu-cuda/src/symbolic.cpp")
+    target_sources(slu-omp PRIVATE "${HECBENCH_SRC_DIR}/slu-cuda/src/main.cpp")
+    target_sources(slu-omp PRIVATE "${HECBENCH_SRC_DIR}/slu-cuda/src/preprocess.cpp")
+    target_link_options(slu-omp BEFORE PRIVATE "-lpthread" )
+
+    target_include_directories(sobel-omp PRIVATE "${HECBENCH_SRC_DIR}/include")
+
+    # had to manually modify some code for this one -- it was incorrect OMP code
+    target_sources(sptrsv-omp PRIVATE "${HECBENCH_SRC_DIR}/sptrsv-sycl/main.cpp")
+    target_compile_options(sptrsv-omp PUBLIC "-DVALUE_TYPE=double")
+
+    target_link_options(srad-omp PRIVATE "-lm")
+    FILE(GLOB SRAD_UTIL "${HECBENCH_SRC_DIR}/srad-omp/util/timer/*.c")
+    target_sources(srad-omp PRIVATE ${SRAD_UTIL})
+    FILE(GLOB SRAD_UTIL "${HECBENCH_SRC_DIR}/srad-omp/util/graphics/*.c")
+    target_sources(srad-omp PRIVATE ${SRAD_UTIL})
+
+    target_include_directories(urng-omp PRIVATE "${HECBENCH_SRC_DIR}/include")
+
+    target_sources(wordcount-omp PRIVATE "${HECBENCH_SRC_DIR}/wordcount-sycl/main.cpp")
+
+    target_compile_options(wsm5-omp PRIVATE "-DMKX=4")
+
+    #enable_language(CUDA)
+    target_sources(xsbench-omp PRIVATE "${HECBENCH_SRC_DIR}/xsbench-cuda/Main.cu")
+    target_sources(xsbench-omp PRIVATE "${HECBENCH_SRC_DIR}/xsbench-cuda/io.cu")
+    target_sources(xsbench-omp PRIVATE "${HECBENCH_SRC_DIR}/xsbench-cuda/GridInit.cu")
+    target_sources(xsbench-omp PRIVATE "${HECBENCH_SRC_DIR}/xsbench-cuda/Materials.cu")
+    target_sources(xsbench-omp PRIVATE "${HECBENCH_SRC_DIR}/xsbench-cuda/XSutils.cu")
+    target_link_options(xsbench-omp PRIVATE "-lm")
+    get_target_property(XSBENCH_SRCS xsbench-omp SOURCES)
+    set_source_files_properties(${XSBENCH_SRCS} PROPERTIES LANGUAGE CXX)
+    #target_sources(xsbench-omp PRIVATE "${HECBENCH_SRC_DIR}/rsbench-cuda/XSutils.cu")
 ENDIF()
 
 
@@ -681,9 +756,9 @@ IF(BUILD_CUDA)
     set_source_files_properties(${AMGMK_C_FILES} PROPERTIES HEADER_FILE_ONLY ON)
 
     set_target_properties(axhelm-cuda PROPERTIES COMPILE_FLAGS "-Ddfloat=float -Ddlong=int")
-    FILE(GLOB BL_FORTRAN_SOURCES "${HECBENCH_SRC_DIR}/axhelm-cuda/BlasLapack/*.f")
-    enable_language(Fortran)
-    add_library(BlasLapack STATIC ${BL_FORTRAN_SOURCES})
+    #FILE(GLOB BL_FORTRAN_SOURCES "${HECBENCH_SRC_DIR}/axhelm-cuda/BlasLapack/*.f")
+    #enable_language(Fortran)
+    #add_library(BlasLapack STATIC ${BL_FORTRAN_SOURCES})
     add_dependencies(axhelm-cuda BlasLapack)
     target_link_libraries(axhelm-cuda BlasLapack)
 
@@ -725,9 +800,8 @@ IF(BUILD_CUDA)
     set_target_properties(bm3d-cuda PROPERTIES CUDA_ARCHITECTURES "60")
 
     target_compile_options(bmf-cuda BEFORE PRIVATE "-DUSE_GPU")
-    target_compile_options(bmf-cuda PRIVATE "-fopenmp=libomp")
-    target_compile_options(bmf-cuda PRIVATE "-I${OMP_INCLUDE_DIR}" )
-    target_link_options(bmf-cuda PRIVATE "${OMP_LINKER_FLAGS}")
+    target_compile_options(bmf-cuda PRIVATE "-fopenmp")
+    target_link_options(bmf-cuda PRIVATE "-fopenmp")
 
     target_include_directories(boxfilter-cuda PRIVATE "${HECBENCH_SRC_DIR}/boxfilter-sycl")
     target_sources(boxfilter-cuda PRIVATE "${HECBENCH_SRC_DIR}/boxfilter-sycl/shrUtils.cpp")
@@ -759,11 +833,15 @@ IF(BUILD_CUDA)
 
     target_include_directories(floydwarshall2-cuda PRIVATE "${HECBENCH_SRC_DIR}/mis-cuda")
 
-    target_include_directories(fluidSim-cuda PRIVATE "${HECBENCH_SRC_DIR}/fluidSim-sycl")
-    target_sources(fluidSim-cuda PRIVATE "${HECBENCH_SRC_DIR}/fluidSim-sycl/reference.cpp")
+    #target_include_directories(fluidSim-cuda PRIVATE "${HECBENCH_SRC_DIR}/fluidSim-sycl")
     target_compile_options(fluidSim-cuda PRIVATE "-DVERIFY")
     get_target_property(FLUIDSIM_SOURCES fluidSim-cuda SOURCES)
     set_source_files_properties(${FLUIDSIM_SOURCES} PROPERTIES LANGUAGE CUDA)
+    target_sources(fluidSim-cuda PRIVATE "${HECBENCH_SRC_DIR}/fluidSim-sycl/reference.cpp")
+    set_source_files_properties("${HECBENCH_SRC_DIR}/fluidSim-sycl/reference.cpp" PROPERTIES LANGUAGE CXX)
+    set_source_files_properties("${HECBENCH_SRC_DIR}/fluidSim-sycl/main.cpp" PROPERTIES LANGUAGE CXX)
+    target_include_directories(fluidSim-cuda PRIVATE "${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}")
+    #target_compile_options(fluidSim-cuda PUBLIC "-includeutils.h")
 
     #set_target_properties(fpdc-cuda PROPERTIES COMPILE_FLAGS "-std=c++14")
     #target_compile_features(fpdc-cuda PRIVATE cxx_std_14)
@@ -820,16 +898,18 @@ IF(BUILD_CUDA)
     #get_target_property(KMC_SOURCES kmc-cuda SOURCES)
     #set_source_files_properties(${KMC_SOURCES} PROPERTIES LANGUAGE CUDA)
     set_source_files_properties("${HECBENCH_SRC_DIR}/kmc-cuda/driver.c" PROPERTIES HEADER_FILE_ONLY ON)
-    target_link_options(kmc-cuda PRIVATE "-lcublas" "-lcudart")
+    target_include_directories(kmc-cuda PRIVATE "${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}")
+    target_link_options(kmc-cuda PRIVATE  "-L${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}/../lib" "-lcublas" "-lcudart")
 
 
     # need to remove the MESCHACH_LIB files from the leukocyte source files 
     # but it's okay since they don't get used in the final linking
-    FILE(GLOB MESCHACH_LIB "${HECBENCH_SRC_DIR}/leukocyte-cuda/meschach_lib/*.c")
-    add_library(meschach STATIC ${MESCHACH_LIB})
-    set_target_properties(meschach PROPERTIES C_STANDARD "90")
-    target_compile_options(meschach BEFORE PUBLIC "-DHAVE_CONFIG_H" "-DANSI_C")
-    set_source_files_properties("${HECBENCH_SRC_DIR}/leukocyte-cuda/meschach_lib/tutadv.c" PROPERTIES HEADER_FILE_ONLY ON)
+    #FILE(GLOB MESCHACH_LIB "${HECBENCH_SRC_DIR}/leukocyte-cuda/meschach_lib/*.c")
+    #add_library(meschach STATIC ${MESCHACH_LIB})
+    #set_target_properties(leukocyte-cuda PROPERTIES CXX_STANDARD "11")
+    #set_target_properties(leukocyte-cuda PROPERTIES LANGUAGE CXX)
+    get_target_property(LEUKO_SRCS leukocyte-cuda SOURCES)
+    set_source_files_properties(${LEUKO_SRCS} PROPERTIES LANGUAGE CUDA)
     add_dependencies(leukocyte-cuda meschach)
     target_link_libraries(leukocyte-cuda meschach)
 
@@ -843,8 +923,10 @@ IF(BUILD_CUDA)
     set_target_properties(logan-cuda PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
     FILE(GLOB LOGAN_INC "${HECBENCH_SRC_DIR}/logan-cuda/src/*.cuh")
     set_source_files_properties(${LOGAN_INC} PROPERTIES HEADER_FILE_ONLY ON)
-    target_compile_options(logan-cuda PRIVATE "-fopenmp=libomp" "-I${OMP_INCLUDE_DIR}")
-    target_link_options(logan-cuda PRIVATE "${OMP_LINKER_FLAGS}")
+    target_compile_options(logan-cuda PRIVATE "-fopenmp")
+    target_link_options(logan-cuda PRIVATE "-fopenmp")
+    #target_compile_options(logan-cuda PRIVATE "-fopenmp=libomp" "-I${OMP_INCLUDE_DIR}")
+    #target_link_options(logan-cuda PRIVATE "${OMP_LINKER_FLAGS}")
 
     # manually fixing a mispelling in thier cuda code
     target_compile_definitions(lsqt-cuda PUBLIC "__syncwrap=__syncwarp")
@@ -862,6 +944,7 @@ IF(BUILD_CUDA)
     target_compile_options(merkle-cuda PRIVATE "--expt-relaxed-constexpr") #"--extended-lambda")
 
     target_link_options(mf-sgd-cuda PRIVATE "-lpthread" )
+    target_include_directories(mf-sgd-cuda PRIVATE "${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}")
     # not allowed to use the __shfl() operation on compute version 7X and higher
     set_target_properties(mf-sgd-cuda PROPERTIES CUDA_ARCHITECTURES "60")
 
@@ -890,14 +973,18 @@ IF(BUILD_CUDA)
     target_link_options(norm2-cuda PRIVATE "-lcurand" "-lcublas")
 
     target_compile_options(openmp-cuda PRIVATE "-fopenmp=libomp")
-    target_compile_options(openmp-cuda PRIVATE "-I${HECBENCH_SRC_DIR}/openmp-omp" "-I${OMP_INCLUDE_DIR}" )
-    target_link_options(openmp-cuda PRIVATE "${OMP_LINKER_FLAGS}")
+    target_compile_options(openmp-cuda PRIVATE "-I${HECBENCH_SRC_DIR}/openmp-omp" "-fopenmp" )
+    target_link_options(openmp-cuda PRIVATE "-fopenmp")
+    #target_compile_options(openmp-cuda PRIVATE "-I${HECBENCH_SRC_DIR}/openmp-omp" "-I${OMP_INCLUDE_DIR}" )
+    #target_link_options(openmp-cuda PRIVATE "${OMP_LINKER_FLAGS}")
 
     target_link_options(pcc-cuda PRIVATE "-lcublas")
 
     target_include_directories(permute-cuda PRIVATE "${HECBENCH_SRC_DIR}/qkv-cuda")
 
     target_compile_options(prna-cuda BEFORE PUBLIC "-DFLOAT")
+
+    target_include_directories(qtclustering-cuda PRIVATE "${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}")
 
     execute_process(
         COMMAND /bin/bash -c "tar -xf data.tar.gz"
@@ -914,12 +1001,12 @@ IF(BUILD_CUDA)
     target_compile_options(segsort-cuda PRIVATE "--expt-relaxed-constexpr")
 
     target_compile_options(slu-cuda BEFORE PUBLIC "-DNO_ATOMIC" "-DSSE2" "-msse2" "-fPIE")
-    FILE(GLOB NICSLU_LIB "${HECBENCH_SRC_DIR}/slu-cuda/src/nicslu/source/*.c")
-    add_library(nicslu STATIC ${NICSLU_LIB})
+    #FILE(GLOB NICSLU_LIB "${HECBENCH_SRC_DIR}/slu-cuda/src/nicslu/source/*.c")
+    #add_library(nicslu STATIC ${NICSLU_LIB})
     add_dependencies(slu-cuda nicslu)
     target_link_libraries(slu-cuda nicslu)
-    FILE(GLOB NICSLU_UTIL "${HECBENCH_SRC_DIR}/slu-cuda/src/nicslu/util/nicslu_readfile.c")
-    add_library(nicslu-util STATIC ${NICSLU_UTIL})
+    #FILE(GLOB NICSLU_UTIL "${HECBENCH_SRC_DIR}/slu-cuda/src/nicslu/util/nicslu_readfile.c")
+    #add_library(nicslu-util STATIC ${NICSLU_UTIL})
     add_dependencies(slu-cuda nicslu-util)
     target_link_libraries(slu-cuda nicslu-util)
     target_include_directories(nicslu-util PRIVATE "${HECBENCH_SRC_DIR}/slu-cuda/src/nicslu/include")
@@ -1000,6 +1087,7 @@ IF(BUILD_CUDA)
 
     target_compile_options(su3-cuda PRIVATE "-DMILC_COMPLEX")
 
+    target_include_directories(tqs-cuda PRIVATE "${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}")
 
     #FILE(GLOB TPACF_CU_FILES "${HECBENCH_SRC_DIR}/tpacf-cuda/*.cu")
     #target_sources(tpacf-cuda PRIVATE ${TPACF_CU_FILES})
