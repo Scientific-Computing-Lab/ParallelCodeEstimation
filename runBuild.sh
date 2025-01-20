@@ -20,6 +20,8 @@ cmake -DCMAKE_C_COMPILER=clang \
       -DCMAKE_CUDA_FLAGS="${CXX_FLAGS}" \
       -S../ -B./
 
+make -j14 all
+
 cd ..
 
       #-DCUDA_RUNTIME_HEADER_DIR="/usr/local/cuda-12.6/targets/x86_64-linux/include" \
@@ -28,11 +30,7 @@ cd ..
       #-DOMP_LINKER_FLAGS="-L/usr/lib/llvm-18/lib;-lgomp" \
       #-DBUILD_CUDA=ON \
 
-#make -j1 VERBOSE=1 streamUM-cuda
-#make -j14 VERBOSE=1 all
-#make -j14 all
 #make -j1 VERBOSE=1 all
-#make -j4 VERBOSE=1 heartwall-cuda
 
 
       #-DCMAKE_EXE_LINKER_FLAGS="-v" \

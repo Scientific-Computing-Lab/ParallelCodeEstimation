@@ -277,15 +277,16 @@ ENDIF()
 # miniWeather-omp is MPI-based
 # saxpy-ompt-hip/sycl are HIP and SYCL based -- we don't support building this for now
 # xlqc-omp requires GSL lib to be installed
+# cmp-omp and cmp-cuda require a dataset we need to get from ed borin
 set(IGNORE_TARGETS allreduce-cuda ccl-cuda diamond-cuda langford-cuda 
                    miniWeather-cuda minibude-cuda pingpong-cuda
                    qkv-cuda rowwiseMoments-cuda saxpy-ompt-cuda slit-cuda sparkler-cuda
                    lzss-cuda cmp-cuda cc-cuda sss-cuda streamUM-cuda stsg-cuda testSNAP-cuda
                    bscan-cuda feynman-kac-cuda lrn-cuda cm-cuda voxelization-cuda mpc-cuda
                    stencil3d-cuda tridiagonal-cuda dwconv1d-cuda convolutionDeformable-cuda
-                   halo-finder-cuda local-ht-cuda miniDGS-cuda xlqc-cuda
+                   halo-finder-cuda local-ht-cuda miniDGS-cuda xlqc-cuda 
                    blas-gemm-omp cm-omp fsm-omp interval-omp langford-omp memcpy-omp
-                   miniWeather-omp saxpy-ompt-hip saxpy-ompt-sycl xlqc-omp)
+                   miniWeather-omp saxpy-ompt-hip saxpy-ompt-sycl xlqc-omp cmp-omp)
 
 # for now we are ignoring this because it requires files
 # to be downloaded

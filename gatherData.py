@@ -81,7 +81,7 @@ def download_rodinia_and_extract():
 
 def run_setup_command_for_file(targetFile, command, targetDir=DOWNLOAD_DIR):
     if not os.path.isfile(targetFile):
-        result = subprocess.run(command, cwd=targetDir, shell=True)
+        result = subprocess.run(args=command, cwd=targetDir, shell=True)
         assert result.returncode == 0
     return
 
@@ -95,6 +95,38 @@ def download_files_for_some_targets(targets):
             tFile = f'{srcDir}/../mis-cuda/internet.egr'
             command = f'wget --no-check-certificate https://userweb.cs.txstate.edu/~burtscher/research/ECLgraph/internet.egr && mv ./internet.egr {srcDir}/../mis-cuda/'
             run_setup_command_for_file(tFile, command)
+
+        elif 'bitcracker' in basename:
+            tFile = os.path.normpath(f'{srcDir}/../bitcracker-cuda/hash_pass/img_win8_user_hash.txt')
+            command = f'wget --no-check-certificate https://raw.githubusercontent.com/oneapi-src/Velocity-Bench/refs/heads/main/bitcracker/hash_pass/img_win8_user_hash.txt && mv ./img_win8_user_hash.txt {tFile}'
+            if not os.path.isfile(tFile):
+                result = subprocess.run(command, cwd=DOWNLOAD_DIR, shell=True)
+                assert result.returncode == 0
+            # idk why the function isn't working, just doing it manually here for now
+            #run_setup_command_for_file(tFile, command)
+
+            tFile = os.path.normpath(f'{srcDir}/../bitcracker-cuda/hash_pass/user_passwords_60000.txt')
+            command = f'wget --no-check-certificate https://raw.githubusercontent.com/oneapi-src/Velocity-Bench/refs/heads/main/bitcracker/hash_pass/user_passwords_60000.txt && mv ./user_passwords_60000.txt {tFile}'
+            if not os.path.isfile(tFile):
+                result = subprocess.run(command, cwd=DOWNLOAD_DIR, shell=True)
+                assert result.returncode == 0
+            #run_setup_command_for_file(tFile, command)
+
+        elif 'logic-rewrite' in basename:
+            tFile = os.path.normpath(f'{srcDir}/benchmarks/arithmetic/hyp.aig')
+            command = f'git clone https://github.com/lsils/benchmarks ./benchmarks'
+            if not os.path.isfile(tFile):
+                result = subprocess.run(command, cwd=srcDir, shell=True)
+                assert result.returncode == 0
+            #run_setup_command_for_file(tFile, command)
+
+        elif 'permutate' in basename:
+            tFile = os.path.normpath(f'{srcDir}/../permutate-cuda/test_data/truerand_1bit.bin')
+            command = f'git clone https://github.com/yeah1kim/yeah_GPU_SP800_90B_IID ./permutate-cuda && cp -r ./permutate-cuda/test_data {srcDir}/../permutate-cuda/test_data'
+            if not os.path.isfile(tFile):
+                result = subprocess.run(command, cwd=DOWNLOAD_DIR, shell=True)
+                assert result.returncode == 0
+
 
         elif basename == 'cc-cuda':
             if not os.path.isfile(f'{srcDir}/delaunay_n24.egr'):
@@ -221,18 +253,112 @@ def get_runnable_targets():
     return execs
 
 
+
+
+def get_exec_command_from_makefile(makefile):
+    assert os.path.isfile(makefile)
+
+    with open(makefile, 'r') as file:
+        data = file.read()
+        # crazy regex program, but pretty much captures multiline invocations
+        # and special makefile cases we've encountered
+        matches = re.findall(r'(?:(?<=\.\/\$\(EXE\))|(?<=\.\/\$\(program\)))(?:[ \n])(?:[^\n\\]*)(?:(?:\\\n[^\n\\]*)+|(?:))', data, re.DOTALL)
+
+        if len(matches) == 0:
+            # let's just double-check that the program takes no arguments
+            return ''
+        else:
+            # sometimes we'll have multiple matches due to multiple invocations
+            # for now we just take the first one
+
+            # let's clean up the string
+            exeArgs = matches[0].lstrip().rstrip()
+            exeArgs = exeArgs.replace('\n', '').replace('\\','')
+            exeArgs = ' '.join(exeArgs.split())
+            return exeArgs
+
+    return ''
+
+def find_makefiles_in_src_dir(srcDir):
+    candidates = list(glob.glob(f'{srcDir}/**/[Mm]akefile*', recursive=True))
+    assert len(candidates) != 0
+    return candidates
+
+
+def get_exe_args(targets:list):
+    # read the Makefile of each program, find the line with `run` and then the `./$(program)` invocation
+    # check that the $LAUNCHER variable isn't populated
+    # extract the remaining arguments for execution
+    assert len(targets) != 0
+    for target in tqdm(targets, desc='Gathering exe args'): 
+        srcDir = target['src']
+        # let's read the Makefile, strip the 'run' target of 
+        #print(target['basename'])
+        makefiles = find_makefiles_in_src_dir(srcDir)
+        # find the first makefile that has a run command
+        # if none of the makefiles have a run command with arguments, the exeArgs will be empty
+        for makefile in makefiles:
+            exeArgs = get_exec_command_from_makefile(makefile)
+            if exeArgs != '':
+                break
+        target['exeArgs'] = exeArgs
+    return targets
+
+
+
+def modify_exe_args_for_some_targets(targets:list):
+    for target in targets:
+        basename = target['basename']
+
+        if basename == 'dxtc1-cuda':
+            target['exeArgs'] = target['exeArgs'].replace('dxtc1-sycl', 'dxtc2-sycl')
+        elif basename == 'softmax-cuda':
+            target['exeArgs'] = target['exeArgs'].replace('784 ', '784 1 ')
+        # just manually set the kmeans -- it doesn't use the $(program) substring in it's makefile
+        # so we don't rip any arguments out for it
+        elif basename == 'kmeans-cuda':
+            target['exeArgs'] = '-r -n 5 -m 15 -l 10 -o -i ../data/kmeans/kdd_cup'
+        elif basename == 'frna-cuda':
+            target['exeArgs'] = '../prna-cuda/HIV1-NL43.seq hiv1-nl43.out'
+        elif 'inversek2j' in basename:
+            target['exeArgs'] = target['exeArgs'].replace('inverse2kj', 'inversek2j')
+
+    return targets
+
+
+
+def modify_kernel_names_for_some_targets(targets:list):
+    for target in targets:
+        basename = target['basename']
+
+        if basename == 'assert-cuda':
+            target['kernelNames'].remove('testKernel')
+
+
+    return targets
+
+
 def search_and_extract_file(inFile):
     # if the file doesn't exist, let's unpack any tar files
     # in the specified directory
     if not (os.path.isfile(inFile) or os.path.islink(inFile)):
-        dirToSearch = os.path.dirname(inFile)
+        dirToSearch = os.path.normpath(os.path.dirname(inFile))
+
+        # go up until we hit the parent dir that ends in -omp -cuda -sycl or -hip
+        while (True):
+            lastName = os.path.basename(dirToSearch)
+            if ('-sycl' in lastName) or ('-cuda' in lastName) or ('-omp' in lastName) or ('-hip' in lastName):
+                break
+            dirToSearch = os.path.normpath(dirToSearch + '/..')
+            print(f'{lastName}, {dirToSearch}')
 
         print('searching dir', dirToSearch)
         print('trying to find', inFile)
 
-        tarFiles = list(glob.glob(f'{dirToSearch}/*.tar.gz'))
-        tgzFiles = list(glob.glob(f'{dirToSearch}/*.tgz'))
-        zipFiles = list(glob.glob(f'{dirToSearch}/*.zip'))
+        # do a recursive search
+        tarFiles = list(glob.glob(f'{dirToSearch}/**/*.tar.gz', recursive=True))
+        tgzFiles = list(glob.glob(f'{dirToSearch}/**/*.tgz', recursive=True))
+        zipFiles = list(glob.glob(f'{dirToSearch}/**/*.zip', recursive=True))
 
         print(tarFiles)
         print(zipFiles)
@@ -265,76 +391,6 @@ def search_and_extract_file(inFile):
     return
 
 
-def get_exec_command_from_makefile(makefile):
-    assert os.path.isfile(makefile)
-
-    with open(makefile, 'r') as file:
-        data = file.read()
-        # crazy regex program, but pretty much captures multiline invocations
-        # and special makefile cases we've encountered
-        matches = re.findall(r'(?:(?<=\.\/\$\(EXE\))|(?<=\.\/\$\(program\)))(?:[ \n])(?:[^\n\\]*)(?:(?:\\\n[^\n\\]*)+|(?:))', data, re.DOTALL)
-
-        if len(matches) == 0:
-            # let's just double-check that the program takes no arguments
-            return ''
-        else:
-            # sometimes we'll have multiple matches due to multiple invocations
-            # for now we just take the first one
-
-            # let's clean up the string
-            exeArgs = matches[0].lstrip().rstrip()
-            exeArgs = exeArgs.replace('\n', '').replace('\\','')
-            exeArgs = ' '.join(exeArgs.split())
-            return exeArgs
-
-    return ''
-
-
-
-def get_exe_args(targets:list):
-    # read the Makefile of each program, find the line with `run` and then the `./$(program)` invocation
-    # check that the $LAUNCHER variable isn't populated
-    # extract the remaining arguments for execution
-    assert len(targets) != 0
-    for target in tqdm(targets, desc='Gathering exe args'): 
-        srcDir = target['src']
-        # let's read the Makefile, strip the 'run' target of 
-        exeArgs = get_exec_command_from_makefile(f'{srcDir}/Makefile')
-        target['exeArgs'] = exeArgs
-    return targets
-
-
-
-def modify_exe_args_for_some_targets(targets:list):
-    for target in targets:
-        basename = target['basename']
-
-        if basename == 'dxtc1-cuda':
-            target['exeArgs'] = target['exeArgs'].replace('dxtc1-sycl', 'dxtc2-sycl')
-        elif basename == 'softmax-cuda':
-            target['exeArgs'] = target['exeArgs'].replace('784 ', '784 1 ')
-        # just manually set the kmeans -- it doesn't use the $(program) substring in it's makefile
-        # so we don't rip any arguments out for it
-        elif basename == 'kmeans-cuda':
-            target['exeArgs'] = '-r -n 5 -m 15 -l 10 -o -i ../data/kmeans/kdd_cup'
-        elif basename == 'frna-cuda':
-            target['exeArgs'] = '../prna-cuda/HIV1-NL43.seq hiv1-nl43.out'
-
-    return targets
-
-
-
-def modify_kernel_names_for_some_targets(targets:list):
-    for target in targets:
-        basename = target['basename']
-
-        if basename == 'assert-cuda':
-            target['kernelNames'].remove('testKernel')
-
-
-    return targets
-
-
 def check_and_unzip_input_files(targets:list):
     for target in tqdm(targets, desc='Checking input files exist'):
         args = target['exeArgs']
@@ -346,7 +402,10 @@ def check_and_unzip_input_files(targets:list):
         inputFiles = re.findall(r'\.+\/[0-9a-zA-Z_\-\/\.]*', args)
         if len(inputFiles) > 0:
             for inFile in inputFiles:
-                search_and_extract_file(f'{srcDir}/{inFile}')
+                # if the word `output` is in the filename, we skip checking for it
+                if not ('output' in inFile.lower()):
+                    print(f'looking for input file: {srcDir}/{inFile}')
+                    search_and_extract_file(f'{srcDir}/{inFile}')
 
     return 
 
@@ -451,7 +510,8 @@ def execute_target(target:dict, kernelName:str):
     srcDir = target['src']
 
     reportFileName = f'{basename}-[{kernelName}]-report'
-    ncuCommand = f'ncu -f -o {reportFileName} --section SpeedOfLight_RooflineChart -c 2 -k "regex:{kernelName}"'
+    #ncuCommand = f'ncu -f -o {reportFileName} --section SpeedOfLight_RooflineChart -c 2 -k "regex:{kernelName}"'
+    ncuCommand = f'ncu -f -o {reportFileName} --set roofline --metrics smsp__sass_thread_inst_executed_op_integer_pred_on -c 2 -k "regex:{kernelName}"'
     exeCommand = f'{ncuCommand} {BUILD_DIR}/{basename} {exeArgs}'.rstrip()
 
     print('executing command:', exeCommand)
