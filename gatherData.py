@@ -140,10 +140,16 @@ def download_files_for_some_targets(targets):
                 result = subprocess.run(command, cwd=DOWNLOAD_DIR, shell=True)
                 assert result.returncode == 0
 
-        elif basename == 'gd-cuda':
+        elif 'gd-' in basename:
             if not os.path.isfile(f'{srcDir}/gisette_scale'):
                 command = f'wget --no-check-certificate https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/gisette_scale.bz2 && bzip2 -dk ./gisette_scale.bz2 && mv ./gisette_scale {srcDir}/'
                 result = subprocess.run(command, cwd=DOWNLOAD_DIR, shell=True)
+                assert result.returncode == 0
+
+        elif 'lanczos-' in basename:
+            if not os.path.isfile(f'{srcDir}/data/social-large-800k.txt'):
+                command = f'python3 gengraph.py'
+                result = subprocess.run(command, cwd=f'{srcDir}/data', shell=True)
                 assert result.returncode == 0
 
         elif basename == 'svd3x3-cuda':
@@ -227,6 +233,23 @@ def download_files_for_some_targets(targets):
                 command = f'tar -xf ./HIV1-NL43.tar.gz && tar -xf ./data_tables.tar.gz'
                 result = subprocess.run(command, cwd=f'{srcDir}/../prna-cuda', shell=True)
                 assert result.returncode == 0
+
+        elif basename == 'multimaterial-omp':
+            if not os.path.isfile(f'{srcDir}/../multimaterial-cuda/volfrac.dat'):
+                command = f'tar -xzf ./volfrac.dat.tgz' 
+                result = subprocess.run(command, cwd=f'{srcDir}/../multimaterial-cuda', shell=True)
+                assert result.returncode == 0
+            if not os.path.isfile(f'{srcDir}/../multimaterial-omp/volfrac.dat'):
+                command = f'cp ./volfrac.dat ../multimaterial-omp/' 
+                result = subprocess.run(command, cwd=f'{srcDir}/../multimaterial-cuda', shell=True)
+                assert result.returncode == 0
+
+        elif (basename == 'grep-cuda') or (basename == 'grep-omp'):
+            if not os.path.exists(f'{srcDir}/../grep-cuda/testcases'):
+                command = f'tar -xf ./testcase.tar.gz' 
+                result = subprocess.run(command, cwd=f'{srcDir}/../grep-cuda', shell=True)
+                assert result.returncode == 0
+
     return
 
 
@@ -262,25 +285,47 @@ def get_exec_command_from_makefile(makefile):
         data = file.read()
         # crazy regex program, but pretty much captures multiline invocations
         # and special makefile cases we've encountered
-        matches = re.findall(r'(?:(?<=\.\/\$\(EXE\))|(?<=\.\/\$\(program\)))(?:[ \n])(?:[^\n\\]*)(?:(?:\\\n[^\n\\]*)+|(?:))', data, re.DOTALL)
+        #matches = re.findall(r'(?:(?<=\.\/\$\(EXE\))|(?<=\.\/\$\(program\)))(?:[ \n])(?:[^\n\\]*)(?:(?:\\\n[^\n\\]*)+|(?:))', data, re.DOTALL)
+        # this regex will just match the Makefile line that has `run` in it, and all the chars 
+        # of the first command that happens after. It accounts for line continuations.
+        matches = list(re.finditer(r'(?<=run)(?:([\s]*\:[^\n]*[\n][\s]*))(?:[^\n\\]*)(?:(?:\\\n[^\n\\]*)+|(?:))', data, re.DOTALL))
 
-        if len(matches) == 0:
-            # let's just double-check that the program takes no arguments
-            return ''
-        else:
-            # sometimes we'll have multiple matches due to multiple invocations
-            # for now we just take the first one
+        matches = [i.group() for i in matches]
 
-            # let's clean up the string
-            exeArgs = matches[0].lstrip().rstrip()
-            exeArgs = exeArgs.replace('\n', '').replace('\\','')
-            exeArgs = ' '.join(exeArgs.split())
-            return exeArgs
+        #print('matches in ', makefile)
+        #print(matches)
 
+        if len(matches) > 0:
+            # every makefile should have at most one match
+            assert len(matches) == 1
+
+            match = matches[0]
+            print(makefile, match)
+
+            # now let's find the part of the string that has $(program) | $(EXE) | $(LAUNCHER)
+            # we'll grab the last one that appears
+            lastExe  = match.rfind('$(EXE)') + len('$(EXE)')
+            lastProg = match.rfind('$(program)') + len('$(program)')
+            lastLauncher = match.rfind('$(LAUNCHER)') + len('$(LAUNCHER)')
+
+            startPt = max([lastExe, lastProg, lastLauncher])
+
+            assert startPt > 0
+
+            clean = match[startPt:].rstrip().lstrip().replace('\n', ' ').replace('\\', '')
+
+            # if `LAUNCHER` is the startPt, then the next argument is the executable, we drop it
+            if lastLauncher == startPt:
+                clean = ' '.join(clean.split()[1:])
+                print(f'{makefile} has a hardcoded exe in run! raw:[{match}] fixed:[{clean}]\n')
+
+            #print(f'clean [{clean}]')
+            return clean
     return ''
 
 def find_makefiles_in_src_dir(srcDir):
-    candidates = list(glob.glob(f'{srcDir}/**/[Mm]akefile*', recursive=True))
+    candidates = list(glob.glob(f'{srcDir}/**/[Mm]akefile*', recursive=True)) 
+    # each program should have at least 1 Makefile in some capacity (except for miniFE)
     assert len(candidates) != 0
     return candidates
 
@@ -301,6 +346,16 @@ def get_exe_args(targets:list):
             exeArgs = get_exec_command_from_makefile(makefile)
             if exeArgs != '':
                 break
+
+        if exeArgs == '':
+            print('--------------------------------------------------------')
+            print(f'Program {target["basename"]} HAS NO INPUT ARGUMENTS!')
+            print('--------------------------------------------------------')
+            with open(makefile, 'r') as file:
+                toprint = '\n'.join(file.readlines()[-10:])
+                print(toprint)
+            print('--------------------------------------------------------')
+            print('--------------------------------------------------------')
         target['exeArgs'] = exeArgs
     return targets
 
@@ -322,6 +377,19 @@ def modify_exe_args_for_some_targets(targets:list):
             target['exeArgs'] = '../prna-cuda/HIV1-NL43.seq hiv1-nl43.out'
         elif 'inversek2j' in basename:
             target['exeArgs'] = target['exeArgs'].replace('inverse2kj', 'inversek2j')
+        elif 'face-' in basename:
+            target['exeArgs'] = '../face-cuda/Face.pgm ../face-cuda/info.txt ../face-cuda/class.txt Output-gpu.pgm'
+        elif 'srad-' in basename:
+            target['exeArgs'] = '1000 0.5 502 458'
+        elif 'snicit-' in basename:
+            target['exeArgs'] = '-k C'
+        elif 'grep-' in basename:
+            target['exeArgs'] = '-f ../grep-cuda/testcases/lua.lines.js.txt "\."'
+        elif (basename == 'che-cuda') or (basename == 'che-omp'):
+            target['exeArgs'] = '1000'
+        elif (basename == 'mcmd-cuda') or (basename == 'mcmd-omp'):
+            target['exeArgs'] = '../mcmd-cuda/dataset/mcmd.inp'
+
 
     return targets
 
@@ -344,12 +412,14 @@ def search_and_extract_file(inFile):
     if not (os.path.isfile(inFile) or os.path.islink(inFile)):
         dirToSearch = os.path.normpath(os.path.dirname(inFile))
 
+        print('searching this dir: ', dirToSearch)
         # go up until we hit the parent dir that ends in -omp -cuda -sycl or -hip
         while (True):
             lastName = os.path.basename(dirToSearch)
             if ('-sycl' in lastName) or ('-cuda' in lastName) or ('-omp' in lastName) or ('-hip' in lastName):
                 break
             dirToSearch = os.path.normpath(dirToSearch + '/..')
+            print('searching this dir: ', dirToSearch, 'for', inFile)
             print(f'{lastName}, {dirToSearch}')
 
         print('searching dir', dirToSearch)
@@ -360,9 +430,9 @@ def search_and_extract_file(inFile):
         tgzFiles = list(glob.glob(f'{dirToSearch}/**/*.tgz', recursive=True))
         zipFiles = list(glob.glob(f'{dirToSearch}/**/*.zip', recursive=True))
 
-        print(tarFiles)
-        print(zipFiles)
-        print(tgzFiles)
+        print('tarfiles', tarFiles)
+        print('zipfiles', zipFiles)
+        print('tgzfiles', tgzFiles)
 
         for tarFile in tarFiles:
             filename = os.path.basename(tarFile)
@@ -399,7 +469,7 @@ def check_and_unzip_input_files(targets:list):
         #print(target)
 
         # if there are any input files, let's try to find them
-        inputFiles = re.findall(r'\.+\/[0-9a-zA-Z_\-\/\.]*', args)
+        inputFiles = re.findall(r'\.+\/[0-9a-zA-Z_\+\-\/\.]*', args)
         if len(inputFiles) > 0:
             for inFile in inputFiles:
                 # if the word `output` is in the filename, we skip checking for it
@@ -432,29 +502,44 @@ def get_kernel_names_from_target(target:dict):
     basename = target['basename']
     srcDir = target['src']
 
-    cuobjdumpCommand = f'cuobjdump --list-text {BUILD_DIR}/{basename} | cu++filt'
-    #print(shlex.split(cuobjdumpCommand))
-    knamesResult = subprocess.run(cuobjdumpCommand, cwd=srcDir, shell=True, 
-                                  timeout=60, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    #print('getting kernel names for', basename)
+    if '-cuda' in basename:
+        cuobjdumpCommand = f'cuobjdump --list-text {BUILD_DIR}/{basename} | cu++filt'
+        #print(shlex.split(cuobjdumpCommand))
+        knamesResult = subprocess.run(cuobjdumpCommand, cwd=srcDir, shell=True, 
+                                      timeout=60, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
-    assert knamesResult.returncode == 0
+        assert knamesResult.returncode == 0
 
-    toRegex = knamesResult.stdout.decode('UTF-8')
-    #print(target, 'toRegex', toRegex)
+        toRegex = knamesResult.stdout.decode('UTF-8')
+        #print(target, 'toRegex', toRegex)
 
-    matches = re.findall(r'(?<= : x-)[\w\-]*(?=\(.*\)\.sm_.*\.elf\.bin)', toRegex)
+        matches = re.findall(r'(?<= : x-)[\w\-]*(?=\(.*\)\.sm_.*\.elf\.bin)', toRegex)
 
-    # check if any matches are templated, so we drop the return type and angle brackets
-    cleanNames = []
-    for match in matches:
-        if ('<' in match) or ('>' in match):
-            cleanName = re.findall(r'(?<= ).*(?=<)', match)[0]
-        else:
-            cleanName = match
-        cleanNames.append(cleanName)
+        # check if any matches are templated, so we drop the return type and angle brackets
+        cleanNames = []
+        for match in matches:
+            if ('<' in match) or ('>' in match):
+                cleanName = re.findall(r'(?<= ).*(?=<)', match)[0]
+            else:
+                cleanName = match
+            cleanNames.append(cleanName)
+    # it's an OMP program
+    else:
+        # when we build for OpenMP, there's a section with all the kernel names
+        objdumpCommand = f'objdump -t --section=omp_offloading_entries {BUILD_DIR}/{basename}'
+        knamesResult = subprocess.run(objdumpCommand, cwd=srcDir, shell=True, 
+                                      timeout=60, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
+        assert knamesResult.returncode == 0
 
-    #print(matches)
+        toRegex = knamesResult.stdout.decode('UTF-8')
+
+        matches = re.findall(r'(?<=\.omp_offloading\.entry\.)(__omp_offloading.*)(?=\n)', toRegex)
+
+        # all the OMP codes should have at least one offload region
+        assert len(matches) != 0
+        cleanNames = matches
 
     #assert len(matches) != 0
     # if the program doesn't have any kernels defined in its source code
@@ -599,6 +684,7 @@ def calc_roofline_data(df):
 
     avgCyclesPerSecond  = kdf['smsp__cycles_elapsed.avg.per_second'].apply(str_to_float)
 
+
     #print(avgCyclesPerSecond)
 
     sumDPAddOpsPerCycle = kdf['smsp__sass_thread_inst_executed_op_dadd_pred_on.sum.per_cycle_elapsed'].apply(str_to_float)
@@ -621,6 +707,11 @@ def calc_roofline_data(df):
 
     kdf['xtime'] = kdf['gpu__time_duration.sum'].apply(str_to_float)
     kdf['device'] = kdf['device__attribute_display_name']
+
+    kdf['intops'] = kdf['smsp__sass_thread_inst_executed_op_integer_pred_on.sum'].apply(str_to_float)
+    # need to scale down the xtime to be in seconds
+    kdf['intPerf'] = kdf['intops'] / (1e-9 * kdf['xtime'])
+    kdf['intAI'] = kdf['intPerf'] / kdf['traffic']
 
     timeUnits = df.iloc[0]['gpu__time_duration.sum']
     assert timeUnits == 'ns'
@@ -677,7 +768,7 @@ def execute_targets(targets:list, dfFilename:str):
                 rawDF = roofline_results_to_df(rooflineResult)
                 roofDF = calc_roofline_data(rawDF)
 
-                subset = roofDF[['Kernel Name', 'traffic', 'dpAI', 'spAI', 'dpPerf', 'spPerf', 'xtime', 'Block Size', 'Grid Size', 'device']].copy()
+                subset = roofDF[['Kernel Name', 'traffic', 'dpAI', 'spAI', 'dpPerf', 'spPerf', 'xtime', 'Block Size', 'Grid Size', 'device', 'intops', 'intPerf', 'intAI']].copy()
                 subset['targetName'] = basename
                 subset['exeArgs'] = exeArgs
                 subset['kernelName'] = kernelName
@@ -829,11 +920,14 @@ def main():
 
     targets = modify_kernel_names_for_some_targets(targets)
 
+    omp_targets = []
 
-    #for target in targets:
-    #    if target['basename'] == 'lulesh-cuda':
-    #        pprint(target)
-    #        execute_targets([target])
+    for target in targets:
+        #if target['basename'] == 'attention-omp':
+        if '-omp' in target['basename']:
+            omp_targets.append([target])
+            #pprint(target)
+            #execute_targets([target], args.outfile)
 
     #targets = targets[:70]
 

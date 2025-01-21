@@ -252,16 +252,9 @@ ENDIF()
 # testSNAP-cuda is missing an include
 # lzss-cuda is unable to download required data files -- broken links
 # cmp-cuda is unable to download required data files -- files not online need to contact eborin
-# cc-cuda has some segfault caused by a stack overflow
 # bincount-cuda only makes external CUDA library calls (we can't get the source code)
-# bscan-cuda gets out-of-memory error during execution
-# feynman-kac-cuda gets out-of-memory error during execution
-# lrn-cuda gets out-of-memory error during execution
 # cm-cuda requires user-input during execution -- need to support
 # voxelization-cuda missing required input files -- can't find a link
-# mpc-cuda gets out-of-memory error during execution
-# stencil3d-cuda gets out-of-memory error during execution (although it runs fine whout `ncu`) -- need to look into this...
-# tridiagonal-cuda segfaults during execution
 # dwconv1d-cuda has no makefile -- it's "run" by a python script
 # convolutionDeformable requires pytorch be installed
 # halo-finder-cuda is mpi-based
@@ -278,15 +271,25 @@ ENDIF()
 # saxpy-ompt-hip/sycl are HIP and SYCL based -- we don't support building this for now
 # xlqc-omp requires GSL lib to be installed
 # cmp-omp and cmp-cuda require a dataset we need to get from ed borin
+# mallocFree-omp and mallocFree-cuda doesn't actually do any compute, it has no kernels that get offloaded
+
+# SIGNAL 137 Out-of-memory (OOM)
+# mpc-cuda lrn-cuda feynman-kac-cuda bscan-cuda 
+# stencil3d-cuda gets out-of-memory error during execution (although it runs fine whout `ncu`) -- need to look into this...
+# channelShuffle-omp
+
+# SIGNAL 11 (segfaulting programs)
+# face-omp tridiagonal-cuda cc-cuda 
+
 set(IGNORE_TARGETS allreduce-cuda ccl-cuda diamond-cuda langford-cuda 
                    miniWeather-cuda minibude-cuda pingpong-cuda
                    qkv-cuda rowwiseMoments-cuda saxpy-ompt-cuda slit-cuda sparkler-cuda
                    lzss-cuda cmp-cuda cc-cuda sss-cuda streamUM-cuda stsg-cuda testSNAP-cuda
                    bscan-cuda feynman-kac-cuda lrn-cuda cm-cuda voxelization-cuda mpc-cuda
                    stencil3d-cuda tridiagonal-cuda dwconv1d-cuda convolutionDeformable-cuda
-                   halo-finder-cuda local-ht-cuda miniDGS-cuda xlqc-cuda 
-                   blas-gemm-omp cm-omp fsm-omp interval-omp langford-omp memcpy-omp
-                   miniWeather-omp saxpy-ompt-hip saxpy-ompt-sycl xlqc-omp cmp-omp)
+                   halo-finder-cuda local-ht-cuda miniDGS-cuda xlqc-cuda mallocFree-cuda
+                   blas-gemm-omp cm-omp fsm-omp interval-omp langford-omp mallocFree-omp memcpy-omp
+                   miniWeather-omp saxpy-ompt-hip saxpy-ompt-sycl xlqc-omp cmp-omp face-omp channelShuffle-omp)
 
 # for now we are ignoring this because it requires files
 # to be downloaded
@@ -410,18 +413,36 @@ IF(BUILD_OMP OR BUILD_CUDA)
     FILE(GLOB NICSLU_UTIL "${HECBENCH_SRC_DIR}/slu-cuda/src/nicslu/util/nicslu_readfile.c")
     add_library(nicslu-util STATIC ${NICSLU_UTIL})
 
-    FILE(GLOB MESCHACH_LIB "${HECBENCH_SRC_DIR}/leukocyte-cuda/meschach_lib/*.c")
+    # we need to manually specify the files for meschach lib    
+    SET(MESCHACH_TARGETS copy.c err.c matrixio.c memory.c vecop.c 
+                         matop.c pxop.c submat.c init.c otherio.c 
+                         machine.c matlab.c ivecop.c version.c 
+                         meminfo.c memstat.c lufactor.c bkpfacto.c 
+                         chfactor.c qrfactor.c solve.c hsehldr.c 
+                         givens.c update.c norm.c hessen.c symmeig.c 
+                         schur.c svd.c fft.c mfunc.c bdfactor.c 
+                         sparse.c sprow.c sparseio.c spchfctr.c 
+                         splufctr.c spbkp.c spswap.c iter0.c 
+                         itersym.c iternsym.c zmachine.c zcopy.c 
+                         zmatio.c zmemory.c zvecop.c zmatop.c 
+                         znorm.c zfunc.c zlufctr.c zsolve.c 
+                         zmatlab.c zhsehldr.c zqrfctr.c zgivens.c 
+                         zhessen.c zschur.c)
+    SET(MESCHACH_LIB "") 
+    FOREACH(MESCH_TARGET ${MESCHACH_TARGETS})
+        LIST(APPEND MESCHACH_LIB "${HECBENCH_SRC_DIR}/leukocyte-cuda/meschach_lib/${MESCH_TARGET}")
+    ENDFOREACH()
     add_library(meschach STATIC ${MESCHACH_LIB})
-    set_source_files_properties("${HECBENCH_SRC_DIR}/leukocyte-omp/meschach_lib/tutadv.c" PROPERTIES HEADER_FILE_ONLY ON)
-    set_source_files_properties("${HECBENCH_SRC_DIR}/leukocyte-cuda/meschach_lib/tutadv.c" PROPERTIES HEADER_FILE_ONLY ON)
-    set_source_files_properties("${HECBENCH_SRC_DIR}/leukocyte-cuda/meschach_lib/torture.c" PROPERTIES HEADER_FILE_ONLY ON)
-    set_source_files_properties("${HECBENCH_SRC_DIR}/leukocyte-cuda/meschach_lib/sptort.c" PROPERTIES HEADER_FILE_ONLY ON)
-    set_source_files_properties("${HECBENCH_SRC_DIR}/leukocyte-cuda/meschach_lib/ztorture.c" PROPERTIES HEADER_FILE_ONLY ON)
-    set_source_files_properties("${HECBENCH_SRC_DIR}/leukocyte-cuda/meschach_lib/memtort.c" PROPERTIES HEADER_FILE_ONLY ON)
-    set_source_files_properties("${HECBENCH_SRC_DIR}/leukocyte-cuda/meschach_lib/itertort.c" PROPERTIES HEADER_FILE_ONLY ON)
-    set_source_files_properties("${HECBENCH_SRC_DIR}/leukocyte-cuda/meschach_lib/mfuntort.c" PROPERTIES HEADER_FILE_ONLY ON)
+    #add_library(meschach SHARED ${MESCHACH_LIB})
+    FOREACH(MESCH_TARGET ${MESCHACH_LIB})
+        set_source_files_properties("${MESCH_TARGET}" PROPERTIES LANGUAGE CXX)
+        set_source_files_properties("${MESCH_TARGET}" PROPERTIES INCLUDE_DIRECTORIES "${HECBENCH_SRC_DIR}/leukocyte-cuda/meschach_lib")
+    ENDFOREACH()
+    # for some weird reason CMake is picking these up even though we don't include them...
+    set_source_files_properties("${HECBENCH_SRC_DIR}/leukocyte-omp/meschach_lib/iotort.c" PROPERTIES HEADER_FILE_ONLY ON)
     set_source_files_properties("${HECBENCH_SRC_DIR}/leukocyte-cuda/meschach_lib/iotort.c" PROPERTIES HEADER_FILE_ONLY ON)
-    set_target_properties(meschach PROPERTIES C_STANDARD "90")
+    #set_target_properties(meschach PROPERTIES C_STANDARD "90")
+    set_target_properties(meschach PROPERTIES LANGUAGE CXX)
     target_compile_options(meschach BEFORE PUBLIC "-DHAVE_CONFIG_H" "-DANSI_C")
     target_link_options(meschach BEFORE PRIVATE "-lm")
 
@@ -431,7 +452,7 @@ IF(BUILD_OMP OR BUILD_CUDA)
 ENDIF()
 
 IF(BUILD_OMP)
-    set_target_properties(${OMP_TARGETS} PROPERTIES COMPILE_FLAGS "-fopenmp -fopenmp-targets=nvptx64-nvidia-cuda")
+    set_target_properties(${OMP_TARGETS} PROPERTIES COMPILE_FLAGS "-fopenmp -fopenmp-targets=nvptx64-nvidia-cuda -DOMP_TARGET -DOPENMP_TARGET -DUSE_OPENMP_TARGET")
     #set_target_properties(${TARGETS} PROPERTIES COMPILE_FLAGS "-fopenmp -fopenmp-targets=nvptx64-nvidia-cuda -fopenmp-offload-mandatory")
     #set_target_properties(${TARGETS} PROPERTIES LINK_FLAGS "-fopenmp -fopenmp-targets=nvptx64-nvidia-cuda --offload-link -fopenmp-offload-mandatory")
     set_target_properties(${OMP_TARGETS} PROPERTIES LINK_FLAGS "-fopenmp -fopenmp-targets=nvptx64-nvidia-cuda")
@@ -468,12 +489,12 @@ IF(BUILD_OMP)
     #target_sources(cm-omp PRIVATE "${HECBENCH_SRC_DIR}/cm-cuda/main.cpp")
     #target_sources(cm-omp PRIVATE "${HECBENCH_SRC_DIR}/cm-cuda/io.cpp")
 
-    target_sources(cmp-omp PRIVATE "${HECBENCH_SRC_DIR}/cmp-cuda/reference.cpp")
-    target_sources(cmp-omp PRIVATE "${HECBENCH_SRC_DIR}/cmp-cuda/su_cdp.cpp")
-    target_sources(cmp-omp PRIVATE "${HECBENCH_SRC_DIR}/cmp-cuda/su_gather.cpp")
-    target_sources(cmp-omp PRIVATE "${HECBENCH_SRC_DIR}/cmp-cuda/su_trace.cpp")
-    target_sources(cmp-omp PRIVATE "${HECBENCH_SRC_DIR}/cmp-cuda/log.cpp")
-    target_sources(cmp-omp PRIVATE "${HECBENCH_SRC_DIR}/cmp-cuda/parser.cpp")
+    #target_sources(cmp-omp PRIVATE "${HECBENCH_SRC_DIR}/cmp-cuda/reference.cpp")
+    #target_sources(cmp-omp PRIVATE "${HECBENCH_SRC_DIR}/cmp-cuda/su_cdp.cpp")
+    #target_sources(cmp-omp PRIVATE "${HECBENCH_SRC_DIR}/cmp-cuda/su_gather.cpp")
+    #target_sources(cmp-omp PRIVATE "${HECBENCH_SRC_DIR}/cmp-cuda/su_trace.cpp")
+    #target_sources(cmp-omp PRIVATE "${HECBENCH_SRC_DIR}/cmp-cuda/log.cpp")
+    #target_sources(cmp-omp PRIVATE "${HECBENCH_SRC_DIR}/cmp-cuda/parser.cpp")
 
     #target_compile_options(crs-omp BEFORE PUBLIC "-D__STRICT_ANSI__")
     target_sources(crs-omp PRIVATE "${HECBENCH_SRC_DIR}/crs-sycl/galois.cpp")
@@ -613,12 +634,25 @@ IF(BUILD_OMP)
     target_sources(lebesgue-omp PRIVATE "${HECBENCH_SRC_DIR}/lebesgue-cuda/utils.cpp")
 
 
+    FILE(GLOB LEUKOCYTE_C_FILES "${HECBENCH_SRC_DIR}/leukocyte-omp/*.c")
+    #message("leukocyte-omp c files ${LEUKOCYTE_C_FILES}")
+    #set_target_properties(leukocyte-omp PROPERTIES SOURCES ${LEUKOCYTE_C_FILES})
+    target_sources(leukocyte-omp PRIVATE ${LEUKOCYTE_C_FILES})
+    #get_target_property(LEUK_SOURCES leukocyte-omp SOURCES)
+    #message("leukocyte-omp c files ${LEUK_SOURCES}")
+    set_target_properties(leukocyte-omp PROPERTIES INCLUDE_DIRECTORIES "${HECBENCH_SRC_DIR}/leukocyte-omp;${HECBENCH_SRC_DIR}/leukocyte-cuda/meschach_lib")
     set_target_properties(leukocyte-omp PROPERTIES CXX_STANDARD "11")
-    set_target_properties(leukocyte-omp PROPERTIES LANGUAGE CXX)
-    set_target_properties(meschach PROPERTIES C_STANDARD "90")
-    set_source_files_properties("${HECBENCH_SRC_DIR}/leukocyte-omp/meschach_lib/tutadv.c" PROPERTIES HEADER_FILE_ONLY ON)
+    #set_target_properties(leukocyte-omp PROPERTIES LANGUAGE CXX)
+    set_source_files_properties(${LEUKOCYTE_C_FILES} PROPERTIES LANGUAGE CXX)
+    #set_source_files_properties("${HECBENCH_SRC_DIR}/leukocyte-omp/find_ellipse.c" PROPERTIES LANGUAGE CXX)
+    #set_source_files_properties("${HECBENCH_SRC_DIR}/leukocyte-omp/find_ellipse.c" PROPERTIES LANGUAGE CXX)
+    #set_target_properties(meschach PROPERTIES C_STANDARD "90")
+    #set_source_files_properties("${HECBENCH_SRC_DIR}/leukocyte-omp/meschach_lib/tutadv.c" PROPERTIES HEADER_FILE_ONLY ON)
     add_dependencies(leukocyte-omp meschach)
     target_link_libraries(leukocyte-omp meschach)
+    target_link_options(leukocyte-omp BEFORE PRIVATE "-lm;-v")
+    
+    #target_link_options(leukocyte-omp BEFORE PRIVATE "-L${HECBENCH_SRC_DIR}/leukocyte-cuda/me")
 
 
     target_sources(lud-omp PRIVATE "${HECBENCH_SRC_DIR}/lud-omp/common/common.c")
@@ -626,6 +660,7 @@ IF(BUILD_OMP)
     #set_target_properties(lud-omp PROPERTIES LANGUAGE CXX)
     #set_source_files_properties("${HECBENCH_SRC_DIR}/lud-cuda/lud_kernels.cu" PROPERTIES HEADER_FILE_ONLY ON)
 
+    #target_compile_options(mallocFree-omp BEFORE PUBLIC "-DUM")
 
     target_compile_options(mcmd-omp PUBLIC "-D_MWAITXINTRIN_H_INCLUDED" "-D_FORCE_INLINES" "-D__STRICT_ANSI__" "-DGPU")
     target_sources(mcmd-omp PRIVATE "${HECBENCH_SRC_DIR}/mcmd-cuda/main.cpp")
@@ -909,8 +944,18 @@ IF(BUILD_CUDA)
     #add_library(meschach STATIC ${MESCHACH_LIB})
     #set_target_properties(leukocyte-cuda PROPERTIES CXX_STANDARD "11")
     #set_target_properties(leukocyte-cuda PROPERTIES LANGUAGE CXX)
-    get_target_property(LEUKO_SRCS leukocyte-cuda SOURCES)
-    set_source_files_properties(${LEUKO_SRCS} PROPERTIES LANGUAGE CUDA)
+    FILE(GLOB LEUKOCYTE_C_FILES "${HECBENCH_SRC_DIR}/leukocyte-cuda/*.c")
+    #message("leukocyte-omp c files ${LEUKOCYTE_C_FILES}")
+    #set_target_properties(leukocyte-omp PROPERTIES SOURCES ${LEUKOCYTE_C_FILES})
+    target_sources(leukocyte-cuda PRIVATE ${LEUKOCYTE_C_FILES})
+    #get_target_property(LEUK_SOURCES leukocyte-omp SOURCES)
+    #message("leukocyte-omp c files ${LEUK_SOURCES}")
+    set_target_properties(leukocyte-cuda PROPERTIES INCLUDE_DIRECTORIES "${HECBENCH_SRC_DIR}/leukocyte-cuda;${HECBENCH_SRC_DIR}/leukocyte-cuda/meschach_lib")
+    set_target_properties(leukocyte-omp PROPERTIES CXX_STANDARD "11")
+    #set_target_properties(leukocyte-omp PROPERTIES LANGUAGE CXX)
+    set_source_files_properties(${LEUKOCYTE_C_FILES} PROPERTIES LANGUAGE CUDA)
+    #get_target_property(LEUKO_SRCS leukocyte-cuda SOURCES)
+    #set_source_files_properties(${LEUKO_SRCS} PROPERTIES LANGUAGE CUDA)
     add_dependencies(leukocyte-cuda meschach)
     target_link_libraries(leukocyte-cuda meschach)
 
@@ -936,6 +981,7 @@ IF(BUILD_CUDA)
     set_source_files_properties("${HECBENCH_SRC_DIR}/lud-cuda/lud_kernels.cu" PROPERTIES HEADER_FILE_ONLY ON)
 
     target_link_options(ludb-cuda PRIVATE "-lcublas")
+
 
     set_source_files_properties("${HECBENCH_SRC_DIR}/md5hash-cuda/MD5Hash.cpp" PROPERTIES HEADER_FILE_ONLY ON)
 

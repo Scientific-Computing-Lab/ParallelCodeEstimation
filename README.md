@@ -41,11 +41,12 @@ Here's a list of common build issues that might help if you're encountering erro
 Once all the codes are built, we can start the data collection process. We have our own script called `gatherData.py` which can be invoked to gather the roofline benchmarking data of each of the built programs.
 
 ```
-DATAPATH=/home/gbolet/HeCBench-roofline/src/prna-cuda/data_tables python3 ./gatherData.py
+LD_LIBRARY_PATH=/usr/lib/llvm-18/lib:$LD_LIBRARY_PATH DATAPATH=/home/gbolet/HeCBench-roofline/src/prna-cuda/data_tables python3 ./gatherData.py
 ```
 
 This will automatically invoke each of the built executables, using `ncu` (NVIDIA Nsight Compute) to profile each of the kernels in the executable. Some of the codes require files to be downloaded proir, this script takes care of the downloading process and makes sure that all the requested files are in place.
 The `DATAPATH` environment variable is only needed by `frna-cuda` and `prna-cuda`, so if you're not running those, you can drop it.
+The `LD_LIBRARY_PATH` environment variable is for all the OMP codes, this is the path to the `libomptarget.so` library. We should probably `rpath` this in in the future, but for now this is fine.
 
 The internal workflow at a high leve looks like the following:
 1. Download rodinia dataset (skip if requested with `--skipRodiniaDownload`).
