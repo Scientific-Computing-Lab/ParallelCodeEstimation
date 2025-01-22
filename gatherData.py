@@ -957,7 +957,7 @@ def main():
     #pprint(targets)
 
     results = execute_targets(omp_targets, args.outfile)
-    results = execute_targets(targets, args.outfile)
+    #results = execute_targets(targets, args.outfile)
 
     return
 
