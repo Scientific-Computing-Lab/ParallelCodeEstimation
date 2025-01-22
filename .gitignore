@@ -34,3 +34,4 @@ lena_std.dds
 src/dxtc2-sycl/data/lena_std.dds
 src/geodesic-cuda/locations.txt
 deleteme**
+.*-api-key

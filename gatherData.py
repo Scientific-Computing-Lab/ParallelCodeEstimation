@@ -249,6 +249,16 @@ def download_files_for_some_targets(targets):
                 command = f'tar -xf ./testcase.tar.gz' 
                 result = subprocess.run(command, cwd=f'{srcDir}/../grep-cuda', shell=True)
                 assert result.returncode == 0
+        elif (basename == 'd2q9-bgk-omp') or (basename == 'd2q9-bgk-cuda'):
+            if not os.path.exists(f'{srcDir}/Inputs/input_256x256.params'):
+                command = f'tar -xf ./test.tar.gz' 
+                result = subprocess.run(command, cwd=f'{srcDir}', shell=True)
+                assert result.returncode == 0
+        elif (basename == 'lr-omp'):
+            if not os.path.exists(f'{srcDir}/assets/house.txt'):
+                command = f'cp ../lr-sycl/assets.tar.gz ./ && tar -xf ./assets.tar.gz' 
+                result = subprocess.run(command, cwd=f'{srcDir}', shell=True)
+                assert result.returncode == 0
 
     return
 
@@ -604,7 +614,16 @@ def execute_target(target:dict, kernelName:str):
     # we print the stderr to the stdout for analysis
     # 15 minute timeout for now?
     # cm-cuda goes over 10 mins to run!
-    execResult = subprocess.run(shlex.split(exeCommand), cwd=srcDir, timeout=900, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    try:
+        execResult = subprocess.run(shlex.split(exeCommand), cwd=srcDir, timeout=30, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+    # temporarily doing this to skip slow runs
+    except subprocess.TimeoutExpired:
+        return (None, None)
+
+    # temporarily doing this to skip breaking runs
+    if execResult.returncode != 0:
+        return (None, None)
 
     assert execResult.returncode == 0, f'Execution error: {execResult.stdout.decode("UTF-8")}'
 
@@ -778,6 +797,8 @@ def execute_targets(targets:list, dfFilename:str):
             # indicate the kernel doesn't get executed and so we skip it
             # if we try to re-run data gathering
             else:
+                # doing this now to skip failing runs
+                continue
                 dataDict = {'targetName':[basename], 'exeArgs':[exeArgs], 'kernelName':[kernelName]}
                 subset = pd.DataFrame(dataDict)
 
@@ -924,8 +945,10 @@ def main():
 
     for target in targets:
         #if target['basename'] == 'attention-omp':
-        if '-omp' in target['basename']:
-            omp_targets.append([target])
+        # skip prna for now as it takes a long time to run
+        # match-omp stays in GPU memory after being force killed
+        if '-omp' in target['basename'] and (not target['basename'] in ['prna-omp', 'memtest-omp', 'metropolis-omp', 'hypterm-omp', 'gc-omp', 'scan-omp', 'frna-omp', 'match-omp', 'lid-driven-cavity-omp']):
+            omp_targets.append(target)
             #pprint(target)
             #execute_targets([target], args.outfile)
 
@@ -933,6 +956,7 @@ def main():
 
     #pprint(targets)
 
+    results = execute_targets(omp_targets, args.outfile)
     results = execute_targets(targets, args.outfile)
 
     return

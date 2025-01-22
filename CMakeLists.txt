@@ -278,8 +278,17 @@ ENDIF()
 # stencil3d-cuda gets out-of-memory error during execution (although it runs fine whout `ncu`) -- need to look into this...
 # channelShuffle-omp
 
+# Device out of memory
+# dense-embedding-omp lrn-omp
+
 # SIGNAL 11 (segfaulting programs)
 # face-omp tridiagonal-cuda cc-cuda 
+
+# SIGNAL 255
+# linearprobing-omp
+
+# cuStreamSynchronize illegal memory access
+# debayer-omp pointwise-omp
 
 set(IGNORE_TARGETS allreduce-cuda ccl-cuda diamond-cuda langford-cuda 
                    miniWeather-cuda minibude-cuda pingpong-cuda
@@ -289,7 +298,8 @@ set(IGNORE_TARGETS allreduce-cuda ccl-cuda diamond-cuda langford-cuda
                    stencil3d-cuda tridiagonal-cuda dwconv1d-cuda convolutionDeformable-cuda
                    halo-finder-cuda local-ht-cuda miniDGS-cuda xlqc-cuda mallocFree-cuda
                    blas-gemm-omp cm-omp fsm-omp interval-omp langford-omp mallocFree-omp memcpy-omp
-                   miniWeather-omp saxpy-ompt-hip saxpy-ompt-sycl xlqc-omp cmp-omp face-omp channelShuffle-omp)
+                   miniWeather-omp saxpy-ompt-hip saxpy-ompt-sycl xlqc-omp cmp-omp face-omp channelShuffle-omp
+                   debayer-omp dense-embedding-omp lrn-omp linearprobing-omp pointwise-omp)
 
 # for now we are ignoring this because it requires files
 # to be downloaded
