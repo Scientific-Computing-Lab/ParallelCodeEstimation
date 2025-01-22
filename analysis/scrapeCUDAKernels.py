@@ -18,6 +18,7 @@ from io import StringIO
 import numpy as np
 import json
 import clang.cindex
+import json
 
 # these will be used globally in this program
 # mainly for consistency. They are absoule (full) paths
@@ -69,74 +70,6 @@ def get_runnable_targets():
     return execs
 
 
-#def search_and_extract_file(inFile):
-    ## if the file doesn't exist, let's unpack any tar files
-    ## in the specified directory
-    #if not (os.path.isfile(inFile) or os.path.islink(inFile)):
-        #dirToSearch = os.path.dirname(inFile)
-
-        #print('searching dir', dirToSearch)
-        #print('trying to find', inFile)
-
-        #tarFiles = list(glob.glob(f'{dirToSearch}/*.tar.gz'))
-        #tgzFiles = list(glob.glob(f'{dirToSearch}/*.tgz'))
-        #zipFiles = list(glob.glob(f'{dirToSearch}/*.zip'))
-
-        #print(tarFiles)
-        #print(zipFiles)
-        #print(tgzFiles)
-
-        #for tarFile in tarFiles:
-            #filename = os.path.basename(tarFile)
-            #command = f'tar -xf {filename}'
-            #result = subprocess.run(shlex.split(command), cwd=dirToSearch)
-            #assert result.returncode == 0
-            #print('Extracted tar archive:', filename)
-
-        #for tgzFile in tgzFiles:
-            #filename = os.path.basename(tgzFile)
-            #command = f'tar -xzf {filename}'
-            #result = subprocess.run(shlex.split(command), cwd=dirToSearch)
-            #assert result.returncode == 0
-            #print('Extracted tgz archive:', filename)
-
-        #for zipFile in zipFiles:
-            #filename = os.path.basename(zipFile)
-            #command = f'unzip {filename}'
-            #result = subprocess.run(shlex.split(command), cwd=dirToSearch)
-            #assert result.returncode == 0
-            #print('Extracted zip archive:', filename)
-
-        ## now let's check that the file exists
-        #assert os.path.exists(inFile)
-
-    #return
-
-
-#def get_exec_command_from_makefile(makefile):
-    #assert os.path.isfile(makefile)
-
-    #with open(makefile, 'r') as file:
-        #data = file.read()
-        ## crazy regex program, but pretty much captures multiline invocations
-        ## and special makefile cases we've encountered
-        #matches = re.findall(r'(?:(?<=\.\/\$\(EXE\))|(?<=\.\/\$\(program\)))(?:[ \n])(?:[^\n\\]*)(?:(?:\\\n[^\n\\]*)+|(?:))', data, re.DOTALL)
-
-        #if len(matches) == 0:
-            ## let's just double-check that the program takes no arguments
-            #return ''
-        #else:
-            ## sometimes we'll have multiple matches due to multiple invocations
-            ## for now we just take the first one
-
-            ## let's clean up the string
-            #exeArgs = matches[0].lstrip().rstrip()
-            #exeArgs = exeArgs.replace('\n', '').replace('\\','')
-            #exeArgs = ' '.join(exeArgs.split())
-            #return exeArgs
-
-    #return ''
-
 
 
 def modify_kernel_names_for_some_targets(targets:list):
@@ -183,6 +116,7 @@ def get_kernel_names_from_target(target:dict):
     return list(set(cleanNames))
 
 
+
 def get_kernel_names(targets:list):
     assert len(targets) != 0
     for target in tqdm(targets, desc='Gathering kernel names'): 
@@ -195,7 +129,7 @@ def get_kernel_names(targets:list):
 
 def read_file_section(file_path, start_line, start_column, end_line, end_column):
     with open(file_path, 'r', errors='ignore') as file:
-        print(f'opening file {file_path} {start_line}:{end_line}')
+        #print(f'opening file {file_path} {start_line}:{end_line}')
         lines = file.readlines()
         # if for some reason they are asking for an index out of range
         if (start_line > len(lines)) | (end_line-1 > len(lines)):
@@ -275,7 +209,7 @@ def find_files_with_kernel_name(dir:str, kernelName:str):
 
     result = [f'{dir}/{filename}' for filename in foundFiles]
 
-    print('foundFiles', foundFiles)
+    #print('foundFiles', foundFiles)
     return result 
 
 def regex_search_for_kernel_in_file(filename:str, kernelName:str):
@@ -322,8 +256,8 @@ def gather_kernels(targets:list, outfileName:str):
                 if len(srcCode) > len(selected):
                     selected = srcCode
 
-            print(f'total code candidates for kernel: [{kernelName}] in [{basename}]: {len(codeCandidates)}')
-            print(f'biggest code candidate for kernel: [{kernelName}] in [{basename}]: \n[{selected}]')
+            #print(f'total code candidates for kernel: [{kernelName}] in [{basename}]: {len(codeCandidates)}')
+            #print(f'biggest code candidate for kernel: [{kernelName}] in [{basename}]: \n[{selected}]')
             kernels[kernelName] = selected
 
         target['kernels'] = kernels
@@ -364,7 +298,7 @@ def main():
 
     parser.add_argument('--buildDir', type=str, required=False, default='../build', help='Directory containing all the built executables')
     parser.add_argument('--srcDir', type=str, required=False, default='../src', help='Directory containing all the source files for the target executables')
-    parser.add_argument('--outfile', type=str, required=False, default='../CUDA-data.csv', help='Output JSON file with extracted kernels')
+    parser.add_argument('--outfile', type=str, required=False, default='../scraped-cuda-kernels.json', help='Output JSON file with extracted kernels')
 
     args = parser.parse_args()
 
@@ -381,6 +315,10 @@ def main():
     #targets = targets[0:100]
 
     results = gather_kernels(targets, args.outfile)
+
+    # save the gathered kernels to a file
+    with open(args.outfile, "w") as fp:
+        json.dump(results, fp, indent=4) 
 
     pprint(results)
 
