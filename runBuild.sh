@@ -20,7 +20,7 @@ cmake -DCMAKE_C_COMPILER=clang \
       -DCMAKE_CUDA_FLAGS="${CXX_FLAGS}" \
       -S../ -B./
 
-make -j14 all
+#make -j14 all
 
 cd ..
 

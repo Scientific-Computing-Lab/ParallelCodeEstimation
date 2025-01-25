@@ -581,11 +581,11 @@ IF(BUILD_OMP)
 
     target_sources(extend2-omp PRIVATE "${HECBENCH_SRC_DIR}/extend2-sycl/read_data.cpp")
 
-    target_compile_options(face-omp BEFORE PUBLIC "-DOMP_TARGET")
-    target_sources(face-omp PRIVATE "${HECBENCH_SRC_DIR}/face-sycl/stdio-wrapper.cpp")
-    target_sources(face-omp PRIVATE "${HECBENCH_SRC_DIR}/face-sycl/rectangles.cpp")
-    target_sources(face-omp PRIVATE "${HECBENCH_SRC_DIR}/face-sycl/image.cpp")
-    target_sources(face-omp PRIVATE "${HECBENCH_SRC_DIR}/face-sycl/main.cpp")
+    #target_compile_options(face-omp BEFORE PUBLIC "-DOMP_TARGET")
+    #target_sources(face-omp PRIVATE "${HECBENCH_SRC_DIR}/face-sycl/stdio-wrapper.cpp")
+    #target_sources(face-omp PRIVATE "${HECBENCH_SRC_DIR}/face-sycl/rectangles.cpp")
+    #target_sources(face-omp PRIVATE "${HECBENCH_SRC_DIR}/face-sycl/image.cpp")
+    #target_sources(face-omp PRIVATE "${HECBENCH_SRC_DIR}/face-sycl/main.cpp")
 
     # need to move this file so that we get a correct build
     execute_process(

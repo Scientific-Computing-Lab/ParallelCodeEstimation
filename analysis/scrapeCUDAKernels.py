@@ -145,6 +145,7 @@ def read_file_section(file_path, start_line, start_column, end_line, end_column)
             return result.rstrip().lstrip()
 
 
+'''
 def search_ast_for_matches(cursor, kernelName:str):
 
     stack = [cursor]
@@ -175,6 +176,20 @@ def get_source_lines_of_kernel(filename:str, kernelName:str):
     cursor = tu.cursor
     matches = search_ast_for_matches(cursor, kernelName)
 
+    ########################### FIX-START
+    # Filter matches to those located in the current file
+    filtered_matches = []
+    for match in matches:
+        # Ensure the match's start location is in the parsed file
+        if match.extent.start.file is None:
+            continue
+        match_file = os.path.abspath(match.extent.start.file.name)
+        current_file = os.path.abspath(filename)
+        if match_file == current_file:
+            filtered_matches.append(match)
+    matches = filtered_matches
+    ########################### FIX-END
+
     # if we got multiple matches, it is often due to function declaration and then later definition
     kernelSources = []
 
@@ -189,7 +204,90 @@ def get_source_lines_of_kernel(filename:str, kernelName:str):
                 kernelSources.append(kernelSource)
 
     return kernelSources
+'''
 
+def search_ast_for_matches(cursor, kernelName:str):
+    stack = [cursor]
+    matches = []
+
+    while len(stack) != 0:
+        current = stack.pop()
+        for child in current.get_children():
+            stack.append(child)
+
+        if (current.spelling == kernelName) & ((current.kind == clang.cindex.CursorKind.FUNCTION_DECL) | (current.kind == clang.cindex.CursorKind.FUNCTION_TEMPLATE)):
+            # skip this cursor if it's actually just the function declaration and not definition
+            if not current.is_definition():
+                continue
+            # Find all __device__ function calls within the __global__ kernel
+            device_functions = []
+            for child in current.walk_preorder():
+                if (child.kind == clang.cindex.CursorKind.CALL_EXPR) and (child.get_definition() is not None):
+                    def_cursor = child.get_definition()
+                    if def_cursor and def_cursor.kind == clang.cindex.CursorKind.FUNCTION_DECL:
+                        device_functions.append(def_cursor)
+            matches.append((current, device_functions))
+
+    return matches
+
+
+def get_source_lines_of_kernel(filename:str, kernelName:str):
+    index = clang.cindex.Index.create()
+
+    try:
+        tu = index.parse(filename)
+    except:
+        # sometimes the files are not C/C++, this will skip these
+        #print(f'error in clang reading file [{filename}]')
+        return []
+
+    #print(f'searching in file {filename}')
+    cursor = tu.cursor
+    matches = search_ast_for_matches(cursor, kernelName)
+
+    # Filter matches to those located in the current file
+    filtered_matches = []
+    for match in matches:
+        # Ensure the match's start location is in the parsed file
+        if match[0].extent.start.file is None:
+            continue
+        match_file = os.path.abspath(match[0].extent.start.file.name)
+        current_file = os.path.abspath(filename)
+        if match_file == current_file:
+            filtered_matches.append(match)
+    matches = filtered_matches
+
+    # if we got multiple matches, it is often due to function declaration and then later definition
+    kernelSources = []
+
+    if len(matches) != None:
+        for match in matches:
+            global_kernel = match[0]
+            device_functions = match[1]
+
+            kernelSource = []
+
+            # Extract the __global__ kernel source
+            start = global_kernel.extent.start
+            end = global_kernel.extent.end
+            #kernelSource = read_file_section(filename, start.line, start.column, end.line, end.column)
+            global_source = read_file_section(filename, start.line, start.column, end.line, end.column)
+
+            kernelSource.append(global_source)
+
+            # Extract the __device__ function sources
+            for device_func in device_functions:
+                start = device_func.extent.start
+                end = device_func.extent.end
+                device_source = read_file_section(filename, start.line, start.column, end.line, end.column)
+                kernelSource.append(device_source)
+                #kernelSource += "\n\n" + device_source  # Append the __device__ function source
+
+            # Check if the kernel name is in the extracted source
+            if kernelName in global_source:
+                kernelSources.append(kernelSource)
+
+    return kernelSources
 
 
 def find_files_with_kernel_name(dir:str, kernelName:str):
@@ -212,10 +310,6 @@ def find_files_with_kernel_name(dir:str, kernelName:str):
     #print('foundFiles', foundFiles)
     return result 
 
-def regex_search_for_kernel_in_file(filename:str, kernelName:str):
-
-
-    return 
 
 def gather_kernels(targets:list, outfileName:str):
 
@@ -236,7 +330,8 @@ def gather_kernels(targets:list, outfileName:str):
             codeCandidates = []
             for filename in finds:
                 srcCodes = get_source_lines_of_kernel(filename, kernelName)
-                codeCandidates = codeCandidates + srcCodes
+                #codeCandidates = codeCandidates + srcCodes
+                codeCandidates.extend(srcCodes)
 
             # in the rare event that we can't find any code candidates 
             # (this happens to particles-cuda for some reason...)
@@ -250,15 +345,33 @@ def gather_kernels(targets:list, outfileName:str):
 
             assert len(codeCandidates) != 0, f'Unable to find source for kernel [{kernelName}] of [{basename}]'
 
+            assert len(codeCandidates) == 1, f'Working on {target}, \n{pprint(codeCandidates)}'
+            ########################### FIX-START
+            # For now, if there are multiple code candidates, we'll pick the one with the 
+            # longest total amount of code for the __global__ kernel
+            #selected = []
+            #max_global_length = 0
+            #for srcCode in codeCandidates:
+            #    # add up the lengths of all the kernels 
+            #    totalLen = sum([len(textCode) for textCode in srcCode])
+            #    if totalLen > max_global_length:  # Check the length of the __global__ kernel
+            #        selected = srcCode
+            #        max_global_length = totalLen
+
+            ## Store the list of kernel sources in the kernels dictionary
+            #kernels[kernelName] = selected
+            kernels[kernelName] = codeCandidates 
+            ########################### FIX-END
+
             # for now, if there are multiple code candidates, we'll pick the biggest one
-            selected = ''
-            for srcCode in codeCandidates:
-                if len(srcCode) > len(selected):
-                    selected = srcCode
+            #selected = ''
+            #for srcCode in codeCandidates:
+            #    if len(srcCode) > len(selected):
+            #        selected = srcCode
 
             #print(f'total code candidates for kernel: [{kernelName}] in [{basename}]: {len(codeCandidates)}')
             #print(f'biggest code candidate for kernel: [{kernelName}] in [{basename}]: \n[{selected}]')
-            kernels[kernelName] = selected
+            #kernels[kernelName] = selected
 
         target['kernels'] = kernels
 
@@ -298,7 +411,7 @@ def main():
 
     parser.add_argument('--buildDir', type=str, required=False, default='../build', help='Directory containing all the built executables')
     parser.add_argument('--srcDir', type=str, required=False, default='../src', help='Directory containing all the source files for the target executables')
-    parser.add_argument('--outfile', type=str, required=False, default='../scraped-cuda-kernels.json', help='Output JSON file with extracted kernels')
+    parser.add_argument('--outfile', type=str, required=False, default='./scraped-cuda-kernels.json', help='Output JSON file with extracted kernels')
 
     args = parser.parse_args()
 
@@ -313,6 +426,13 @@ def main():
     #targets = load_exisiting_data(targets, args.outfile)
 
     #targets = targets[0:100]
+    shortlist_targets = []
+    for target in targets:
+        #if target['basename'] == 'cooling-cuda':
+        if '-cuda' in target['basename']:
+            shortlist_targets.append(target)
+    
+    targets = shortlist_targets
 
     results = gather_kernels(targets, args.outfile)
 
