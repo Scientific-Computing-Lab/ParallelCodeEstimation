@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.28)
 
 project("HeCBench-roofline")
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 #option(OMP_INCLUDE_DIR "OpenMP Include Directory (contains omp.h)" "")
 

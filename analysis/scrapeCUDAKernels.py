@@ -1,35 +1,36 @@
 '''
-This script will go through each of the source directories and use `grep`
-to extract the files containing the kernels of interest.
-Once the files are identified, we use some regex to pull out the kernels.
-We then save all the extracted kernels to a JSON file for easy parsing.
+This script will go through each of the source directories and use `clang.cindex`
+to extract the CUDA kernels and their called __device__ functions from the source code.
+The extracted code is saved to a JSON file for easy parsing.
 '''
 
 import os
 import argparse
-import pandas as pd
 import glob
 from pprint import pprint
 import re
 from tqdm import tqdm
 import subprocess
 import shlex
-from io import StringIO
-import numpy as np
 import json
 import clang.cindex
-import json
+from clang.cindex import Cursor, CursorKind, StorageClass
 
 # these will be used globally in this program
-# mainly for consistency. They are absoule (full) paths
+# mainly for consistency. They are absolute (full) paths
 ROOT_DIR = ''
 SRC_DIR = ''
 BUILD_DIR = ''
+LIBCLANG_PATH = ''
 
-def setup_dirs(buildDir, srcDir):
+def setup_dirs(buildDir, srcDir, libclangPath):
     global ROOT_DIR
     global SRC_DIR
     global BUILD_DIR
+    global LIBCLANG_PATH
+
+    LIBCLANG_PATH = os.path.abspath(libclangPath)
+    assert os.path.isfile(LIBCLANG_PATH)
 
     ROOT_DIR = os.path.abspath(f'{srcDir}/../')
     assert os.path.exists(ROOT_DIR)
@@ -50,7 +51,6 @@ def setup_dirs(buildDir, srcDir):
 
 def get_runnable_targets():
     # gather a list of dictionaries storing executable names and source directories
-    # the list of dicts will later have run command information added to them
     files = glob.glob(f'{BUILD_DIR}/*')
     execs = []
     for entry in files:
@@ -70,15 +70,15 @@ def get_runnable_targets():
     return execs
 
 
-
-
 def modify_kernel_names_for_some_targets(targets:list):
     for target in targets:
         basename = target['basename']
 
         if basename == 'assert-cuda':
-            target['kernelNames'].remove('testKernel')
-
+            if 'testKernel' in target['kernelNames']:
+                target['kernelNames'].remove('testKernel')
+        if basename == 'atomicIntrinsics-cuda':
+            print('atomicIntrinsics', target)
 
     return targets
 
@@ -89,32 +89,27 @@ def get_kernel_names_from_target(target:dict):
     srcDir = target['src']
 
     cuobjdumpCommand = f'cuobjdump --list-text {BUILD_DIR}/{basename} | cu++filt'
-    #print(shlex.split(cuobjdumpCommand))
     knamesResult = subprocess.run(cuobjdumpCommand, cwd=srcDir, shell=True, 
                                   timeout=60, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
     assert knamesResult.returncode == 0
 
     toRegex = knamesResult.stdout.decode('UTF-8')
-    #print(target, 'toRegex', toRegex)
 
-    matches = re.findall(r'(?<= : x-)[\w\-]*(?=\(.*\)\.sm_.*\.elf\.bin)', toRegex)
+    matches = re.findall(r'(?<= : x-).*(?=\(.*\)\.sm_.*\.elf\.bin)', toRegex)
 
     # check if any matches are templated, so we drop the return type and angle brackets
     cleanNames = []
     for match in matches:
         if ('<' in match) or ('>' in match):
-            cleanName = re.findall(r'(?<= ).*(?=<)', match)[0]
+            parts = re.split(r'<|>', match)
+            cleanName = parts[0].split()[-1] if ' ' in parts[0] else parts[0]
         else:
             cleanName = match
         cleanNames.append(cleanName)
 
-    # if the program doesn't have any kernels defined in its source code
-    # the matches list will be empty, indicating we should skip sampling
-    # this program as the source code is usually some external private
-    # library.
+    # deduplicate and return
     return list(set(cleanNames))
-
 
 
 def get_kernel_names(targets:list):
@@ -125,325 +120,232 @@ def get_kernel_names(targets:list):
     return targets
 
 
-
-
 def read_file_section(file_path, start_line, start_column, end_line, end_column):
     with open(file_path, 'r', errors='ignore') as file:
-        #print(f'opening file {file_path} {start_line}:{end_line}')
         lines = file.readlines()
-        # if for some reason they are asking for an index out of range
-        if (start_line > len(lines)) | (end_line-1 > len(lines)):
+        if start_line > len(lines) or end_line > len(lines):
             return ''
-        elif start_line != end_line:
-            lines = lines[start_line - 1:end_line]
-            result = [lines[0][start_column-1:]]
-            result = result + lines[1:len(lines)-1]
-            result = result + [lines[-1][:end_column]]
-            return ''.join(result).rstrip().lstrip()
+        start_line_idx = start_line - 1
+        end_line_idx = end_line - 1
+        if start_line_idx == end_line_idx:
+            line = lines[start_line_idx]
+            return line[start_column-1:end_column-1].strip()
         else:
-            result = lines[start_line - 1]
-            return result.rstrip().lstrip()
+            # First line
+            code = [lines[start_line_idx][start_column-1:]]
+            # Middle lines
+            for i in range(start_line_idx + 1, end_line_idx):
+                code.append(lines[i])
+            # Last line
+            code.append(lines[end_line_idx][:end_column-1])
+            return ''.join(code).strip()
 
-
-'''
-def search_ast_for_matches(cursor, kernelName:str):
-
-    stack = [cursor]
-    matches = []
-
-    while len(stack) != 0:
-        current = stack.pop()
-        for child in current.get_children():
-            stack.append(child)
-
-        if (current.spelling == kernelName) & ((current.kind == clang.cindex.CursorKind.FUNCTION_DECL) | (current.kind == clang.cindex.CursorKind.FUNCTION_TEMPLATE)):
-            matches.append(current)
-
-    return matches
-
-
-def get_source_lines_of_kernel(filename:str, kernelName:str):
-    index = clang.cindex.Index.create()
-
-    try:
-        tu = index.parse(filename)
-    except:
-        # sometimes the files are not C/C++, this will skip these
-        #print(f'error in clang reading file [{filename}]')
+# this is used to remove any unneeded build arguments like `-c`
+# that we don't need for static analysis
+def process_compile_command(command_str):
+    args = shlex.split(command_str)
+    if not args:
         return []
-
-    #print(f'searching in file {filename}')
-    cursor = tu.cursor
-    matches = search_ast_for_matches(cursor, kernelName)
-
-    ########################### FIX-START
-    # Filter matches to those located in the current file
-    filtered_matches = []
-    for match in matches:
-        # Ensure the match's start location is in the parsed file
-        if match.extent.start.file is None:
-            continue
-        match_file = os.path.abspath(match.extent.start.file.name)
-        current_file = os.path.abspath(filename)
-        if match_file == current_file:
-            filtered_matches.append(match)
-    matches = filtered_matches
-    ########################### FIX-END
-
-    # if we got multiple matches, it is often due to function declaration and then later definition
-    kernelSources = []
-
-    if len(matches) != None:
-        for match in matches:
-            start = match.extent.start
-            end = match.extent.end
-            kernelSource = read_file_section(filename, start.line, start.column, end.line, end.column)
-            # sometimes the clang ast will give the wrong file lines? Not sure if it's expanding source lines unintentionally
-            # instead we just check and make sure that the lines that were grabbed contain the kernel name
-            if kernelName in kernelSource:
-                kernelSources.append(kernelSource)
-
-    return kernelSources
-'''
-
-def search_ast_for_matches(cursor, kernelName:str):
-    stack = [cursor]
-    matches = []
-
-    while len(stack) != 0:
-        current = stack.pop()
-        for child in current.get_children():
-            stack.append(child)
-
-        if (current.spelling == kernelName) & ((current.kind == clang.cindex.CursorKind.FUNCTION_DECL) | (current.kind == clang.cindex.CursorKind.FUNCTION_TEMPLATE)):
-            # skip this cursor if it's actually just the function declaration and not definition
-            if not current.is_definition():
-                continue
-            # Find all __device__ function calls within the __global__ kernel
-            device_functions = []
-            for child in current.walk_preorder():
-                if (child.kind == clang.cindex.CursorKind.CALL_EXPR) and (child.get_definition() is not None):
-                    def_cursor = child.get_definition()
-                    if def_cursor and def_cursor.kind == clang.cindex.CursorKind.FUNCTION_DECL:
-                        device_functions.append(def_cursor)
-            matches.append((current, device_functions))
-
-    return matches
+    # Remove the compiler (nvcc, g++, etc.)
+    args = args[1:]
+    filtered_args = []
+    i = 0
+    source_file = None
+    while i < len(args):
+        arg = args[i]
+        if arg == '-c':
+            i += 1
+        elif arg == '-o':
+            i += 2
+        elif arg.startswith(('-I', '-D', '-U')):
+            filtered_args.append(arg)
+            i += 1
+        elif arg.startswith(('-std=', '--std=')):
+            filtered_args.append(arg)
+            i += 1
+        elif arg.endswith(('.cu', '.c', '.cpp', '.cxx', '.cc', '.cuh', '.h')):
+            source_file = arg
+            i += 1
+        else:
+            # Skip other arguments (like -gencode, etc.)
+            i += 1
+    # Add -x cuda if source file is a .cu file
+    if source_file and source_file.endswith('.cu'):
+        filtered_args.extend(['-x', 'cuda'])
+    return filtered_args
 
 
-def get_source_lines_of_kernel(filename:str, kernelName:str):
-    index = clang.cindex.Index.create()
-
-    try:
-        tu = index.parse(filename)
-    except:
-        # sometimes the files are not C/C++, this will skip these
-        #print(f'error in clang reading file [{filename}]')
-        return []
-
-    #print(f'searching in file {filename}')
-    cursor = tu.cursor
-    matches = search_ast_for_matches(cursor, kernelName)
-
-    # Filter matches to those located in the current file
-    filtered_matches = []
-    for match in matches:
-        # Ensure the match's start location is in the parsed file
-        if match[0].extent.start.file is None:
-            continue
-        match_file = os.path.abspath(match[0].extent.start.file.name)
-        current_file = os.path.abspath(filename)
-        if match_file == current_file:
-            filtered_matches.append(match)
-    matches = filtered_matches
-
-    # if we got multiple matches, it is often due to function declaration and then later definition
-    kernelSources = []
-
-    if len(matches) != None:
-        for match in matches:
-            global_kernel = match[0]
-            device_functions = match[1]
-
-            kernelSource = []
-
-            # Extract the __global__ kernel source
-            start = global_kernel.extent.start
-            end = global_kernel.extent.end
-            #kernelSource = read_file_section(filename, start.line, start.column, end.line, end.column)
-            global_source = read_file_section(filename, start.line, start.column, end.line, end.column)
-
-            kernelSource.append(global_source)
-
-            # Extract the __device__ function sources
-            for device_func in device_functions:
-                start = device_func.extent.start
-                end = device_func.extent.end
-                device_source = read_file_section(filename, start.line, start.column, end.line, end.column)
-                kernelSource.append(device_source)
-                #kernelSource += "\n\n" + device_source  # Append the __device__ function source
-
-            # Check if the kernel name is in the extracted source
-            if kernelName in global_source:
-                kernelSources.append(kernelSource)
-
-    return kernelSources
+def extract_code_from_cursor(cursor):
+    if not cursor.location.file:
+        return ''
+    file_path = cursor.location.file.name
+    start_line = cursor.extent.start.line
+    start_col = cursor.extent.start.column
+    end_line = cursor.extent.end.line
+    end_col = cursor.extent.end.column
+    return read_file_section(file_path, start_line, start_col, end_line, end_col)
 
 
-def find_files_with_kernel_name(dir:str, kernelName:str):
 
-    command = f'grep -rl "{kernelName}"'
-    grepOutput = subprocess.run(command, cwd=dir, 
-                                  shell=True, timeout=300, 
-                                  stdout=subprocess.PIPE, 
-                                  stderr=subprocess.STDOUT)
+def is_cuda_kernel(cursor: Cursor) -> bool:
+    """Check if a cursor represents a CUDA kernel (__global__ function)."""
+    for child in cursor.get_children():
+        if child.kind == CursorKind.CUDAGLOBAL_ATTR:
+            return True
+    return False
 
-    assert grepOutput.returncode == 0
+def is_device_function(cursor: Cursor) -> bool:
+    """Check if a cursor represents a CUDA __device__ function."""
+    for child in cursor.get_children():
+        if child.kind == CursorKind.CUDADEVICE_ATTR:
+            return True
+    return False
 
-    foundFiles = grepOutput.stdout.decode('UTF-8').replace('\n', ' ').split()
+def get_called_device_functions(global_cursor):
+    device_cursors = set()
+    visited = set()
 
-    # drop any that end in 'ncu-rep' or 'sqlite'
-    foundFiles = [filename for filename in foundFiles if not(('-report.ncu-rep' in filename) | ('.sqlite' in filename))]
+    def _traverse(cursor):
+        if cursor in visited:
+            return
+        visited.add(cursor)
+        for child in cursor.get_children():
+            if child.kind == CursorKind.CALL_EXPR:
+                called_cursor = child.referenced
+                if (called_cursor and 
+                    called_cursor.kind == CursorKind.FUNCTION_DECL and
+                    is_device_function(called_cursor) and 
+                    called_cursor.is_definition()):
+                    if called_cursor not in device_cursors:
+                        device_cursors.add(called_cursor)
+                        _traverse(called_cursor)
+            _traverse(child)
 
-    result = [f'{dir}/{filename}' for filename in foundFiles]
-
-    #print('foundFiles', foundFiles)
-    return result 
+    _traverse(global_cursor)
+    return list(device_cursors)
 
 
-def gather_kernels(targets:list, outfileName:str):
+def gather_kernels(targets):
+    # assuming the compile_commands.json file is in the build_dir (where it gets built by default)
+    compile_commands_path = os.path.join(BUILD_DIR, 'compile_commands.json')
+    if not os.path.exists(compile_commands_path):
+        raise FileNotFoundError(f"compile_commands.json not found in {BUILD_DIR}")
+    
+    with open(compile_commands_path, 'r') as f:
+        compile_db = json.load(f)
 
-    assert len(targets) != 0
+    clang.cindex.Config.set_library_file(LIBCLANG_PATH)
 
-    for target in tqdm(targets, desc='Scraping kernel source codes!'):
-        basename = target['basename']
-        parentName = basename[0:basename.find('-cuda')]
-        kernelNames = target['kernelNames']
-        srcDir = target['src']
+    for target in tqdm(targets, desc='Extracting kernels'):
+        src_dir = target['src']
+        kernel_names = target['kernelNames']
+        target['kernels'] = {}
 
-        kernels = {}
+        # Find relevant compile commands
+        target_commands = []
+        for entry in compile_db:
+            file_path = os.path.abspath(entry['file'])
+            if os.path.commonpath([file_path, src_dir]) == src_dir:
+                target_commands.append(entry)
 
-        for kernelName in kernelNames:
-            # search in the cuda directory to start
-            finds = find_files_with_kernel_name(srcDir, kernelName)
-
-            codeCandidates = []
-            for filename in finds:
-                srcCodes = get_source_lines_of_kernel(filename, kernelName)
-                #codeCandidates = codeCandidates + srcCodes
-                codeCandidates.extend(srcCodes)
-
-            # in the rare event that we can't find any code candidates 
-            # (this happens to particles-cuda for some reason...)
-            # we will grep search the function declaration candidates, include a couple lines before
-            # then manually push/pop curly braces of the source file till we complete the
-            # function text. From here we push this extracted text to a temporary file
-            # for clang to parse
-            if len(codeCandidates) == 0:
-                print(f'skipping kernel {kernelName} in {basename}')
+        # Parse each relevant source file
+        for entry in target_commands:
+            file_path = entry['file']
+            args = process_compile_command(entry['command'])
+            index = clang.cindex.Index.create()
+            try:
+                tu = index.parse(file_path, args=args)
+            except Exception as e:
+                print(f"Error parsing {file_path}: {e}")
                 continue
 
-            assert len(codeCandidates) != 0, f'Unable to find source for kernel [{kernelName}] of [{basename}]'
+            # Traverse AST for CUDA kernels (__global__ functions)
+            for cursor in tu.cursor.walk_preorder():
+                if (cursor.kind == CursorKind.FUNCTION_DECL and 
+                    cursor.is_definition() and 
+                    is_cuda_kernel(cursor)):
+                    kernel_name = cursor.spelling
+                    if kernel_name in kernel_names:
+                        # Extract global function code
+                        global_code = extract_code_from_cursor(cursor)
+                        if not global_code:
+                            continue
 
-            assert len(codeCandidates) == 1, f'Working on {target}, \n{pprint(codeCandidates)}'
-            ########################### FIX-START
-            # For now, if there are multiple code candidates, we'll pick the one with the 
-            # longest total amount of code for the __global__ kernel
-            #selected = []
-            #max_global_length = 0
-            #for srcCode in codeCandidates:
-            #    # add up the lengths of all the kernels 
-            #    totalLen = sum([len(textCode) for textCode in srcCode])
-            #    if totalLen > max_global_length:  # Check the length of the __global__ kernel
-            #        selected = srcCode
-            #        max_global_length = totalLen
+                        # Get called device functions
+                        device_cursors = get_called_device_functions(cursor)
+                        device_code = [extract_code_from_cursor(dc) for dc in device_cursors if extract_code_from_cursor(dc)]
 
-            ## Store the list of kernel sources in the kernels dictionary
-            #kernels[kernelName] = selected
-            kernels[kernelName] = codeCandidates 
-            ########################### FIX-END
+                        all_code = [global_code] + device_code
 
-            # for now, if there are multiple code candidates, we'll pick the biggest one
-            #selected = ''
-            #for srcCode in codeCandidates:
-            #    if len(srcCode) > len(selected):
-            #        selected = srcCode
+                        # don't allow empty strings
+                        all_code = [code for code in all_code if code]
 
-            #print(f'total code candidates for kernel: [{kernelName}] in [{basename}]: {len(codeCandidates)}')
-            #print(f'biggest code candidate for kernel: [{kernelName}] in [{basename}]: \n[{selected}]')
-            #kernels[kernelName] = selected
+                        # Deduplicate
+                        unique_code = []
+                        seen = set()
+                        for code in all_code:
+                            if code not in seen:
+                                seen.add(code)
+                                unique_code.append(code)
 
-        target['kernels'] = kernels
+                        if kernel_name not in target['kernels']:
+                            target['kernels'][kernel_name] = []
+                        target['kernels'][kernel_name].extend(unique_code)
 
+        # Deduplicate across multiple files
+        for kernel in target['kernels']:
+            unique = []
+            seen = set()
+            for code in target['kernels'][kernel]:
+                if code not in seen:
+                    seen.add(code)
+                    unique.append(code)
+            target['kernels'][kernel] = unique
 
     return targets
 
 
-def has_already_been_sampled(basename:str, kernelName:str, df:pd.DataFrame): 
-    return False
-
-
-def load_exisiting_data(targets:list, outfileName:str):
-
-    if os.path.isfile(outfileName):
-        with open(outfileName, 'r') as file:
-            data = json.load(file) 
-            assert type(data) == list
-
-        # let's merge the two lists
-        for dtarg in data:
-            dname = dtarg['basename']
-            for target in targets:
-                name = target['basename']
-                if dname == name: 
-                    pass
-
-
-
-    else:
-        return targets
-
-    return
-
 def main():
-
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--buildDir', type=str, required=False, default='../build', help='Directory containing all the built executables')
-    parser.add_argument('--srcDir', type=str, required=False, default='../src', help='Directory containing all the source files for the target executables')
-    parser.add_argument('--outfile', type=str, required=False, default='./scraped-cuda-kernels.json', help='Output JSON file with extracted kernels')
+    parser.add_argument('--buildDir', type=str, default='../build', help='Directory containing built executables')
+    parser.add_argument('--srcDir', type=str, default='../src', help='Directory containing source files')
+    parser.add_argument('--outfile', type=str, default='./scraped-cuda-kernels.json', help='Output JSON file')
+    parser.add_argument('--libclangPath', type=str, default='/usr/lib/llvm-18/lib/libclang-18.so.1', help='Path to the libclang.so library file')
 
     args = parser.parse_args()
 
-    setup_dirs(args.buildDir, args.srcDir)
+    setup_dirs(args.buildDir, args.srcDir, args.libclangPath)
 
-    # let's check if rodinia has been downloaded, if not, download it
     print('Starting CUDA kernel gathering process!')
 
     targets = get_runnable_targets()
     targets = get_kernel_names(targets)
     targets = modify_kernel_names_for_some_targets(targets)
-    #targets = load_exisiting_data(targets, args.outfile)
 
-    #targets = targets[0:100]
-    shortlist_targets = []
+    # Filter to only targets with '-cuda' in their basename
+    targets = [t for t in targets if '-cuda' in t['basename']]
+
+    results = gather_kernels(targets)
+
+    # Convert to list of dicts for JSON serialization
+    output = []
     for target in targets:
-        #if target['basename'] == 'cooling-cuda':
-        if '-cuda' in target['basename']:
-            shortlist_targets.append(target)
-    
-    targets = shortlist_targets
+        entry = {
+            'basename': target['basename'],
+            'exe': target['exe'],
+            'src': target['src'],
+            'kernelNames': target['kernelNames'],
+            'kernels': target['kernels']
+        }
+        output.append(entry)
 
-    results = gather_kernels(targets, args.outfile)
+    with open(args.outfile, 'w') as f:
+        json.dump(output, f, indent=4)
 
-    # save the gathered kernels to a file
-    with open(args.outfile, "w") as fp:
-        json.dump(results, fp, indent=4) 
-
-    pprint(results)
+    print(f"Saved results to {args.outfile}")
 
     return
-
 
 
 if __name__ == "__main__":
