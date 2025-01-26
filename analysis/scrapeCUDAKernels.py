@@ -14,7 +14,7 @@ import subprocess
 import shlex
 import json
 import clang.cindex
-from clang.cindex import Cursor, CursorKind, StorageClass
+from clang.cindex import Cursor, CursorKind, Config
 
 # these will be used globally in this program
 # mainly for consistency. They are absolute (full) paths
@@ -77,8 +77,6 @@ def modify_kernel_names_for_some_targets(targets:list):
         if basename == 'assert-cuda':
             if 'testKernel' in target['kernelNames']:
                 target['kernelNames'].remove('testKernel')
-        if basename == 'atomicIntrinsics-cuda':
-            print('atomicIntrinsics', target)
 
     return targets
 
@@ -96,11 +94,14 @@ def get_kernel_names_from_target(target:dict):
 
     toRegex = knamesResult.stdout.decode('UTF-8')
 
-    matches = re.findall(r'(?<= : x-).*(?=\(.*\)\.sm_.*\.elf\.bin)', toRegex)
+    matches = re.findall(r'(?<= : x-)(?:void )?[\w\-]*(?=[\(\<].*[\)\>]\.sm_.*\.elf\.bin)', toRegex)
 
     # check if any matches are templated, so we drop the return type and angle brackets
     cleanNames = []
     for match in matches:
+        if 'void ' in match:
+            assert len(match.split()) == 2
+            match = match.split()[1]
         if ('<' in match) or ('>' in match):
             parts = re.split(r'<|>', match)
             cleanName = parts[0].split()[-1] if ' ' in parts[0] else parts[0]
@@ -142,6 +143,7 @@ def read_file_section(file_path, start_line, start_column, end_line, end_column)
 
 # this is used to remove any unneeded build arguments like `-c`
 # that we don't need for static analysis
+'''
 def process_compile_command(command_str):
     args = shlex.split(command_str)
     if not args:
@@ -166,6 +168,7 @@ def process_compile_command(command_str):
         elif arg.endswith(('.cu', '.c', '.cpp', '.cxx', '.cc', '.cuh', '.h')):
             source_file = arg
             i += 1
+        # if we have an options file, we need to read it in
         else:
             # Skip other arguments (like -gencode, etc.)
             i += 1
@@ -173,10 +176,14 @@ def process_compile_command(command_str):
     if source_file and source_file.endswith('.cu'):
         filtered_args.extend(['-x', 'cuda'])
     return filtered_args
-
+'''
 
 def extract_code_from_cursor(cursor):
     if not cursor.location.file:
+        return ''
+    # if the code we are trying to extract is from some external library
+    # no within HeCBench, we're going to avoid adding it in
+    if SRC_DIR not in os.path.abspath(cursor.location.file.name):
         return ''
     file_path = cursor.location.file.name
     start_line = cursor.extent.start.line
@@ -187,7 +194,7 @@ def extract_code_from_cursor(cursor):
 
 
 
-def is_cuda_kernel(cursor: Cursor) -> bool:
+def is_global_function(cursor: Cursor) -> bool:
     """Check if a cursor represents a CUDA kernel (__global__ function)."""
     for child in cursor.get_children():
         if child.kind == CursorKind.CUDAGLOBAL_ATTR:
@@ -201,6 +208,38 @@ def is_device_function(cursor: Cursor) -> bool:
             return True
     return False
 
+# in cases of calls to 'atomicAdd' which are handled by an external CUDA library,
+# the compiler thinks these are function declarations, each with their own unique
+# declaration. We instead just check the spelling to be sure we only include
+# the function once.
+# TODO: this is technically overlooking some repeat overload definitions, no?
+def is_cursor_in_set(cursor, set):
+    for item in set:
+        if item.spelling == cursor.spelling: 
+            return True
+
+
+def get_overloaded_cursors_manual(cursor):
+    index = 0
+    config = Config()
+    found = set()
+    print('looking for', cursor.spelling)
+    while True:
+        print('idx', index)
+
+        overload_cursor = config.lib.clang_getOverloadedDecl(cursor, index)
+        if not overload_cursor:
+            break
+        if not is_cursor_in_set(overload_cursor, found):
+            print('not in set!')
+            print(overload_cursor.spelling, overload_cursor.location)
+            found.add(overload_cursor)
+        index += 1
+    print('len', len(found))
+    assert len(found) == 1
+    return list(found)[0]
+
+
 def get_called_device_functions(global_cursor):
     device_cursors = set()
     visited = set()
@@ -208,13 +247,32 @@ def get_called_device_functions(global_cursor):
     def _traverse(cursor):
         if cursor in visited:
             return
+
         visited.add(cursor)
+
+        # sometimes we get an OVERLOADED_DECL_REF which is a templated function
+        # that clang hasn't yet resolved. Thus we'll need to manually find the
+        # cursor it corresponds to. This cursor also has 0 children, so we need
+        # to get the cursor it corresponds to, to continue searching.
+        if cursor and cursor.kind == CursorKind.OVERLOADED_DECL_REF:
+            print(f"Overloaded reference {cursor.spelling} at {cursor.location}:")
+            ref_cursor = get_overloaded_cursors_manual(cursor)
+            #print(f"  Candidate: {ref_cursor.spelling} (Kind: {ref_cursor.kind})")
+            #print(f"- {ref_cursor.spelling} (type: {ref_cursor.type.spelling}) (location: {ref_cursor.location})")
+            # continue traversing the referenced cursor, as it might make other __device__ calls
+            device_cursors.add(ref_cursor)
+            _traverse(ref_cursor)
+
         for child in cursor.get_children():
+            #if cursor.spelling == 'processSmallNet':
+                #print('\tchild', child.spelling, child.kind)
             if child.kind == CursorKind.CALL_EXPR:
                 called_cursor = child.referenced
+                #if called_cursor:
+                #    print('called cursor', called_cursor.spelling)
                 if (called_cursor and 
-                    called_cursor.kind == CursorKind.FUNCTION_DECL and
-                    is_device_function(called_cursor) and 
+                    (called_cursor.kind in [CursorKind.FUNCTION_DECL, CursorKind.FUNCTION_TEMPLATE]) and
+                    (is_device_function(called_cursor) or is_global_function(called_cursor)) and 
                     called_cursor.is_definition()):
                     if called_cursor not in device_cursors:
                         device_cursors.add(called_cursor)
@@ -222,9 +280,13 @@ def get_called_device_functions(global_cursor):
             _traverse(child)
 
     _traverse(global_cursor)
+
+    # now let's go through and find the defs of any overloaded decl refs
+
+
     return list(device_cursors)
 
-
+'''
 def gather_kernels(targets):
     # assuming the compile_commands.json file is in the build_dir (where it gets built by default)
     compile_commands_path = os.path.join(BUILD_DIR, 'compile_commands.json')
@@ -250,8 +312,11 @@ def gather_kernels(targets):
 
         # Parse each relevant source file
         for entry in target_commands:
+            print('entry', entry)
             file_path = entry['file']
             args = process_compile_command(entry['command'])
+            args = args + ['-I"/home/gbolet/HeCBench-roofline/src/atomicIntrinsics-cuda"']
+            print('cleaned up command', args)
             index = clang.cindex.Index.create()
             try:
                 tu = index.parse(file_path, args=args)
@@ -265,6 +330,7 @@ def gather_kernels(targets):
                     cursor.is_definition() and 
                     is_cuda_kernel(cursor)):
                     kernel_name = cursor.spelling
+                    print('looking at', kernel_name)
                     if kernel_name in kernel_names:
                         # Extract global function code
                         global_code = extract_code_from_cursor(cursor)
@@ -303,6 +369,156 @@ def gather_kernels(targets):
             target['kernels'][kernel] = unique
 
     return targets
+'''
+
+############ FIX-START
+def process_compile_command(command_str):
+    args = shlex.split(command_str)
+    if not args:
+        return []
+    # Remove the compiler (nvcc, g++, etc.)
+    args = args[1:]
+    filtered_args = []
+    i = 0
+    source_file = None
+    while i < len(args):
+        arg = args[i]
+        if arg == '-c':
+            i += 1
+        elif arg == '-o':
+            i += 2
+        # some of the build commands have an options file with extra
+        # build flags that we need to take into account
+        elif arg == '--options-file':
+            # Read the options file
+            options_file = args[i+1]
+            try:
+                options_file_full_path = os.path.join(BUILD_DIR, options_file)
+                with open(options_file_full_path, 'r') as f:
+                    content = f.read()
+                    # Split into arguments using shlex to handle quotes, spaces, etc.
+                    options = shlex.split(content)
+                    filtered_args.extend(options)
+            except Exception as e:
+                print(f"Error processing options file {options_file_full_path}: {e}")
+            i += 2  # Skip the filename
+        elif arg.startswith(('-I', '-D', '-U')):
+            filtered_args.append(arg)
+            i += 1
+        elif arg.startswith(('-std=', '--std=')):
+            filtered_args.append(arg)
+            i += 1
+        elif arg.endswith(('.cu', '.c', '.cpp', '.cxx', '.cc', '.cuh', '.h')):
+            source_file = arg
+            i += 1
+        else:
+            # Skip other arguments (like -gencode, etc.)
+            i += 1
+    # Add -x cuda if source file is a .cu file
+    if source_file and source_file.endswith('.cu'):
+        filtered_args.extend(['-x', 'cuda'])
+
+    # force the compiler to resolve OVERLOAD_DECL_REFs to functions
+    # this doesn't seem to change anything though :(
+    filtered_args.extend(['-fno-delayed-template-parsing'])
+    return filtered_args
+############ FIX-END
+
+############ FIX-START
+def gather_kernels(targets):
+    compile_commands_path = os.path.join(BUILD_DIR, 'compile_commands.json')
+    if not os.path.exists(compile_commands_path):
+        raise FileNotFoundError(f"compile_commands.json not found in {BUILD_DIR}")
+    
+    with open(compile_commands_path, 'r') as f:
+        compile_db = json.load(f)
+
+    clang.cindex.Config.set_library_file(LIBCLANG_PATH)
+
+    for target in tqdm(targets, desc='Extracting kernels'):
+        src_dir = target['src']
+        kernel_names = target['kernelNames']
+        target['kernels'] = {}
+
+        # Find relevant compile commands
+        target_commands = []
+        for entry in compile_db:
+            file_path = os.path.abspath(entry['file'])
+            if os.path.commonpath([file_path, src_dir]) == src_dir:
+                target_commands.append(entry)
+
+        # Parse each relevant source file and its includes
+        for entry in target_commands:
+            file_path = entry['file']
+            args = process_compile_command(entry['command'])
+            print('args', args)
+            index = clang.cindex.Index.create()
+            processed_files = set()  # Track processed files to avoid duplicates
+
+            # Process main file
+            if file_path not in processed_files:
+                processed_files.add(file_path)
+                try:
+                    tu = index.parse(file_path, args=args)
+                except Exception as e:
+                    print(f"Error parsing {file_path}: {e}")
+                    continue
+
+                # Process main TU
+                process_translation_unit(tu, target, kernel_names, src_dir)
+
+        # Deduplicate across multiple files
+        for kernel in target['kernels']:
+            unique = []
+            seen = set()
+            for code in target['kernels'][kernel]:
+                if code not in seen:
+                    seen.add(code)
+                    unique.append(code)
+            target['kernels'][kernel] = unique
+
+    return targets
+
+def process_translation_unit(tu, target, kernel_names, src_dir):
+    # Traverse AST for CUDA kernels (__global__ functions) and device functions
+    for cursor in tu.cursor.walk_preorder():
+        #print('are we actually walking this?')
+        if (cursor.kind in [CursorKind.FUNCTION_DECL, CursorKind.FUNCTION_TEMPLATE] and 
+            cursor.is_definition() and 
+            is_global_function(cursor) and
+            cursor.spelling in kernel_names):
+
+            #print('got a hit!', cursor.spelling)
+
+            kernel_name = cursor.spelling
+            # Extract global function code
+            global_code = extract_code_from_cursor(cursor)
+            if not global_code:
+                continue
+
+            # Get called device functions
+            device_cursors = get_called_device_functions(cursor)
+
+            # if the code we extract is nonempty, keep it
+            # when the code we're pulling is from outside the HeCBench files, we skip adding it
+            device_code = [extract_code_from_cursor(dc) for dc in device_cursors if extract_code_from_cursor(dc)]
+
+            all_code = [global_code] + device_code
+            all_code = [code for code in all_code if code]
+
+            # Deduplicate
+            unique_code = []
+            seen_code = set()
+            for code in all_code:
+                if code not in seen_code:
+                    seen_code.add(code)
+                    unique_code.append(code)
+
+            if kernel_name not in target['kernels']:
+                target['kernels'][kernel_name] = []
+            target['kernels'][kernel_name].extend(unique_code)
+############ FIX-END
+
 
 
 def main():
@@ -325,6 +541,9 @@ def main():
 
     # Filter to only targets with '-cuda' in their basename
     targets = [t for t in targets if '-cuda' in t['basename']]
+
+    targets = [targets[281]]
+    pprint(targets)
 
     results = gather_kernels(targets)
 
