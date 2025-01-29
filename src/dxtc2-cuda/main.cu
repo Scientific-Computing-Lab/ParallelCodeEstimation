@@ -685,7 +685,7 @@ int main(int argc, char **argv) {
 
   for (int i = 0; i < numIterations; ++i) {
     for (int j = 0; j < (int)blocks; j += blocksPerLaunch) {
-      compress<<<min(blocksPerLaunch, blocks - j), NUM_THREADS>>>(
+      compress<<<MIN(blocksPerLaunch, blocks - j), NUM_THREADS>>>(
           d_permutations, d_data, (uint2 *)d_result, j);
     }
   }

@@ -60,7 +60,7 @@ void validate_result(D* device_result, const T* cpu_reference, const char* name,
 #endif
     for (std::size_t i = 0; i < num_elements; i++) {
         // Skip masked elements
-        if(!isfinite(cpu_reference[i]))
+        if(!std::isfinite(cpu_reference[i]))
             continue;
 
         // print the first few comparisons

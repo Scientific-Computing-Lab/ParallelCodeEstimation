@@ -79,9 +79,9 @@ int main(int argc, char **argv)
   int ex = 0, ey = 0, ez = 0;
   reference(h_src, r_dst, &prop);
   for (int i = 0; i < imageSize; i++) {
-    ex = max(abs(h_dst[i].x - r_dst[i].x), ex);
-    ey = max(abs(h_dst[i].y - r_dst[i].y), ey);
-    ez = max(abs(h_dst[i].z - r_dst[i].z), ez);
+    ex = std::max(abs(h_dst[i].x - r_dst[i].x), ex);
+    ey = std::max(abs(h_dst[i].y - r_dst[i].y), ey);
+    ez = std::max(abs(h_dst[i].z - r_dst[i].z), ez);
   }
 
   std::cout << "Max error of each channel: " << ex << " " << ey << " " << ez << std::endl;

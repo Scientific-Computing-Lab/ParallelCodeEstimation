@@ -290,7 +290,7 @@ void bitPackConfigLaunch(
     size_t const maxNum)
 {
   const dim3 grid(
-      min(BLOCK_WIDTH, static_cast<int>(roundUpDiv(maxNum, BLOCK_SIZE))));
+      std::min(BLOCK_WIDTH, static_cast<int>(roundUpDiv(maxNum, BLOCK_SIZE))));
   const dim3 block(BLOCK_SIZE);
 
   // make sure the result will fit in a single block for the finalize kernel

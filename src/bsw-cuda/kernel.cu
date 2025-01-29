@@ -94,7 +94,8 @@ blockShuffleReduce_with_index(short myVal, short& myIndex, short& myIndex2, unsi
   return myVal;
 }
 
-__device__ __host__ short
+//__device__ __host__ short
+__device__ short
 findMaxFour(short first, short second, short third, short fourth)
 {
   short maxScore = 0;

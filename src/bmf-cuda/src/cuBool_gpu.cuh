@@ -470,7 +470,7 @@ class cuBool
         uint32_t gpuSeed = fast_kiss32(state) + iteration;
 
         vectorMatrixMultCompareRowWarpShared
-          <<< SDIV(min(linesAtOnce, height_), WARPSPERBLOCK), WARPSPERBLOCK*32, 0, stream >>>
+          <<< SDIV(std::min(linesAtOnce, height_), WARPSPERBLOCK), WARPSPERBLOCK*32, 0, stream >>>
           (handler.d_A, handler.d_B, d_C, height_, width_, width_C_padded_, handler.factorDim_,
            lineToBeChanged, handler.d_distance_, gpuSeed, temperature/10,
            config.flipManyChance, config.flipManyDepth, weight);
@@ -481,7 +481,7 @@ class cuBool
         gpuSeed = fast_kiss32(state) + iteration;
 
         vectorMatrixMultCompareColWarpShared
-          <<< SDIV(min(linesAtOnce, width_), WARPSPERBLOCK), WARPSPERBLOCK*32, 0, stream >>>
+          <<< SDIV(std::min(linesAtOnce, width_), WARPSPERBLOCK), WARPSPERBLOCK*32, 0, stream >>>
           (handler.d_A, handler.d_B, d_C, height_, width_, width_C_padded_, handler.factorDim_,
            lineToBeChanged, handler.d_distance_, gpuSeed, temperature/10,
            config.flipManyChance, config.flipManyDepth, weight);

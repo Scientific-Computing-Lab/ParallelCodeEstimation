@@ -266,6 +266,7 @@ ENDIF()
 # cm-omp having a matching function call error during build
 # fsm-omp has critical regions in target region -- not allowed
 # interval-omp has a linking error I couldn't figure out, undefined reference -- nvlink 255 errorcode XD
+# interval-cuda has a ptxas build error I couldn't figure out -- unresolved extern function
 # langford-omp having same mysterious issues as langford-cuda -- can't be built
 # memcpy-omp abuses the `auto` keyword and we get a not-assignable error
 # miniWeather-omp is MPI-based
@@ -273,6 +274,8 @@ ENDIF()
 # xlqc-omp requires GSL lib to be installed
 # cmp-omp and cmp-cuda require a dataset we need to get from ed borin
 # mallocFree-omp and mallocFree-cuda doesn't actually do any compute, it has no kernels that get offloaded
+# layernorm-cuda using nvrtc intrinsics that are not easily found by clang
+# lda-cuda having an LLVM intrinsics error
 
 # SIGNAL 137 Out-of-memory (OOM)
 # mpc-cuda lrn-cuda feynman-kac-cuda bscan-cuda 
@@ -291,13 +294,23 @@ ENDIF()
 # cuStreamSynchronize illegal memory access
 # debayer-omp pointwise-omp
 
+# cudaMemGetInfo illegal memory access
+# logic-rewrite-cuda -- I also tried fixing the __managed__ variables by adding __device__ to them
+
+# ptxas error
+# sobol-cuda interval-cuda
+
+# strange issue with __host__ __device__ variants not genreating correctly
+# xsbench-cuda
+
 set(IGNORE_TARGETS allreduce-cuda ccl-cuda diamond-cuda langford-cuda 
                    miniWeather-cuda minibude-cuda pingpong-cuda
                    qkv-cuda rowwiseMoments-cuda saxpy-ompt-cuda slit-cuda sparkler-cuda
                    lzss-cuda cmp-cuda cc-cuda sss-cuda streamUM-cuda stsg-cuda testSNAP-cuda
                    bscan-cuda feynman-kac-cuda lrn-cuda cm-cuda voxelization-cuda mpc-cuda
                    stencil3d-cuda tridiagonal-cuda dwconv1d-cuda convolutionDeformable-cuda
-                   halo-finder-cuda local-ht-cuda miniDGS-cuda xlqc-cuda mallocFree-cuda
+                   halo-finder-cuda local-ht-cuda miniDGS-cuda xlqc-cuda mallocFree-cuda interval-cuda
+                   layernorm-cuda  lda-cuda logic-rewrite-cuda sobol-cuda xsbench-cuda
                    blas-gemm-omp cm-omp fsm-omp interval-omp langford-omp mallocFree-omp memcpy-omp
                    miniWeather-omp saxpy-ompt-hip saxpy-ompt-sycl xlqc-omp cmp-omp face-omp channelShuffle-omp
                    debayer-omp dense-embedding-omp lrn-omp linearprobing-omp pointwise-omp)
@@ -684,6 +697,7 @@ IF(BUILD_OMP)
         WORKING_DIRECTORY "${HECBENCH_SRC_DIR}/miniFE-omp/src"
     )
     target_compile_options(miniFE-omp BEFORE PUBLIC "-DMINIFE_SCALAR=double" "-DMINIFE_LOCAL_ORDINAL=int" "-DMINIFE_GLOBAL_ORDINAL=int" "-DMINIFE_RESTRICT=__restrict__" "-DMINIFE_CSR_MATRIX" "-DMINIFE_INFO=1" "-DMINIFE_KERNELS=0")
+    #target_compile_options(miniFE-omp BEFORE PUBLIC "-D__CUDACC__" "-fopenmp")
     #target_sources(lud-cuda PRIVATE "${HECBENCH_SRC_DIR}/miniFE-cuda/src/miniFE_info.hpp")
     #set_source_files_properties("${HECBENCH_SRC_DIR}/miniFE-cuda/src/miniFE_info.hpp" PROPERTIES HEADER_FILE_ONLY ON)
     set_source_files_properties("${HECBENCH_SRC_DIR}/miniFE-omp/basic/utest.cpp" PROPERTIES HEADER_FILE_ONLY ON)
@@ -821,6 +835,8 @@ IF(BUILD_CUDA)
 
     set_target_properties(bicgstab-cuda PROPERTIES LINK_FLAGS "-lcublas -lcusparse")
 
+    #set_target_properties(bitpacking-cuda PROPERTIES CXX_STANDARD "17")
+
     set_target_properties(blas-dot-cuda PROPERTIES LINK_FLAGS "-lcublas")
 
     set_target_properties(blas-fp8gemm-cuda PROPERTIES LINK_FLAGS "-lcublasLt")
@@ -854,6 +870,14 @@ IF(BUILD_CUDA)
     target_sources(boxfilter-cuda PRIVATE "${HECBENCH_SRC_DIR}/boxfilter-sycl/shrUtils.cpp")
     target_sources(boxfilter-cuda PRIVATE "${HECBENCH_SRC_DIR}/boxfilter-sycl/cmd_arg_reader.cpp")
     target_sources(boxfilter-cuda PRIVATE "${HECBENCH_SRC_DIR}/boxfilter-sycl/reference.cpp")
+
+    #set_source_files_properties("${HECBENCH_SRC_DIR}/bsw-cuda/driver.cu" PROPERTIES COMPILE_OPTIONS "-fcuda-rdc;--cuda-device-only")
+    #set_source_files_properties("${HECBENCH_SRC_DIR}/bsw-cuda/kernel.cu" PROPERTIES COMPILE_OPTIONS "--offload-new-driver")
+    #set_source_files_properties("${HECBENCH_SRC_DIR}/bsw-cuda/driver.cu" PROPERTIES COMPILE_OPTIONS "--offload-new-driver")
+    #target_compile_options(bsw-cuda PRIVATE "--cuda-device-only" "-fcuda-rdc")
+    #target_compile_options(bsw-cuda PUBLIC "-includemath.h" "-relocatable-pch" "-fgpu-rdc" "--cuda-device-only")
+    set_source_files_properties("${HECBENCH_SRC_DIR}/bsw-cuda/kernel.cu" PROPERTIES HEADER_FILE_ONLY ON)
+    #target_link_options(bsw-cuda PUBLIC "--offload-link")
 
     # excluded
     #target_include_directories(cc-cuda PRIVATE "${HECBENCH_SRC_DIR}/mis-cuda")
@@ -928,7 +952,11 @@ IF(BUILD_CUDA)
     set_target_properties(gels-cuda PROPERTIES CXX_STANDARD "17")
     target_link_options(gels-cuda PRIVATE "-lcublas")
 
-    target_compile_options(hausdorff-cuda PRIVATE "--expt-relaxed-constexpr")
+    target_compile_options(gpp-cuda PRIVATE "-D__NVCC__")
+
+    # need this flag if you're compiling with nvcc
+    # add an if statement here later to check if we are using nvcc instead of clang
+    #target_compile_options(hausdorff-cuda PRIVATE "--expt-relaxed-constexpr")
 
     get_target_property(HAVERSINE_SOURCES haversine-cuda SOURCES)
     set_source_files_properties(${HAVERSINE_SOURCES} PROPERTIES LANGUAGE CUDA)
@@ -940,6 +968,8 @@ IF(BUILD_CUDA)
 
     FILE(GLOB HS_IGNORE "${HECBENCH_SRC_DIR}/hybridsort-cuda/tmp/*.cpp")
     set_source_files_properties(${HS_IGNORE} PROPERTIES HEADER_FILE_ONLY ON)
+
+    #target_link_options(interval-cuda PRIVATE "-lboost")
 
     # this technically makes it so that nvcc in invoked to build these files instead of clang++
     #get_target_property(KMC_SOURCES kmc-cuda SOURCES)
@@ -962,7 +992,7 @@ IF(BUILD_CUDA)
     #get_target_property(LEUK_SOURCES leukocyte-omp SOURCES)
     #message("leukocyte-omp c files ${LEUK_SOURCES}")
     set_target_properties(leukocyte-cuda PROPERTIES INCLUDE_DIRECTORIES "${HECBENCH_SRC_DIR}/leukocyte-cuda;${HECBENCH_SRC_DIR}/leukocyte-cuda/meschach_lib")
-    set_target_properties(leukocyte-omp PROPERTIES CXX_STANDARD "11")
+    set_target_properties(leukocyte-cuda PROPERTIES CXX_STANDARD "11")
     #set_target_properties(leukocyte-omp PROPERTIES LANGUAGE CXX)
     set_source_files_properties(${LEUKOCYTE_C_FILES} PROPERTIES LANGUAGE CUDA)
     #get_target_property(LEUKO_SRCS leukocyte-cuda SOURCES)
@@ -976,7 +1006,10 @@ IF(BUILD_CUDA)
     #set_target_properties(local-ht-cuda PROPERTIES COMPILE_FLAGS "--include=bits/stdint-uintn.h")
     #set_target_properties(local-ht-cuda PROPERTIES COMPILE_FLAGS "--include=bits/types.h")
 
-    target_compile_options(logan-cuda BEFORE PUBLIC "-DADAPTABLE" "-maxrregcount=32")
+    # the maxregcount is needed for nvcc compilation
+    #target_compile_options(logan-cuda BEFORE PUBLIC "-DADAPTABLE" "-maxrregcount=32")
+
+    target_compile_options(logan-cuda BEFORE PUBLIC "-DADAPTABLE")
     set_target_properties(logan-cuda PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
     FILE(GLOB LOGAN_INC "${HECBENCH_SRC_DIR}/logan-cuda/src/*.cuh")
     set_source_files_properties(${LOGAN_INC} PROPERTIES HEADER_FILE_ONLY ON)
@@ -984,6 +1017,9 @@ IF(BUILD_CUDA)
     target_link_options(logan-cuda PRIVATE "-fopenmp")
     #target_compile_options(logan-cuda PRIVATE "-fopenmp=libomp" "-I${OMP_INCLUDE_DIR}")
     #target_link_options(logan-cuda PRIVATE "${OMP_LINKER_FLAGS}")
+
+    #set_target_properties(logic-rewrite-cuda PROPERTIES CXX_STANDARD "17")
+    target_compile_definitions(lr-cuda PUBLIC "-D__NVCC__")
 
     # manually fixing a mispelling in thier cuda code
     target_compile_definitions(lsqt-cuda PUBLIC "__syncwrap=__syncwarp")
@@ -999,7 +1035,7 @@ IF(BUILD_CUDA)
     set_target_properties(meanshift-cuda PROPERTIES CXX_STANDARD "17")
 
     set_target_properties(merkle-cuda PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
-    target_compile_options(merkle-cuda PRIVATE "--expt-relaxed-constexpr") #"--extended-lambda")
+    #target_compile_options(merkle-cuda PRIVATE "--expt-relaxed-constexpr") #"--extended-lambda")
 
     target_link_options(mf-sgd-cuda PRIVATE "-lpthread" )
     target_include_directories(mf-sgd-cuda PRIVATE "${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}")
@@ -1013,6 +1049,7 @@ IF(BUILD_CUDA)
         WORKING_DIRECTORY "${HECBENCH_SRC_DIR}/miniFE-cuda/src"
     )
     target_compile_options(miniFE-cuda BEFORE PUBLIC "-DMINIFE_SCALAR=double" "-DMINIFE_LOCAL_ORDINAL=int" "-DMINIFE_GLOBAL_ORDINAL=int" "-DMINIFE_RESTRICT=__restrict__" "-DMINIFE_CSR_MATRIX" "-DMINIFE_INFO=1" "-DMINIFE_KERNELS=0")
+    #target_compile_options(miniFE-omp BEFORE PUBLIC "-D__CUDACC__" "-fopenmp")
     #target_sources(lud-cuda PRIVATE "${HECBENCH_SRC_DIR}/miniFE-cuda/src/miniFE_info.hpp")
     #set_source_files_properties("${HECBENCH_SRC_DIR}/miniFE-cuda/src/miniFE_info.hpp" PROPERTIES HEADER_FILE_ONLY ON)
     set_source_files_properties("${HECBENCH_SRC_DIR}/miniFE-cuda/basic/utest.cpp" PROPERTIES HEADER_FILE_ONLY ON)
@@ -1026,6 +1063,13 @@ IF(BUILD_CUDA)
     set_source_files_properties(${MINIFE_SRC} PROPERTIES LANGUAGE CUDA)
     #set_target_properties(miniFE-cuda PROPERTIES CXX_STANDARD "11")
 
+    set_target_properties(minmax-cuda PROPERTIES CXX_STANDARD "17")
+    #target_compile_options(minmax-cuda PRIVATE "-ferror-limit=3")
+    #target_include_directories(minmax-cuda PUBLIC "/usr/local/cuda-12.6/targets/x86_64-linux/include")
+    #target_compile_options(minmax-cuda PUBLIC "-includecub/cub.cuh" "-D__NVCC__")
+    target_compile_options(minmax-cuda PUBLIC "-D__NVCC__")
+    #target_compile_options(minmax-cuda PUBLIC "-includecub/thread/thread_reduce.cuh")
+
     target_link_options(mrg32k3a-cuda PRIVATE "-lcurand")
 
     target_link_options(norm2-cuda PRIVATE "-lcurand" "-lcublas")
@@ -1038,7 +1082,8 @@ IF(BUILD_CUDA)
 
     target_link_options(pcc-cuda PRIVATE "-lcublas")
 
-    target_include_directories(permute-cuda PRIVATE "${HECBENCH_SRC_DIR}/qkv-cuda")
+    target_include_directories(permute-cuda PUBLIC "${HECBENCH_SRC_DIR}/qkv-cuda")
+    #target_link_options(permute-cuda PRIVATE "-lcublas" "-lcublasLt")
 
     target_compile_options(prna-cuda BEFORE PUBLIC "-DFLOAT")
 
@@ -1056,7 +1101,7 @@ IF(BUILD_CUDA)
         WORKING_DIRECTORY "${HECBENCH_SRC_DIR}/seam-carving-cuda"
     )
 
-    target_compile_options(segsort-cuda PRIVATE "--expt-relaxed-constexpr")
+    #target_compile_options(segsort-cuda PRIVATE "--expt-relaxed-constexpr")
 
     target_compile_options(slu-cuda BEFORE PUBLIC "-DNO_ATOMIC" "-DSSE2" "-msse2" "-fPIE")
     #FILE(GLOB NICSLU_LIB "${HECBENCH_SRC_DIR}/slu-cuda/src/nicslu/source/*.c")
@@ -1084,7 +1129,7 @@ IF(BUILD_CUDA)
 
     target_link_options(rayleighBenardConvection-cuda PRIVATE "-lcublas")
 
-    target_compile_options(rotary-cuda PRIVATE "--expt-relaxed-constexpr" "--extended-lambda")
+    #target_compile_options(rotary-cuda PRIVATE "--expt-relaxed-constexpr" "--extended-lambda")
 
     #target_compile_options(saxpy-ompt-cuda PRIVATE "-fopenmp")
     #target_include_directories(saxpy-ompt-cuda PRIVATE "-I${OMP_INCLUDE_DIR}")
@@ -1116,7 +1161,8 @@ IF(BUILD_CUDA)
 
     target_include_directories(sobel-cuda PRIVATE "${HECBENCH_SRC_DIR}/include")
 
-    target_compile_options(softmax-fused-cuda PRIVATE "--expt-relaxed-constexpr" "--use_fast_math")
+    #target_compile_options(softmax-fused-cuda PRIVATE "--expt-relaxed-constexpr" "--use_fast_math")
+    #target_compile_options(softmax-fused-cuda PRIVATE "--use_fast_math")
 
     target_include_directories(sps2d-cuda PRIVATE "${HECBENCH_SRC_DIR}/spd2s-cuda")
     target_link_options(sps2d-cuda PRIVATE "-lcusparse")
@@ -1142,6 +1188,7 @@ IF(BUILD_CUDA)
     #target_compile_options(streamUM-cuda PRIVATE "-fopenmp=libomp")
     #target_compile_options(streamUM-cuda PRIVATE "-I${OMP_INCLUDE_DIR}" "-rpath /usr/lib/llvm-18/lib" )
 
+    target_compile_options(ssim-cuda PRIVATE "-D__NVCC__" "-D__CUDACC__")
 
     target_compile_options(su3-cuda PRIVATE "-DMILC_COMPLEX")
 
@@ -1157,11 +1204,11 @@ IF(BUILD_CUDA)
 
 
 
-    target_compile_options(unfold-cuda PRIVATE "--extended-lambda")
+    #target_compile_options(unfold-cuda PRIVATE "--extended-lambda")
 
     target_include_directories(urng-cuda PRIVATE "${HECBENCH_SRC_DIR}/include")
 
-    target_compile_options(vol2col-cuda PRIVATE "--expt-relaxed-constexpr")
+    #target_compile_options(vol2col-cuda PRIVATE "--expt-relaxed-constexpr")
 
     target_include_directories(warpexchange-cuda PRIVATE "${HECBENCH_SRC_DIR}/blockAccess-cuda")
 
@@ -1170,4 +1217,7 @@ IF(BUILD_CUDA)
     target_sources(wordcount-cuda PRIVATE "${HECBENCH_SRC_DIR}/wordcount-sycl/main.cpp")
 
     target_compile_options(wsm5-cuda PRIVATE "-DMKX=4")
+
+    #target_compile_options(xsbench-cuda PUBLIC "-fopenmp=libomp")
+    #target_link_options(xsbench-cuda PRIVATE "-fopenmp=libomp")
 ENDIF()

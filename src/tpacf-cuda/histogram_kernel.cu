@@ -25,6 +25,8 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 #ifndef _HISTOGRAM_KERNEL_H_
 #define _HISTOGRAM_KERNEL_H_
 
+#include <algorithm>
+
 // 64 bin histogram kernel, based on nVidia whitepaper.
 
 // NUMBINS: Number of bins, should be <= 64 on G8x hardware due to memory.
@@ -85,7 +87,7 @@ void GPUHistogram(unsigned int* h_result, unsigned int* d_idata, int num, cudaSt
   histoKernel<<< grid, threads, 0, stream >>>(d_odata, d_idata, num >> 2);
 
   // If there are fewer blocks than MAXBLOCKSEND+1, we can move on to compiling the sub-histograms.
-  const int endNumBlocks = min(MAXBLOCKSEND, numBlocks);
+  const int endNumBlocks = std::min(MAXBLOCKSEND, numBlocks);
   if(MAXBLOCKSEND < numBlocks){
     // Otherwise we used the merge kernel to reduce the number of sub-histograms to MAXBLOCKSEND.
     grid = make_uint3(MAXBLOCKSEND, 1, 1);

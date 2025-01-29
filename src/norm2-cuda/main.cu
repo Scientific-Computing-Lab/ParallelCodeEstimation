@@ -4,6 +4,7 @@
 #include <chrono>
 #include <cuda_runtime.h>
 #include <cublas_v2.h>
+#include <algorithm>
 
 int main (int argc, char* argv[]){
   if (argc != 2) {
@@ -12,7 +13,7 @@ int main (int argc, char* argv[]){
   }
 
   // repeat at least once
-  const int repeat = max(1, atoi(argv[1]));
+  const int repeat = std::max(1, atoi(argv[1]));
 
   bool ok = true;
   cudaError_t cudaStat;

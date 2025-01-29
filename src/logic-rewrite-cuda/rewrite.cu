@@ -21,10 +21,10 @@ using namespace rw;
 #define TABLE_SIZE 8
 #define LARGE_BLOCK_SIZE 512
 
-__managed__ int P;
-__managed__ int N; // # of graph nodes
-__managed__ int GPUexpected = 0;
-__managed__ int replaceHasFullCorrsp = 0;
+__device__ __managed__ int P;
+__device__ __managed__ int N; // # of graph nodes
+__device__ __managed__ int GPUexpected = 0;
+__device__ __managed__ int replaceHasFullCorrsp = 0;
 
 #define ID(i, j) ((i) * CUT_SET_SIZE + (j))
 #define BLOCK_NUMBER(n, m) (((n) + (m) - 1) / (m))

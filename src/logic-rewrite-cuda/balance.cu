@@ -20,7 +20,7 @@ const int COVER_TABLE_NUM_COLS = 4;
 const double HT_LOAD_FACTOR = 0.5;
 
 // managed memory
-__managed__ int isEnd;
+__device__ __managed__ int isEnd;
 
 // declarations
 #ifdef DEBUG
@@ -1112,8 +1112,8 @@ std::tuple<int *, int *, int *, int *, int>
 
     int maxReadyCovers = levelRanges[0];
     for(int i=1; i<levelCount; i++)
-        maxReadyCovers = max(maxReadyCovers, levelRanges[i] - levelRanges[i-1]);
-    maxReadyCovers = min(maxReadyCovers, iterLen);
+        maxReadyCovers = std::max(maxReadyCovers, levelRanges[i] - levelRanges[i-1]);
+    maxReadyCovers = std::min(maxReadyCovers, iterLen);
 
     cudaMalloc(&vCoverNodeIdMapping, (nCovers + 1) * sizeof(int));
     cudaMalloc(&vCoverNodeNewLitMapping, (nCovers + 1) * sizeof(int));

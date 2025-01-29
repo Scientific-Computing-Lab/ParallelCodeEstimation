@@ -569,7 +569,7 @@ int topoSortGetLevel(int nodeId, int nPIs, int * levels, const int * fanin0, con
         return (levels[nodeId] = 
                 topoSortGetLevel(AigNodeID(fanin1[nodeId]), nPIs, levels, fanin0, fanin1));
     return (levels[nodeId] = 
-            1 + max(
+            1 + std::max(
                 topoSortGetLevel(AigNodeID(fanin0[nodeId]), nPIs, levels, fanin0, fanin1),
                 topoSortGetLevel(AigNodeID(fanin1[nodeId]), nPIs, levels, fanin0, fanin1)
             ));

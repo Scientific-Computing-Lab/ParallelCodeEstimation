@@ -5,7 +5,15 @@ mkdir -p ./build
 
 cd ./build
 
-CXX_FLAGS="-O3"
+CXX_FLAGS="-O3 -v"
+
+# The full build works with the nvcc compiler set for CMAKE_CUDA_COMPILER.
+# we had to make lots of changes to some codes to get them to work
+# correctly because a lot of the CUDA codes were designed to be built
+# with nvcc. It turns out that nvcc does a lot of nice compilation tricks
+# under-the-hood (e.g: properly calling min/max functions not in __device__ sections)
+# that clang struggles with. So we had to make some source code
+# changes to get all the codes to build correctly with clang XD
 
 cmake -DCMAKE_C_COMPILER=clang \
       -DCMAKE_CXX_COMPILER=clang++ \
@@ -13,14 +21,15 @@ cmake -DCMAKE_C_COMPILER=clang \
       -DBUILD_ALL=ON \
       -DBUILD_OMP=ON \
       -DBUILD_CUDA=ON \
-      -DCMAKE_CUDA_COMPILER=/usr/local/cuda-12.6/bin/nvcc \
       -DCUDAToolkit_ROOT=/usr/local/cuda-12.6 \
+      -DCMAKE_CUDA_COMPILER=clang++ \
       -DCMAKE_C_FLAGS="${CXX_FLAGS}" \
       -DCMAKE_CXX_FLAGS="${CXX_FLAGS}" \
       -DCMAKE_CUDA_FLAGS="${CXX_FLAGS}" \
       -S../ -B./
 
-#make -j14 all
+      #-DCMAKE_CUDA_COMPILER=/usr/local/cuda-12.6/bin/nvcc \
+make -j14 all
 
 cd ..
 

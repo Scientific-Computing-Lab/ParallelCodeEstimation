@@ -22,7 +22,7 @@ namespace gdt {
   // operator ==
   // ------------------------------------------------------------------
 
-#if __CUDACC__
+#ifdef __CUDACC__
   template<typename T>
   inline __both__ bool operator==(const vec_t<T,2> &a, const vec_t<T,2> &b)
   { return (a.x==b.x) & (a.y==b.y); }

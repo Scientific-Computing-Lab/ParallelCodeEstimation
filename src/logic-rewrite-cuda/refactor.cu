@@ -18,7 +18,7 @@
 #include "sop.cuh"
 #include "print.cuh"
 
-__managed__ int nNewObjs;
+__device__ __managed__ int nNewObjs;
 
 struct isNotSmallMffc {
     __host__ __device__
@@ -644,7 +644,7 @@ int topoSort(int nodeId, int nPIs, int * levels, const int * fanin0, const int *
         return (levels[nodeId] = 
                 topoSort(AigNodeID(fanin1[nodeId]), nPIs, levels, fanin0, fanin1));
     return (levels[nodeId] = 
-            1 + max(
+            1 + std::max(
                 topoSort(AigNodeID(fanin0[nodeId]), nPIs, levels, fanin0, fanin1),
                 topoSort(AigNodeID(fanin1[nodeId]), nPIs, levels, fanin0, fanin1)
             ));
@@ -1258,7 +1258,7 @@ void updateLevel(int * pLevel, int * pFanin0, int * pFanin1, int nObjs, int nPIs
         fanin1Idx = (size_t)(pFanin1[i] >> 1);
         assert(fanin0Idx < i && fanin1Idx < i);
 
-        pLevel[i] = 1 + max(pLevel[fanin0Idx], pLevel[fanin1Idx]);
+        pLevel[i] = 1 + std::max(pLevel[fanin0Idx], pLevel[fanin1Idx]);
     }
 }
 

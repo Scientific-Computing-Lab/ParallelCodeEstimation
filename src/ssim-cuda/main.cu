@@ -81,7 +81,7 @@ int main() {
                              ? (float)NP / (NP - 1) // sample covariance
                              : 1.f; // population covariance to match Wang et. al. 2004
 
-  const vec3i batch = min(vec3i(4096,16,16),dims);
+  const vec3i batch = std::min(vec3i(4096,16,16),dims);
 
   const vec3i batch_grid = batch + win_size - 1;
   const auto batch_grid_count = util::next_multiple<size_t>(batch_grid.long_product(), 256);
@@ -116,7 +116,7 @@ int main() {
   for (int y = crop; y < dims.y - crop; y += batch.y) {
   for (int x = crop; x < dims.x - crop; x += batch.x) {
     const vec3i block_offset = vec3i(x,y,z);
-    const vec3i block = min(batch, dims - crop - block_offset);
+    const vec3i block = std::min(batch, dims - crop - block_offset);
     const auto block_count = block.long_product();
     if (block_count == 0) continue;
 

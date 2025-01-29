@@ -43,6 +43,7 @@ Using GPUs, pp. 7:1-7:7. March 2011.
 #include <assert.h>
 #include <chrono>
 #include <cuda.h>
+#include <algorithm>
 #include "kernels.h"
 
 static void CheckTest(const char *msg)
@@ -118,7 +119,7 @@ static void Compress(int blocks, int warpsperblock, int repeat, int dimensionali
   int curr = 0, before = 0, d = 0;
   for (int i = 0; i < num_warps; i++) {
     curr += per;
-    cut[i] = min(curr, doubles);
+    cut[i] = std::min(curr, doubles);
     if (cut[i] - before > 0) {
       d = cut[i] - before;
     }
