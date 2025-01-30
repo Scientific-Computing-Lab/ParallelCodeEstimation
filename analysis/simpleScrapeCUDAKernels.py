@@ -189,6 +189,11 @@ def get_kernel_names_from_target(target:dict):
                 cleanName = parts[0].split()[-1] if ' ' in parts[0] else parts[0]
             else:
                 cleanName = match
+
+            # if the name has any :: let's grab the last element
+            if ('::' in cleanName):
+                cleanName = cleanName.split('::')[-1]
+
             cleanNames.append(cleanName)
 
 
@@ -416,6 +421,57 @@ def process_compile_command(command_str):
     filtered_args.extend(['-fno-delayed-template-parsing'])
     return filtered_args
 
+def find_files_with_extension(dir, ext):
+    filenames = list(sorted(glob.glob(f'{dir}/**/*.{ext}', recursive=True)))
+    return filenames
+
+
+def amalgamate_files_into_string(files):
+    joined = ''
+    for srcFile in files:
+        filename = os.path.basename(srcFile)
+        print(f'working on file {srcFile}')
+        with open(srcFile, 'r', encoding='utf8', errors='replace') as file:
+            data = file.read()
+            joined += f'-----------------------------------\n'
+            joined += f'{filename}\n'
+            joined += f'-----------------------------------\n'
+            joined += f'{data}\n\n'
+    return joined
+
+def check_kernel_is_in_srcCode(kernName, srcCode):
+
+    # regex search the string to make sure we find a 
+    # kernelName<<<...>>> invocation
+    # and a definition
+
+    return
+
+def gather_kernels_simple(targets):
+
+    for target in tqdm(targets, desc='Extracting kernels'):
+        src_dir = target['src']
+        kernel_names = target['kernelNames']
+        target['kernels'] = {}
+
+        # grab all the source files (.cu, .c, .cpp, .cuh, .cc, .h, .hpp)
+        exts = ['cu', 'c', 'cc', 'h', 'hpp', 'cpp', 'cxx', 'cuh']
+        found = [find_files_with_extension(src_dir, ext) for ext in exts]
+        files = []
+        [files.extend(flist) for flist in found]
+
+        # remove any duplicate files that may come up
+        files = list(set(files))
+
+        # amalgamate all the source files and set it as the "context" of a kernel
+        # if a program has multiple kernels, they will all have the same context
+        joined = amalgamate_files_into_string(files)
+
+        for kern in kernel_names:
+            target['kernels'][kern] = joined
+            assert kern in joined, f'[{target["basename"]}][{kern}] Kernel not found in any of the pulled source code!'
+
+    return
 
 def gather_kernels(targets):
     compile_commands_path = os.path.join(BUILD_DIR, 'compile_commands.json')
@@ -553,7 +609,7 @@ def main():
     #targets = [targets[281]]
     #pprint(targets)
 
-    results = gather_kernels(targets)
+    results = gather_kernels_simple(targets)
 
     # Convert to list of dicts for JSON serialization
     output = []
