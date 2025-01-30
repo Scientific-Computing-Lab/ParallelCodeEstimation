@@ -238,19 +238,6 @@ def read_file_section(file_path, start_line, start_column, end_line, end_column)
             return ''.join(code).strip()
 
 
-def extract_code_from_cursor(cursor):
-    if not cursor.location.file:
-        return ''
-    # if the code we are trying to extract is from some external library
-    # no within HeCBench, we're going to avoid adding it in
-    if SRC_DIR not in os.path.abspath(cursor.location.file.name):
-        return ''
-    file_path = cursor.location.file.name
-    start_line = cursor.extent.start.line
-    start_col = cursor.extent.start.column
-    end_line = cursor.extent.end.line
-    end_col = cursor.extent.end.column
-    return read_file_section(file_path, start_line, start_col, end_line, end_col)
 
 
 
@@ -385,7 +372,7 @@ def process_compile_command(command_str):
     args = args[1:]
     filtered_args = []
     i = 0
-    source_file = None
+    #source_file = None
     while i < len(args):
         arg = args[i]
         if arg == '-c':
@@ -414,13 +401,12 @@ def process_compile_command(command_str):
             filtered_args.append(arg)
             i += 1
         elif arg.endswith(('.cu', '.c', '.cpp', '.cxx', '.cc', '.cuh', '.h')):
-            source_file = arg
+            #source_file = arg
             i += 1
         else:
             # Skip other arguments (like -gencode, etc.)
             i += 1
-    # Add -x cuda if source file is a .cu file
-    #if source_file and source_file.endswith('.cu'):
+
     # force on ALL the files because some .c files need to be 
     # treated like CUDA files (e.g: leukocyte-cuda)
     filtered_args.extend(['-x', 'cuda'])
@@ -471,7 +457,7 @@ def gather_kernels(targets):
                     continue
 
                 # Process main TU
-                process_translation_unit(tu, target, kernel_names, src_dir)
+                process_translation_unit(tu, target, kernel_names)
 
         # Deduplicate across multiple files
         for kernel in target['kernels']:
@@ -486,10 +472,27 @@ def gather_kernels(targets):
     return targets
 
 
-def process_translation_unit(tu, target, kernel_names, src_dir):
+
+def extract_code_from_cursor(cursor):
+    if not cursor.location.file:
+        return ''
+    # if the code we are trying to extract is from some external library
+    # no within HeCBench, we're going to avoid adding it in
+    if SRC_DIR not in os.path.abspath(cursor.location.file.name):
+        return ''
+    file_path = cursor.location.file.name
+    start_line = cursor.extent.start.line
+    start_col = cursor.extent.start.column
+    end_line = cursor.extent.end.line
+    end_col = cursor.extent.end.column
+    return read_file_section(file_path, start_line, start_col, end_line, end_col)
+
+
+def process_translation_unit(tu, target, kernel_names):
     # Traverse AST for CUDA kernels (__global__ functions) and device functions
     for cursor in tu.cursor.walk_preorder():
-        #print('are we actually walking this?')
+
+        # look for a matching function to a kernel_name
         if (cursor.kind in [CursorKind.FUNCTION_DECL, CursorKind.FUNCTION_TEMPLATE] and 
             cursor.is_definition() and 
             is_global_function(cursor) and

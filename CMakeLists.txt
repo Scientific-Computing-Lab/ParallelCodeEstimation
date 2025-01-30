@@ -902,6 +902,8 @@ IF(BUILD_CUDA)
 
     set_target_properties(f16sp-cuda PROPERTIES LINK_FLAGS "-lcublas")
 
+    target_compile_options(face-cuda BEFORE PUBLIC "-DGPU")
+
     target_include_directories(floydwarshall2-cuda PRIVATE "${HECBENCH_SRC_DIR}/mis-cuda")
 
     #target_include_directories(fluidSim-cuda PRIVATE "${HECBENCH_SRC_DIR}/fluidSim-sycl")

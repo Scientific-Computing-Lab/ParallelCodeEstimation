@@ -1,7 +1,16 @@
 '''
-This script will go through each of the source directories and use `clang.cindex`
-to extract the CUDA kernels and their called __device__ functions from the source code.
-The extracted code is saved to a JSON file for easy parsing.
+This is a simple script designed to go through the source files
+of each target program and extracts the C/C++ files with the 
+target kernel definition, declarations, and invocations. 
+It also extracts the file that defines main().
+These files get collated together and added to a scraped 
+kernels database.
+
+The purpose of this approach is that it's simple to implement,
+and will give us a baseline on whether or not we need to cut
+down the context for inference/training.
+We later have a script that's going to visualize the scraped
+data and drop any samples that have high token counts.
 '''
 
 import os
@@ -51,7 +60,7 @@ def setup_dirs(buildDir, srcDir, libclangPath):
 
 def get_runnable_targets():
     # gather a list of dictionaries storing executable names and source directories
-    files = glob.glob(f'{BUILD_DIR}/*')
+    files = sorted(glob.glob(f'{BUILD_DIR}/*'))
     execs = []
     for entry in files:
         # check we have a file and it's an executable
@@ -80,36 +89,120 @@ def modify_kernel_names_for_some_targets(targets:list):
 
     return targets
 
-
-def get_kernel_names_from_target(target:dict):
-
+def get_cuobjdump_kernels(target, filter='cu++filt'):
     basename = target['basename']
     srcDir = target['src']
 
-    cuobjdumpCommand = f'cuobjdump --list-text {BUILD_DIR}/{basename} | cu++filt'
+    cuobjdumpCommand = f'cuobjdump --list-text {BUILD_DIR}/{basename} | {filter}'
+    #print(shlex.split(cuobjdumpCommand))
     knamesResult = subprocess.run(cuobjdumpCommand, cwd=srcDir, shell=True, 
                                   timeout=60, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
     assert knamesResult.returncode == 0
 
     toRegex = knamesResult.stdout.decode('UTF-8')
+    #print(target, 'toRegex', toRegex)
 
-    matches = re.findall(r'(?<= : x-)(?:void )?[\w\-]*(?=[\(\<].*[\)\>]\.sm_.*\.elf\.bin)', toRegex)
+    reMatches = re.finditer(r'((?<= : x-)|(?<= : x-void ))[\w\-\:]*(?=[\(\<].*[\)\>](?:(?:(?:(?:\.sm_)|(?: \(\.sm_)).*\.elf\.bin)|(?: \[clone)))', toRegex, re.MULTILINE)
 
-    # check if any matches are templated, so we drop the return type and angle brackets
-    cleanNames = []
-    for match in matches:
-        if 'void ' in match:
-            assert len(match.split()) == 2
-            match = match.split()[1]
-        if ('<' in match) or ('>' in match):
-            parts = re.split(r'<|>', match)
-            cleanName = parts[0].split()[-1] if ' ' in parts[0] else parts[0]
-        else:
-            cleanName = match
-        cleanNames.append(cleanName)
+    matches = [m.group() for m in reMatches]
 
-    # deduplicate and return
+    # keep non-empty matches
+    matches = [m for m in matches if m]
+
+    return matches
+
+def get_objdump_kernels(target):
+    basename = target['basename']
+    srcDir = target['src']
+
+    objdumpCommand = f'objdump -t --section=omp_offloading_entries {BUILD_DIR}/{basename}'
+    knamesResult = subprocess.run(objdumpCommand, cwd=srcDir, shell=True, 
+                                  timeout=60, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+    assert knamesResult.returncode == 0
+
+    toRegex = knamesResult.stdout.decode('UTF-8')
+
+    #matches = re.findall(r'(?<=\.omp_offloading\.entry\.)(__omp_offloading.*)(?=\n)', toRegex)
+    reMatches = re.finditer(r'(?<=\.omp_offloading\.entry\.)(__omp_offloading.*)(?=\n)', toRegex, re.MULTILINE)
+
+    matches = [m.group() for m in reMatches]
+
+    # keep non-empty matches
+    matches = [m for m in matches if m]
+    # all the OMP codes should have at least one offload region
+    assert len(matches) != 0
+
+    return matches
+
+
+# technically this could give a false negative
+# because a kernel may be pragmaed out at build time
+# but this would say some kernels do exist
+def does_grep_show_global_defs(target):
+    basename = target['basename']
+    srcDir = target['src']
+
+    command = f'grep -rni "__global__"'
+    grep_results = subprocess.run(command, cwd=srcDir, shell=True, 
+                                  timeout=60, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+
+    # we get a return code of 1 if no matches are found
+    assert grep_results.returncode == 0 or grep_results.returncode == 1
+
+    returnData = grep_results.stdout.decode('UTF-8').strip()
+
+    # returns True if not empty, False if empty
+    return (returnData != '')
+
+
+def get_kernel_names_from_target(target:dict):
+
+    basename = target['basename']
+
+    cleanNames = list()
+
+    #print('getting kernel names for', basename)
+    if '-cuda' in basename:
+        matches = get_cuobjdump_kernels(target, 'cu++filt')
+
+        # if there are no matches, it's sometimes that the mangled names
+        # are not unmangleable by cu++filt, so we use c++filt or llvm-cxxfilt
+        if len(matches) == 0:
+            matches = get_cuobjdump_kernels(target, 'c++filt')
+
+            if len(matches) == 0:
+                matches = get_cuobjdump_kernels(target, 'llvm-cxxfilt')
+
+                if len(matches) == 0:
+                    assert not does_grep_show_global_defs(target), f'__global__ defs exist for {basename}, but they are NOT in compiled executable'
+
+        # check if any matches are templated, so we drop the return type and angle brackets
+        for match in matches:
+            # any kernel that's actually a library function, we omit
+            if ('cub::' in match):
+                continue
+            if ('<' in match) or ('>' in match):
+                parts = re.split(r'<|>', match)
+                cleanName = parts[0].split()[-1] if ' ' in parts[0] else parts[0]
+            else:
+                cleanName = match
+            cleanNames.append(cleanName)
+
+
+    # it's an OMP program, need to use regular objdump
+    else:
+        matches = get_objdump_kernels(target)
+        # when we build for OpenMP, there's a section with all the kernel names
+        cleanNames = matches
+
+    #assert len(matches) != 0
+    # if the program doesn't have any kernels defined in its source code
+    # the matches list will be empty, indicating we should skip sampling
+    # this program as the source code is usually some external private
+    # library.
     return list(set(cleanNames))
 
 
@@ -117,6 +210,9 @@ def get_kernel_names(targets:list):
     assert len(targets) != 0
     for target in tqdm(targets, desc='Gathering kernel names'): 
         knames = get_kernel_names_from_target(target)
+        if len(knames) == 0:
+            bname = target['basename']
+            print(f'{bname} DOES NOT HAVE ANY KERNELS!')
         target['kernelNames'] = knames
     return targets
 
@@ -141,56 +237,7 @@ def read_file_section(file_path, start_line, start_column, end_line, end_column)
             code.append(lines[end_line_idx][:end_column-1])
             return ''.join(code).strip()
 
-# this is used to remove any unneeded build arguments like `-c`
-# that we don't need for static analysis
-'''
-def process_compile_command(command_str):
-    args = shlex.split(command_str)
-    if not args:
-        return []
-    # Remove the compiler (nvcc, g++, etc.)
-    args = args[1:]
-    filtered_args = []
-    i = 0
-    source_file = None
-    while i < len(args):
-        arg = args[i]
-        if arg == '-c':
-            i += 1
-        elif arg == '-o':
-            i += 2
-        elif arg.startswith(('-I', '-D', '-U')):
-            filtered_args.append(arg)
-            i += 1
-        elif arg.startswith(('-std=', '--std=')):
-            filtered_args.append(arg)
-            i += 1
-        elif arg.endswith(('.cu', '.c', '.cpp', '.cxx', '.cc', '.cuh', '.h')):
-            source_file = arg
-            i += 1
-        # if we have an options file, we need to read it in
-        else:
-            # Skip other arguments (like -gencode, etc.)
-            i += 1
-    # Add -x cuda if source file is a .cu file
-    if source_file and source_file.endswith('.cu'):
-        filtered_args.extend(['-x', 'cuda'])
-    return filtered_args
-'''
 
-def extract_code_from_cursor(cursor):
-    if not cursor.location.file:
-        return ''
-    # if the code we are trying to extract is from some external library
-    # no within HeCBench, we're going to avoid adding it in
-    if SRC_DIR not in os.path.abspath(cursor.location.file.name):
-        return ''
-    file_path = cursor.location.file.name
-    start_line = cursor.extent.start.line
-    start_col = cursor.extent.start.column
-    end_line = cursor.extent.end.line
-    end_col = cursor.extent.end.column
-    return read_file_section(file_path, start_line, start_col, end_line, end_col)
 
 
 
@@ -315,6 +362,8 @@ def get_called_device_functions(global_cursor):
 
     return list(device_cursors)
 
+# this is used to remove any unneeded build arguments like `-c`
+# that we don't need for static analysis
 def process_compile_command(command_str):
     args = shlex.split(command_str)
     if not args:
@@ -323,7 +372,7 @@ def process_compile_command(command_str):
     args = args[1:]
     filtered_args = []
     i = 0
-    source_file = None
+    #source_file = None
     while i < len(args):
         arg = args[i]
         if arg == '-c':
@@ -352,14 +401,15 @@ def process_compile_command(command_str):
             filtered_args.append(arg)
             i += 1
         elif arg.endswith(('.cu', '.c', '.cpp', '.cxx', '.cc', '.cuh', '.h')):
-            source_file = arg
+            #source_file = arg
             i += 1
         else:
             # Skip other arguments (like -gencode, etc.)
             i += 1
-    # Add -x cuda if source file is a .cu file
-    if source_file and source_file.endswith('.cu'):
-        filtered_args.extend(['-x', 'cuda'])
+
+    # force on ALL the files because some .c files need to be 
+    # treated like CUDA files (e.g: leukocyte-cuda)
+    filtered_args.extend(['-x', 'cuda'])
 
     # force the compiler to resolve OVERLOAD_DECL_REFs to functions
     # this doesn't seem to change anything though :(
@@ -393,7 +443,7 @@ def gather_kernels(targets):
         for entry in target_commands:
             file_path = entry['file']
             args = process_compile_command(entry['command'])
-            print('args', args)
+            #print('args', args)
             index = clang.cindex.Index.create()
             processed_files = set()  # Track processed files to avoid duplicates
 
@@ -407,7 +457,7 @@ def gather_kernels(targets):
                     continue
 
                 # Process main TU
-                process_translation_unit(tu, target, kernel_names, src_dir)
+                process_translation_unit(tu, target, kernel_names)
 
         # Deduplicate across multiple files
         for kernel in target['kernels']:
@@ -422,10 +472,27 @@ def gather_kernels(targets):
     return targets
 
 
-def process_translation_unit(tu, target, kernel_names, src_dir):
+
+def extract_code_from_cursor(cursor):
+    if not cursor.location.file:
+        return ''
+    # if the code we are trying to extract is from some external library
+    # no within HeCBench, we're going to avoid adding it in
+    if SRC_DIR not in os.path.abspath(cursor.location.file.name):
+        return ''
+    file_path = cursor.location.file.name
+    start_line = cursor.extent.start.line
+    start_col = cursor.extent.start.column
+    end_line = cursor.extent.end.line
+    end_col = cursor.extent.end.column
+    return read_file_section(file_path, start_line, start_col, end_line, end_col)
+
+
+def process_translation_unit(tu, target, kernel_names):
     # Traverse AST for CUDA kernels (__global__ functions) and device functions
     for cursor in tu.cursor.walk_preorder():
-        #print('are we actually walking this?')
+
+        # look for a matching function to a kernel_name
         if (cursor.kind in [CursorKind.FUNCTION_DECL, CursorKind.FUNCTION_TEMPLATE] and 
             cursor.is_definition() and 
             is_global_function(cursor) and
