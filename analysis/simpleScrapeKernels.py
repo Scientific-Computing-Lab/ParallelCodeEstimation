@@ -141,10 +141,28 @@ def get_objdump_kernels(target):
 # because a kernel may be pragmaed out at build time
 # but this would say some kernels do exist
 def does_grep_show_global_defs(target):
-    basename = target['basename']
     srcDir = target['src']
 
     command = f'grep -rni "__global__"'
+    grep_results = subprocess.run(command, cwd=srcDir, shell=True, 
+                                  timeout=60, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+
+    # we get a return code of 1 if no matches are found
+    assert grep_results.returncode == 0 or grep_results.returncode == 1
+
+    returnData = grep_results.stdout.decode('UTF-8').strip()
+
+    # returns True if not empty, False if empty
+    return (returnData != '')
+
+
+# simple sanity check to make sure we actually have an omp program
+# that can be offloaded to the GPU
+def does_grep_show_omp_pragmas(target):
+    srcDir = target['src']
+
+    command = f'grep -rni "#pragma.*omp.*target"'
     grep_results = subprocess.run(command, cwd=srcDir, shell=True, 
                                   timeout=60, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
@@ -200,6 +218,9 @@ def get_kernel_names_from_target(target:dict):
     # it's an OMP program, need to use regular objdump
     else:
         matches = get_objdump_kernels(target)
+
+        assert does_grep_show_omp_pragmas(target), f"{target['basename']} doesn't have any target regions!"
+
         # when we build for OpenMP, there's a section with all the kernel names
         cleanNames = matches
 
@@ -240,13 +261,7 @@ def amalgamate_files_into_string(files):
             joined += f'{data}\n\n'
     return joined
 
-def check_kernel_is_in_srcCode(kernName, srcCode):
 
-    # regex search the string to make sure we find a 
-    # kernelName<<<...>>> invocation
-    # and a definition
-
-    return
 
 def gather_kernels_simple(targets):
 
@@ -268,9 +283,14 @@ def gather_kernels_simple(targets):
         # if a program has multiple kernels, they will all have the same context
         joined = amalgamate_files_into_string(files)
 
+        basename = target['basename']
         for kern in kernel_names:
             target['kernels'][kern] = joined
-            assert kern in joined, f'[{target["basename"]}][{kern}] Kernel not found in any of the pulled source code!'
+            if '-cuda' in basename:
+                assert kern in joined, f'[{target["basename"]}][{kern}] Kernel not found in any of the pulled source code!'
+            # for now, we're skipping the check on omp codes in making sure
+            # the kernels actually exist
+            
 
     return
 
@@ -280,7 +300,7 @@ def main():
 
     parser.add_argument('--buildDir', type=str, default='../build', help='Directory containing built executables')
     parser.add_argument('--srcDir', type=str, default='../src', help='Directory containing source files')
-    parser.add_argument('--outfile', type=str, default='./scraped-cuda-kernels.json', help='Output JSON file')
+    parser.add_argument('--outfile', type=str, default='./simple-scraped-kernels.json', help='Output JSON file')
     parser.add_argument('--libclangPath', type=str, default='/usr/lib/llvm-18/lib/libclang-18.so.1', help='Path to the libclang.so library file')
 
     args = parser.parse_args()
@@ -294,27 +314,27 @@ def main():
     targets = modify_kernel_names_for_some_targets(targets)
 
     # Filter to only targets with '-cuda' in their basename
-    targets = [t for t in targets if '-cuda' in t['basename']]
+    #targets = [t for t in targets if '-omp' in t['basename']]
 
     #targets = [targets[281]]
     #pprint(targets)
 
-    results = gather_kernels_simple(targets)
+    gather_kernels_simple(targets)
 
     # Convert to list of dicts for JSON serialization
-    output = []
-    for target in targets:
-        entry = {
-            'basename': target['basename'],
-            'exe': target['exe'],
-            'src': target['src'],
-            'kernelNames': target['kernelNames'],
-            'kernels': target['kernels']
-        }
-        output.append(entry)
+    #output = []
+    #for target in targets:
+    #    entry = {
+    #        'basename': target['basename'],
+    #        'exe': target['exe'],
+    #        'src': target['src'],
+    #        'kernelNames': target['kernelNames'],
+    #        'kernels': target['kernels']
+    #    }
+    #    output.append(entry)
 
     with open(args.outfile, 'w') as f:
-        json.dump(output, f, indent=4)
+        json.dump(targets, f, indent=4)
 
     print(f"Saved results to {args.outfile}")
 
