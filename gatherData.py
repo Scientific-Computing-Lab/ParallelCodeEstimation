@@ -606,7 +606,7 @@ def execute_target(target:dict, kernelName:str):
 
     reportFileName = f'{basename}-[{kernelName}]-report'
     #ncuCommand = f'ncu -f -o {reportFileName} --section SpeedOfLight_RooflineChart -c 2 -k "regex:{kernelName}"'
-    ncuCommand = f'ncu -f -o {reportFileName} --set roofline --metrics smsp__sass_thread_inst_executed_op_integer_pred_on -c 2 -k "regex:{kernelName}"'
+    ncuCommand = f'ncu -f -o {reportFileName} --clock-control=none --set roofline --metrics smsp__sass_thread_inst_executed_op_integer_pred_on -c 2 -k "regex:{kernelName}"'
     exeCommand = f'{ncuCommand} {BUILD_DIR}/{basename} {exeArgs}'.rstrip()
 
     print('executing command:', exeCommand)
