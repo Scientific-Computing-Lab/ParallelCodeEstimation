@@ -5,7 +5,8 @@ mkdir -p ./build
 
 cd ./build
 
-CXX_FLAGS="-O3 -v"
+#CXX_FLAGS="-O3 -v --gcc-install-dir=/usr/tce/packages/gcc/gcc-12.2.1/rh"
+CXX_FLAGS="-O3 -v" 
 
 # The full build works with the nvcc compiler set for CMAKE_CUDA_COMPILER.
 # we had to make lots of changes to some codes to get them to work
@@ -18,21 +19,23 @@ CXX_FLAGS="-O3 -v"
 cmake -DCMAKE_C_COMPILER=clang \
       -DCMAKE_CXX_COMPILER=clang++ \
       -DCMAKE_CUDA_HOST_COMPILER=clang++ \
+      -DCMAKE_CUDA_COMPILER=clang++ \
       -DBUILD_ALL=ON \
       -DBUILD_OMP=ON \
-      -DBUILD_CUDA=ON \
+      -DBUILD_CUDA=OFF \
       -DCUDAToolkit_ROOT=/usr/local/cuda-12.6 \
-      -DCMAKE_CUDA_COMPILER=clang++ \
-      -DCMAKE_C_FLAGS="${CXX_FLAGS}" \
+      -DCMAKE_C_FLAGS="-O3 -v" \
       -DCMAKE_CXX_FLAGS="${CXX_FLAGS}" \
-      -DCMAKE_CUDA_FLAGS="${CXX_FLAGS}" \
+      -DCMAKE_CUDA_FLAGS="-O3 -v" \
       -S../ -B./
 
+#make -j14 all
+make VERBOSE=1 accuracy-omp
+make VERBOSE=1 ace-omp
+
+#cd ..
+
       #-DCMAKE_CUDA_COMPILER=/usr/local/cuda-12.6/bin/nvcc \
-make -j14 all
-
-cd ..
-
       #-DCUDA_RUNTIME_HEADER_DIR="/usr/local/cuda-12.6/targets/x86_64-linux/include" \
       #-DOMP_INCLUDE_DIR="/usr/lib/llvm-18/lib/clang/18/include" \
       #-DOMP_LINKER_FLAGS="-L/usr/lib/llvm-18/lib" \

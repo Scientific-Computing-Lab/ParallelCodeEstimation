@@ -143,7 +143,7 @@ MACRO(FINDMAKEFILE result curdir)
     # there should only be one for each source 
     IF(${curdir} MATCHES "\-cuda")
         execute_process(
-            COMMAND /bin/bash -c "find ./ -name \"Makefile*\""
+            COMMAND /bin/bash -c "find ./ -name \"Makefile*\" | sort -r"
             OUTPUT_VARIABLE MATCHED_FILES
             WORKING_DIRECTORY ${curdir}
         )
@@ -168,6 +168,9 @@ MACRO(FINDMAKEFILE result curdir)
     ELSE()
         # only grab the first element -- it conveniently happens that in the dirs with
         # multiple Makefiles, the first element is the desired makefile
+
+        # if one of the makefiles has .gpu in it, we'll take that one
+
         LIST(GET MATCHED_FILES_LIST 0 MATCHED)
         SET(${result} "${curdir}/${MATCHED}")
     ENDIF()
@@ -212,7 +215,7 @@ ENDMACRO()
 IF(NOT BUILD_ALL)
     message("Only building specific targets!")
     # set the targets you want built here!
-    set(TARGET_NAMES atomicReduction attention attentionMultiHead axhelm babelstream backprop)
+    set(TARGET_NAMES accuracy ace ans)
 
     SET(TARGET_DIRS "")
 
@@ -434,8 +437,20 @@ IF(BUILD_OMP OR BUILD_CUDA)
 
     FILE(GLOB NICSLU_LIB "${HECBENCH_SRC_DIR}/slu-cuda/src/nicslu/source/*.c")
     add_library(nicslu STATIC ${NICSLU_LIB})
+    target_include_directories(nicslu BEFORE PUBLIC "${HECBENCH_SRC_DIR}/slu-cuda/src/nicslu/source")
+    get_target_property(NICSLU_SOURCES nicslu SOURCES)
+    set_target_properties(nicslu PROPERTIES COMPILE_FLAGS "-I /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11 -isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11 -isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include -H")
+
+    #target_compile_options(nicslu PUBLIC "-includealgorithm")
+    #target_include_directories(nicslu SYSTEM BEFORE PUBLIC "/usr/tce/packages/clang/clang-ibm-18.1.8/release/lib/clang/18/include")
+
+    #set_source_files_properties(${NICSLU_SOURCES} PROPERTIES LANGUAGE CXX)
+    #set_target_properties(nicslu PROPERTIES CXX_STANDARD "14")
+    #target_compile_options(nicslu PUBLIC "-includealgorithm;-lm")
+    
     FILE(GLOB NICSLU_UTIL "${HECBENCH_SRC_DIR}/slu-cuda/src/nicslu/util/nicslu_readfile.c")
     add_library(nicslu-util STATIC ${NICSLU_UTIL})
+    target_include_directories(nicslu-util PUBLIC "${HECBENCH_SRC_DIR}/slu-cuda/src/nicslu/util")
 
     # we need to manually specify the files for meschach lib    
     SET(MESCHACH_TARGETS copy.c err.c matrixio.c memory.c vecop.c 
@@ -475,13 +490,61 @@ IF(BUILD_OMP OR BUILD_CUDA)
     add_library(BlasLapack STATIC ${BL_FORTRAN_SOURCES})
 ENDIF()
 
-IF(BUILD_OMP)
-    set_target_properties(${OMP_TARGETS} PROPERTIES COMPILE_FLAGS "-fopenmp -fopenmp-targets=nvptx64-nvidia-cuda -DOMP_TARGET -DOPENMP_TARGET -DUSE_OPENMP_TARGET")
-    #set_target_properties(${TARGETS} PROPERTIES COMPILE_FLAGS "-fopenmp -fopenmp-targets=nvptx64-nvidia-cuda -fopenmp-offload-mandatory")
-    #set_target_properties(${TARGETS} PROPERTIES LINK_FLAGS "-fopenmp -fopenmp-targets=nvptx64-nvidia-cuda --offload-link -fopenmp-offload-mandatory")
+
+# this is for if you want to build your own handful of codes
+IF (NOT BUILD_ALL)
+    #set_target_properties(${OMP_TARGETS} PROPERTIES COMPILE_FLAGS "-fopenmp -fopenmp-targets=nvptx64-nvidia-cuda -DOMP_TARGET -DOPENMP_TARGET -DUSE_OPENMP_TARGET")
+    #set_target_properties(${OMP_TARGETS} PROPERTIES COMPILE_FLAGS "-fopenmp -fopenmp-offload-mandatory --include-directory-after /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include/openmp_wrappers --include-directory-after /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include -cxx-isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/lib/gcc/ppc64le-redhat-linux/11/../../../../include/c++/11 -nobuiltininc -fopenmp-targets=nvptx64-nvidia-cuda -DOMP_TARGET -DOPENMP_TARGET -DUSE_OPENMP_TARGET")
+    #set_target_properties(${OMP_TARGETS} PROPERTIES COMPILE_FLAGS "-fopenmp -fopenmp-offload-mandatory --include-directory-after /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include/openmp_wrappers --include-directory-after /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include -cxx-isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/lib/gcc/ppc64le-redhat-linux/11/../../../../include/c++/11 -nobuiltininc -fopenmp-targets=nvptx64-nvidia-cuda -DOMP_TARGET -DOPENMP_TARGET -DUSE_OPENMP_TARGET")
+    #set_target_properties(${OMP_TARGETS} PROPERTIES COMPILE_FLAGS "-fopenmp -fopenmp-offload-mandatory --include-directory-after /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include/openmp_wrappers --include-directory-after /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include --include-directory-after /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/lib/gcc/ppc64le-redhat-linux/11/../../../../include/c++/11 -nobuiltininc -fopenmp-targets=nvptx64-nvidia-cuda -DOMP_TARGET -DOPENMP_TARGET -DUSE_OPENMP_TARGET")
+    #set_target_properties(${OMP_TARGETS} PROPERTIES COMPILE_FLAGS "-fopenmp -fopenmp-offload-mandatory -I /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include/openmp_wrappers -I /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include -nobuiltininc -fopenmp-targets=nvptx64-nvidia-cuda -DOMP_TARGET -DOPENMP_TARGET -DUSE_OPENMP_TARGET")
+    #set_target_properties(${OMP_TARGETS} PROPERTIES COMPILE_FLAGS "-fopenmp -fopenmp-offload-mandatory -isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include -cxx-isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include/cuda_wrappers -isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include/openmp_wrappers -nobuiltininc -fopenmp-targets=nvptx64-nvidia-cuda -DOMP_TARGET -DOPENMP_TARGET -DUSE_OPENMP_TARGET")
+    set_target_properties(${OMP_TARGETS} PROPERTIES COMPILE_FLAGS "-fopenmp -fopenmp-offload-mandatory -isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include -isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include/openmp_wrappers -isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11 -isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include/cuda_wrappers -H -nobuiltininc -fopenmp-targets=nvptx64-nvidia-cuda -DOMP_TARGET -DOPENMP_TARGET -DUSE_OPENMP_TARGET")
+    #set_target_properties(${OMP_TARGETS} PROPERTIES COMPILE_FLAGS "-fopenmp -fopenmp-offload-mandatory -isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include -isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include/llvm_libc_wrappers  -isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include/openmp_wrappers -isystem /usr/tce/packages/cuda/cuda-11.8.0/include -nobuiltininc -fopenmp-targets=nvptx64-nvidia-cuda -DOMP_TARGET -DOPENMP_TARGET -DUSE_OPENMP_TARGET")
+    #set_target_properties(${OMP_TARGETS} PROPERTIES COMPILE_FLAGS "-fopenmp -DOMP_TARGET -DOPENMP_TARGET -DUSE_OPENMP_TARGET")
     set_target_properties(${OMP_TARGETS} PROPERTIES LINK_FLAGS "-fopenmp -fopenmp-targets=nvptx64-nvidia-cuda")
 
-    #target_compile_options(accuracy-omp BEFORE PRIVATE "-D__STRICT_ANSI__")
+    #target_link_libraries(accuracy-omp PUBLIC OpenMP::OpenMP_CXX)
+
+    #target_compile_options(accuracy-omp BEFORE PUBLIC "-H")
+    #target_include_directories(accuracy-omp SYSTEM AFTER PUBLIC "/usr/tce/packages/clang/clang-ibm-18.1.8/release/lib/clang/18/include")
+    #target_include_directories(accuracy-omp SYSTEM AFTER PUBLIC "/usr/include")
+    #target_include_directories(accuracy-omp SYSTEM AFTER PUBLIC "/usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11")
+    #target_include_directories(accuracy-omp SYSTEM AFTER PUBLIC "/usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11/ppc64le-redhat-linux")
+    #target_include_directories(accuracy-omp SYSTEM AFTER PUBLIC "/usr/tce/packages/gcc/gcc-11.2.1/rh/usr/lib/gcc/ppc64le-redhat-linux/11/include")
+    #target_include_directories(accuracy-omp SYSTEM AFTER PUBLIC "/usr/tce/packages/cuda/cuda-11.8.0/include")
+
+    #target_include_directories(accuracy-omp SYSTEM BEFORE PUBLIC "/usr/tce/packages/clang/clang-ibm-18.1.8/release/lib/clang/18/include/cuda_wrappers")
+    #target_include_directories(accuracy-omp SYSTEM BEFORE PUBLIC "/usr/tce/packages/clang/clang-ibm-18.1.8/release/lib/clang/18/include/openmp_wrappers")
+    #target_include_directories(accuracy-omp SYSTEM BEFORE PUBLIC "/usr/tce/packages/clang/clang-ibm-18.1.8/release/include/c++/v1")
+    #target_include_directories(accuracy-omp SYSTEM BEFORE PUBLIC "/usr/tce/packages/clang/clang-ibm-18.1.8/release/lib/clang/18/include")
+    #target_include_directories(accuracy-omp SYSTEM AFTER PUBLIC "/usr/tce/packages/clang/clang-ibm-18.1.8/release/include/powerpc64le-unknown-linux-gnu/c++/v1")
+    #target_include_directories(accuracy-omp SYSTEM AFTER PUBLIC "/usr/tce/packages/gcc/gcc-11.2.1/rh/usr/lib/gcc/ppc64le-redhat-linux/11/include")
+    #target_include_directories(accuracy-omp SYSTEM AFTER PUBLIC "/usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11")
+    #target_include_directories(accuracy-omp BEFORE PUBLIC "/usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11")
+    #target_include_directories(accuracy-omp SYSTEM AFTER PUBLIC "/usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11/parallel")
+    #target_include_directories(accuracy-omp SYSTEM AFTER PUBLIC "/usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11/tr1")
+
+    ##target_include_directories(accuracy-omp BEFORE PUBLIC "/usr/tce/packages/clang/clang-ibm-18.1.8/release/lib/clang/18/include/llvm_libc_wrappers")
+    #target_include_directories(accuracy-omp SYSTEM BEFORE PUBLIC "/usr/tce/packages/clang/clang-ibm-18.1.8/release/lib/clang/18/include/openmp_wrappers")
+    #target_include_directories(accuracy-omp SYSTEM BEFORE PUBLIC "/usr/tce/packages/clang/clang-ibm-18.1.8/release/lib/clang/18/include/cuda_wrappers")
+    #target_include_directories(accuracy-omp SYSTEM BEFORE PUBLIC "/usr/tce/packages/clang/clang-ibm-18.1.8/release/lib/clang/18/include/llvm_libc_wrappers")
+
+ELSE()
+
+IF(BUILD_OMP)
+    #set_target_properties(${OMP_TARGETS} PROPERTIES COMPILE_FLAGS "-fopenmp -fopenmp-targets=nvptx64-nvidia-cuda -DOMP_TARGET -DOPENMP_TARGET -DUSE_OPENMP_TARGET")
+    #set_target_properties(${OMP_TARGETS} PROPERTIES LINK_FLAGS "-fopenmp -fopenmp-targets=nvptx64-nvidia-cuda")
+
+    #set_target_properties(${OMP_TARGETS} PROPERTIES COMPILE_FLAGS "-fopenmp -fopenmp-offload-mandatory -I /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include/openmp_wrappers -I /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include -nobuiltininc -fopenmp-targets=nvptx64-nvidia-cuda -DOMP_TARGET -DOPENMP_TARGET -DUSE_OPENMP_TARGET")
+    #set_target_properties(${OMP_TARGETS} PROPERTIES COMPILE_FLAGS "-fopenmp -fopenmp-offload-mandatory -isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include -cxx-isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include/cuda_wrappers -isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include/openmp_wrappers -isystem /usr/tce/packages/cuda/cuda-11.8.0/include -nobuiltininc -fopenmp-targets=nvptx64-nvidia-cuda -DOMP_TARGET -DOPENMP_TARGET -DUSE_OPENMP_TARGET")
+    set_target_properties(${OMP_TARGETS} PROPERTIES COMPILE_FLAGS "-fopenmp -fopenmp-offload-mandatory -isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include -isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include/openmp_wrappers -isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11 -isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include/cuda_wrappers -H -nobuiltininc -fopenmp-targets=nvptx64-nvidia-cuda -DOMP_TARGET -DOPENMP_TARGET -DUSE_OPENMP_TARGET")
+    set_target_properties(${OMP_TARGETS} PROPERTIES LINK_FLAGS "-fopenmp -fopenmp-targets=nvptx64-nvidia-cuda")
+
+
+    #target_link_libraries(accuracy-omp OpenMP::OpenMP_CXX)
+    #target_compile_options(accuracy-omp BEFORE PUBLIC "-H")
+    #target_compile_options(accuracy-omp PRIVATE "-includetime.h")
 
     target_compile_options(adv-omp BEFORE PRIVATE "-Ddfloat=float" "-Ddlong=int")
 
@@ -1223,3 +1286,5 @@ IF(BUILD_CUDA)
     #target_compile_options(xsbench-cuda PUBLIC "-fopenmp=libomp")
     #target_link_options(xsbench-cuda PRIVATE "-fopenmp=libomp")
 ENDIF()
+
+ENDIF() # BUILD_ALL
