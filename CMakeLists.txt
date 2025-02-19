@@ -1,5 +1,5 @@
 
-cmake_minimum_required(VERSION 3.28)
+cmake_minimum_required(VERSION 3.23)
 
 project("HeCBench-roofline")
 
@@ -21,10 +21,17 @@ option(BUILD_OMP "Build OMP variants of target codes" OFF)
 option(BUILD_CUDA "Build CUDA variants of target codes" ON)
 
 IF(BUILD_CUDA)
+    #set(CMAKE_CUDA_ARCHITECTURES "70")
+    #set(CMAKE_CUDA_ARCHITECTURES_NATIVE "70-real")
+
     enable_language(CUDA)
+    message("Compile features ${CMAKE_CUDA_COMPILE_FEATURES}")
+    message("vars: ${CMAKE_PLATFORM_INFO_DIR} ${CMAKE_CUDA_ARCHITECTURES_NATIVE}")
+    #message("more vars: [${CMAKE_CUDA_ARCHITECTURES_NATIVE_CLAMP}]")
     find_package(CUDAToolkit REQUIRED)
     #find_package(CUDA REQUIRED)
     find_package(OpenMP REQUIRED)
+
 
     IF(CUDA_HAS_FP16)
         message("CUDA has FP16 support")
@@ -522,8 +529,16 @@ IF (BUILD_CUDA)
 
     # the 11.8.0 version of CUDA does not support __nv_bfloat16 to __half conversion
     # although we build with the 11.8.0, we give it the 12.2.2 headers to have supported types/conversions
-    set_target_properties(${CUDA_TARGETS} PROPERTIES COMPILE_FLAGS "-isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11 -isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include/cuda_wrappers -isystem /usr/tce/packages/cuda/cuda-11.8.0/nvidia/targets/ppc64le-linux/include -isystem /usr/tce/packages/cuda/cuda-11.8.0/nvidia/targets/ppc64le-linux/include/cuda/std/detail/libcxx/include -isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11/ppc64le-redhat-linux -isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include/openmp_wrappers -isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11/backward -isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include -isystem /usr/tce/packages/cuda/cuda-11.8.0/include -nobuiltininc")
+    # THIS WORKS -- but not for converion-cuda# set_target_properties(${CUDA_TARGETS} PROPERTIES COMPILE_FLAGS "-isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11 -isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include/cuda_wrappers -isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11/ppc64le-redhat-linux -isystem /usr/tce/packages/cuda/cuda-11.8.0/nvidia/targets/ppc64le-linux/include -isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11/backward -isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include -isystem /usr/tce/packages/cuda/cuda-11.8.0/include -nobuiltininc")
 
+    # THIS one works for most
+    #set_target_properties(${CUDA_TARGETS} PROPERTIES COMPILE_FLAGS "-isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11 -isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include/cuda_wrappers -isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11/ppc64le-redhat-linux -isystem /usr/tce/packages/cuda/cuda-12.2.2/nvidia/targets/ppc64le-linux/include -isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11/backward -isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include -isystem /usr/tce/packages/cuda/cuda-12.2.2/include -nobuiltininc --cuda-path=/usr/tce/packages/cuda/cuda-12.2.2")
+    set_target_properties(${CUDA_TARGETS} PROPERTIES COMPILE_FLAGS "-isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11 -isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include/cuda_wrappers -isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11/ppc64le-redhat-linux -isystem /usr/tce/packages/cuda/cuda-12.2.2/nvidia/targets/ppc64le-linux/include -isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11/backward -isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include -isystem /usr/tce/packages/cuda/cuda-12.2.2/include -nobuiltininc --cuda-path=/usr/tce/packages/cuda/cuda-12.2.2")
+
+    # -isystem /usr/tce/packages/cuda/cuda-11.8.0/nvidia/targets/ppc64le-linux/include/cuda/std/detail/libcxx/include 
+    # -isystem /usr/tce/packages/cuda/cuda-11.8.0/nvidia/targets/ppc64le-linux/include 
+    # -isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include/openmp_wrappers 
+    # -isystem /usr/tce/packages/cuda/cuda-11.8.0/nvidia/targets/ppc64le-linux/include/cuda/std/detail/libcxx/include 
     #set_target_properties(${CUDA_TARGETS} PROPERTIES COMPILE_FLAGS "-isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11 -isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include/cuda_wrappers -isystem /usr/tce/packages/cuda/cuda-12.2.2/nvidia/targets/ppc64le-linux/include -isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11/ppc64le-redhat-linux -isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11/backward -isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include -isystem /usr/tce/packages/cuda/cuda-12.2.2/include -nobuiltininc --cuda-path=/usr/tce/packages/cuda/cuda-12.2.2")
 
     #set_target_properties(${CUDA_TARGETS} PROPERTIES COMPILE_FLAGS "-isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11 -isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include/cuda_wrappers -isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11/ppc64le-redhat-linux -isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11/backward -isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include -nobuiltininc --cuda-path=/usr/tce/packages/cuda/cuda-12.2.2")
