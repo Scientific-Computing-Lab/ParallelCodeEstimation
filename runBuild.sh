@@ -5,33 +5,37 @@ mkdir -p ./build
 
 cd ./build
 
-#CXX_FLAGS="-O3 -v --gcc-install-dir=/usr/tce/packages/gcc/gcc-12.2.1/rh"
-CXX_FLAGS="-O3 -v" 
+# for some reason on lassen, clang is struggling to properly order the include
+# directories at build time, so we need to forcibly set the correct directories
+LASSEN_NICSLU_FLAGS=""
+# if you're having issues building, it's most likely due to include issues
+# Add `-H` to the build command to see what include files are being added
+# you can use `make target-name 2>&1 | grep -ni "math.h"` to find the instances
+# of the math header being included and decide if clang is including the correct one
+LASSEN_OMP_FLAGS="-fopenmp-offload-mandatory -isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include -isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include/openmp_wrappers -isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11 -isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include/cuda_wrappers -nobuiltininc"
 
-# The full build works with the nvcc compiler set for CMAKE_CUDA_COMPILER.
-# we had to make lots of changes to some codes to get them to work
-# correctly because a lot of the CUDA codes were designed to be built
-# with nvcc. It turns out that nvcc does a lot of nice compilation tricks
-# under-the-hood (e.g: properly calling min/max functions not in __device__ sections)
-# that clang struggles with. So we had to make some source code
-# changes to get all the codes to build correctly with clang XD
+#EXTRA_FLAGS="-O3 -v -H" 
+EXTRA_FLAGS="-O3 -v -H" 
+
+# We have modified all the flags in the build system to be clang-specific
+# We originally had this working with `nvcc` for the CUDA codes, but switched
+# to LLVM because it's popular and keeps the build pipeline simpler. 
+# It'll also allow us to build SYCL in the future.
 
 cmake -DCMAKE_C_COMPILER=clang \
       -DCMAKE_CXX_COMPILER=clang++ \
       -DCMAKE_CUDA_HOST_COMPILER=clang++ \
       -DCMAKE_CUDA_COMPILER=clang++ \
-      -DBUILD_ALL=ON \
-      -DBUILD_OMP=ON \
-      -DBUILD_CUDA=OFF \
+      -DBUILD_ALL=OFF \
+      -DBUILD_OMP=OFF \
+      -DBUILD_CUDA=ON \
       -DCUDAToolkit_ROOT=/usr/local/cuda-12.6 \
-      -DCMAKE_C_FLAGS="-O3 -v" \
-      -DCMAKE_CXX_FLAGS="${CXX_FLAGS}" \
-      -DCMAKE_CUDA_FLAGS="-O3 -v" \
+      -DCMAKE_C_FLAGS="${EXTRA_FLAGS}" \
+      -DCMAKE_CXX_FLAGS="${EXTRA_FLAGS}" \
+      -DCMAKE_CUDA_FLAGS="${EXTRA_FLAGS}" \
       -S../ -B./
 
-#make -j14 all
-make VERBOSE=1 accuracy-omp
-make VERBOSE=1 ace-omp
+#make -j20 all
 
 #cd ..
 
