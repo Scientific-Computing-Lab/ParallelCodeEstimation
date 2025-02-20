@@ -33,6 +33,7 @@ cmake -DCMAKE_C_COMPILER=clang \
       -DCMAKE_C_FLAGS="${EXTRA_FLAGS}" \
       -DCMAKE_CXX_FLAGS="${EXTRA_FLAGS}" \
       -DCMAKE_CUDA_FLAGS="${EXTRA_FLAGS}" \
+      -DCMAKE_BUILD_TYPE=Release \
       -S../ -B./
 
 #make -j20 all

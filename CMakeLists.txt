@@ -5,6 +5,8 @@ project("HeCBench-roofline")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+message("Host System Processor: [${CMAKE_HOST_SYSTEM_PROCESSOR}]")
+
 #option(OMP_INCLUDE_DIR "OpenMP Include Directory (contains omp.h)" "")
 
 
@@ -12,7 +14,7 @@ IF (NOT DEFINED HECBENCH_SRC_DIR)
     set(HECBENCH_SRC_DIR "${CMAKE_CURRENT_LIST_DIR}/src")
 ENDIF()
 
-message("HECBENCH_SRC_DIR [${HECBENCH_SRC_DIR}]")
+message("\tHECBENCH_SRC_DIR [${HECBENCH_SRC_DIR}]")
 
 # we assume you're using CLANG to build everything
 # we assume building for NVIDIA hardware for now
@@ -25,18 +27,17 @@ IF(BUILD_CUDA)
     #set(CMAKE_CUDA_ARCHITECTURES_NATIVE "70-real")
 
     enable_language(CUDA)
-    message("Compile features ${CMAKE_CUDA_COMPILE_FEATURES}")
-    message("vars: ${CMAKE_PLATFORM_INFO_DIR} ${CMAKE_CUDA_ARCHITECTURES_NATIVE}")
     #message("more vars: [${CMAKE_CUDA_ARCHITECTURES_NATIVE_CLAMP}]")
     find_package(CUDAToolkit REQUIRED)
     #find_package(CUDA REQUIRED)
     find_package(OpenMP REQUIRED)
 
+    find_package(Boost)
 
     IF(CUDA_HAS_FP16)
-        message("CUDA has FP16 support")
+        message("\tCUDA has FP16 support")
     ELSE()
-        message("This version of CUDA does NOT have FP16 support")
+        message("\tThis version of CUDA does NOT have FP16 support")
     ENDIF()
 ENDIF()
 
@@ -70,6 +71,11 @@ MACRO(SUBDIRLIST result curdir)
   SET(${result} ${dirlist})
 ENDMACRO()
 
+
+MACRO(SET_SOURCES_CUDA_LANGUAGE target_name)
+    get_target_property(SRC_FILES_TO_CHANGE ${target_name} SOURCES)
+    set_source_files_properties(${SRC_FILES_TO_CHANGE} PROPERTIES LANGUAGE CUDA)
+ENDMACRO()
 
 # this is used to find the files that need to get built
 # we essentially call `make clean` and extract the object file names
@@ -224,7 +230,7 @@ ENDMACRO()
 IF(NOT BUILD_ALL)
     message("Only building specific targets!")
     # set the targets you want built here!
-    set(TARGET_NAMES conversion atomicReduction ans ace accuracy d3q19-bgk)
+    set(TARGET_NAMES conversion atomicReduction ans ace accuracy d3q19-bgk dp)
 
     SET(TARGET_DIRS "")
 
@@ -328,6 +334,12 @@ set(IGNORE_TARGETS allreduce-cuda ccl-cuda diamond-cuda langford-cuda
                    debayer-omp dense-embedding-omp lrn-omp linearprobing-omp pointwise-omp)
 
 IF (BUILD_CUDA)
+    # if we're using IBM-Power9 on the host system
+    IF (CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "ppc")
+        set(X86INTRIN_CODES heat2d-cuda)
+        message("DROPPING CODES THAT USE x86 intrinsics! [${X86INTRIN_CODES}]")
+        list(APPEND IGNORE_TARGETS ${X86INTRIN_CODES}) 
+    ENDIF()
     # if we don't have FP16 support, some codes can't be built
     #IF (NOT CUDA_HAS_FP16)
     #    list(APPEND IGNORE_TARGETS "conversion-cuda") 
@@ -531,9 +543,10 @@ IF (BUILD_CUDA)
     # although we build with the 11.8.0, we give it the 12.2.2 headers to have supported types/conversions
     # THIS WORKS -- but not for converion-cuda# set_target_properties(${CUDA_TARGETS} PROPERTIES COMPILE_FLAGS "-isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11 -isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include/cuda_wrappers -isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11/ppc64le-redhat-linux -isystem /usr/tce/packages/cuda/cuda-11.8.0/nvidia/targets/ppc64le-linux/include -isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11/backward -isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include -isystem /usr/tce/packages/cuda/cuda-11.8.0/include -nobuiltininc")
 
-    # THIS one works for most
     #set_target_properties(${CUDA_TARGETS} PROPERTIES COMPILE_FLAGS "-isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11 -isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include/cuda_wrappers -isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11/ppc64le-redhat-linux -isystem /usr/tce/packages/cuda/cuda-12.2.2/nvidia/targets/ppc64le-linux/include -isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11/backward -isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include -isystem /usr/tce/packages/cuda/cuda-12.2.2/include -nobuiltininc --cuda-path=/usr/tce/packages/cuda/cuda-12.2.2")
-    set_target_properties(${CUDA_TARGETS} PROPERTIES COMPILE_FLAGS "-isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11 -isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include/cuda_wrappers -isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11/ppc64le-redhat-linux -isystem /usr/tce/packages/cuda/cuda-12.2.2/nvidia/targets/ppc64le-linux/include -isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11/backward -isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include -isystem /usr/tce/packages/cuda/cuda-12.2.2/include -nobuiltininc --cuda-path=/usr/tce/packages/cuda/cuda-12.2.2")
+    # THIS ONE WAS WORKING LAST# set_target_properties(${CUDA_TARGETS} PROPERTIES COMPILE_FLAGS "-isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11 -isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include/cuda_wrappers -isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11/ppc64le-redhat-linux -isystem /usr/tce/packages/cuda/cuda-12.2.2/nvidia/targets/ppc64le-linux/include -isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11/backward -isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include -isystem /usr/tce/packages/cuda/cuda-12.2.2/include -nobuiltininc")
+    # Swapping cuda_wrappers and c++/11 order
+    set_target_properties(${CUDA_TARGETS} PROPERTIES COMPILE_FLAGS "-isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include/cuda_wrappers -isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11 -isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11/ppc64le-redhat-linux -isystem /usr/tce/packages/cuda/cuda-12.2.2/nvidia/targets/ppc64le-linux/include -isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11/backward -isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include -isystem /usr/tce/packages/cuda/cuda-12.2.2/include -nobuiltininc")
 
     # -isystem /usr/tce/packages/cuda/cuda-11.8.0/nvidia/targets/ppc64le-linux/include/cuda/std/detail/libcxx/include 
     # -isystem /usr/tce/packages/cuda/cuda-11.8.0/nvidia/targets/ppc64le-linux/include 
@@ -543,6 +556,7 @@ IF (BUILD_CUDA)
 
     #set_target_properties(${CUDA_TARGETS} PROPERTIES COMPILE_FLAGS "-isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11 -isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include/cuda_wrappers -isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11/ppc64le-redhat-linux -isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11/backward -isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include -nobuiltininc --cuda-path=/usr/tce/packages/cuda/cuda-12.2.2")
     set_target_properties(${CUDA_TARGETS} PROPERTIES LINK_FLAGS "-v")
+
 ENDIF()
 
 
@@ -895,6 +909,8 @@ IF (BUILD_ALL)
         FILE(GLOB AMGMK_C_FILES "${HECBENCH_SRC_DIR}/amgmk-cuda/*.c")
         set_source_files_properties(${AMGMK_C_FILES} PROPERTIES HEADER_FILE_ONLY ON)
 
+        SET_SOURCES_CUDA_LANGUAGE(ans-cuda)
+
         set_target_properties(axhelm-cuda PROPERTIES COMPILE_FLAGS "-Ddfloat=float -Ddlong=int")
         #FILE(GLOB BL_FORTRAN_SOURCES "${HECBENCH_SRC_DIR}/axhelm-cuda/BlasLapack/*.f")
         #enable_language(Fortran)
@@ -949,6 +965,7 @@ IF (BUILD_ALL)
         target_sources(boxfilter-cuda PRIVATE "${HECBENCH_SRC_DIR}/boxfilter-sycl/shrUtils.cpp")
         target_sources(boxfilter-cuda PRIVATE "${HECBENCH_SRC_DIR}/boxfilter-sycl/cmd_arg_reader.cpp")
         target_sources(boxfilter-cuda PRIVATE "${HECBENCH_SRC_DIR}/boxfilter-sycl/reference.cpp")
+        SET_SOURCES_CUDA_LANGUAGE(boxfilter-cuda)
 
         #set_source_files_properties("${HECBENCH_SRC_DIR}/bsw-cuda/driver.cu" PROPERTIES COMPILE_OPTIONS "-fcuda-rdc;--cuda-device-only")
         #set_source_files_properties("${HECBENCH_SRC_DIR}/bsw-cuda/kernel.cu" PROPERTIES COMPILE_OPTIONS "--offload-new-driver")
@@ -974,7 +991,8 @@ IF (BUILD_ALL)
         #set_target_properties(determinant-cuda PROPERTIES LINK_FLAGS "-lcusolver")
         target_link_options(determinant-cuda PRIVATE "-lcusolver")
 
-        set_target_properties(dp-cuda PROPERTIES LINK_FLAGS "-lcublas")
+        target_link_libraries(dp-cuda "cublas")
+        target_compile_options(dp-cuda PUBLIC "-D_PSTL_PAR_BACKEND_SERIAL")
         set_target_properties(dp-cuda PROPERTIES CXX_STANDARD "17")
 
         target_include_directories(dwconv-cuda PRIVATE "${HECBENCH_SRC_DIR}/tensorAccessor-cuda")
@@ -997,6 +1015,7 @@ IF (BUILD_ALL)
         set_source_files_properties("${HECBENCH_SRC_DIR}/fluidSim-sycl/main.cpp" PROPERTIES LANGUAGE CXX)
         target_include_directories(fluidSim-cuda PRIVATE "${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}")
         #target_compile_options(fluidSim-cuda PUBLIC "-includeutils.h")
+        SET_SOURCES_CUDA_LANGUAGE(fluidSim-cuda)
 
         #set_target_properties(fpdc-cuda PROPERTIES COMPILE_FLAGS "-std=c++14")
         #target_compile_features(fpdc-cuda PRIVATE cxx_std_14)
@@ -1042,8 +1061,9 @@ IF (BUILD_ALL)
         # add an if statement here later to check if we are using nvcc instead of clang
         #target_compile_options(hausdorff-cuda PRIVATE "--expt-relaxed-constexpr")
 
-        get_target_property(HAVERSINE_SOURCES haversine-cuda SOURCES)
-        set_source_files_properties(${HAVERSINE_SOURCES} PROPERTIES LANGUAGE CUDA)
+        SET_SOURCES_CUDA_LANGUAGE(haversine-cuda)
+
+        SET_SOURCES_CUDA_LANGUAGE(hbc-cuda)
 
         target_sources(heartwall-cuda PRIVATE "${HECBENCH_SRC_DIR}/heartwall-cuda/util/avi/avilib.c")
         target_sources(heartwall-cuda PRIVATE "${HECBENCH_SRC_DIR}/heartwall-cuda/util/avi/avimod.c")
@@ -1113,6 +1133,7 @@ IF (BUILD_ALL)
 
         target_link_options(ludb-cuda PRIVATE "-lcublas")
 
+        SET_SOURCES_CUDA_LANGUAGE(mcmd-cuda)
 
         set_source_files_properties("${HECBENCH_SRC_DIR}/md5hash-cuda/MD5Hash.cpp" PROPERTIES HEADER_FILE_ONLY ON)
 
@@ -1125,6 +1146,7 @@ IF (BUILD_ALL)
         target_include_directories(mf-sgd-cuda PRIVATE "${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}")
         # not allowed to use the __shfl() operation on compute version 7X and higher
         set_target_properties(mf-sgd-cuda PROPERTIES CUDA_ARCHITECTURES "60")
+        SET_SOURCES_CUDA_LANGUAGE(mf-sgd-cuda)
 
 
         execute_process(
@@ -1143,8 +1165,9 @@ IF (BUILD_ALL)
         target_include_directories(miniFE-cuda BEFORE PUBLIC "${HECBENCH_SRC_DIR}/miniFE-cuda/utils")
         target_include_directories(miniFE-cuda BEFORE PUBLIC "${HECBENCH_SRC_DIR}/miniFE-cuda/src")
         target_include_directories(miniFE-cuda BEFORE PUBLIC "${HECBENCH_SRC_DIR}/miniFE-cuda/fem")
-        get_target_property(MINIFE_SRC miniFE-cuda SOURCES)
-        set_source_files_properties(${MINIFE_SRC} PROPERTIES LANGUAGE CUDA)
+        #get_target_property(MINIFE_SRC miniFE-cuda SOURCES)
+        #set_source_files_properties(${MINIFE_SRC} PROPERTIES LANGUAGE CUDA)
+        SET_SOURCES_CUDA_LANGUAGE(miniFE-cuda)
         #set_target_properties(miniFE-cuda PROPERTIES CXX_STANDARD "11")
 
         set_target_properties(minmax-cuda PROPERTIES CXX_STANDARD "17")
@@ -1153,6 +1176,9 @@ IF (BUILD_ALL)
         #target_compile_options(minmax-cuda PUBLIC "-includecub/cub.cuh" "-D__NVCC__")
         target_compile_options(minmax-cuda PUBLIC "-D__NVCC__")
         #target_compile_options(minmax-cuda PUBLIC "-includecub/thread/thread_reduce.cuh")
+
+        target_include_directories(mmcsf-cuda BEFORE PUBLIC "${Boost_INCLUDE_DIR}")
+        target_link_libraries(mmcsf-cuda ${Boost_LIBRARIES})
 
         target_link_options(mrg32k3a-cuda PRIVATE "-lcurand")
 
@@ -1164,10 +1190,14 @@ IF (BUILD_ALL)
         #target_compile_options(openmp-cuda PRIVATE "-I${HECBENCH_SRC_DIR}/openmp-omp" "-I${OMP_INCLUDE_DIR}" )
         #target_link_options(openmp-cuda PRIVATE "${OMP_LINKER_FLAGS}")
 
+        SET_SOURCES_CUDA_LANGUAGE(pad-cuda)
+
         target_link_options(pcc-cuda PRIVATE "-lcublas")
 
         target_include_directories(permute-cuda PUBLIC "${HECBENCH_SRC_DIR}/qkv-cuda")
         #target_link_options(permute-cuda PRIVATE "-lcublas" "-lcublasLt")
+
+        SET_SOURCES_CUDA_LANGUAGE(permutate-cuda)
 
         target_compile_options(prna-cuda BEFORE PUBLIC "-DFLOAT")
 
@@ -1185,9 +1215,15 @@ IF (BUILD_ALL)
             WORKING_DIRECTORY "${HECBENCH_SRC_DIR}/seam-carving-cuda"
         )
 
+        SET_SOURCES_CUDA_LANGUAGE(rsc-cuda)
+
+        SET_SOURCES_CUDA_LANGUAGE(sc-cuda)
+
         #target_compile_options(segsort-cuda PRIVATE "--expt-relaxed-constexpr")
 
-        target_compile_options(slu-cuda BEFORE PUBLIC "-DNO_ATOMIC" "-DSSE2" "-msse2" "-fPIE")
+        # the SSE is for HOST-side, so honestly we don't care about building it in
+        #target_compile_options(slu-cuda BEFORE PUBLIC "-DNO_ATOMIC" "-DSSE2" "-msse2" "-fPIE")
+        target_compile_options(slu-cuda BEFORE PUBLIC "-DNO_ATOMIC" "-fPIE")
         #FILE(GLOB NICSLU_LIB "${HECBENCH_SRC_DIR}/slu-cuda/src/nicslu/source/*.c")
         #add_library(nicslu STATIC ${NICSLU_LIB})
         add_dependencies(slu-cuda nicslu)
@@ -1204,6 +1240,8 @@ IF (BUILD_ALL)
         set_source_files_properties("${HECBENCH_SRC_DIR}/slu-cuda/src/nicslu/demo/test.c" PROPERTIES COMPILE_FLAGS "-ansi")
         FILE(GLOB NICSLU_DEMO "${HECBENCH_SRC_DIR}/slu-cuda/src/nicslu/demo/*.c")
         set_source_files_properties(${NICSLU_DEMO} PROPERTIES HEADER_FILE_ONLY ON)
+
+        SET_SOURCES_CUDA_LANGUAGE(slu-cuda)
 
         #target_compile_options(rowwiseMoments-cuda PRIVATE "-I${CUDA_THRUST_INCLUDE_DIR}")
 
@@ -1276,17 +1314,18 @@ IF (BUILD_ALL)
 
         target_compile_options(su3-cuda PRIVATE "-DMILC_COMPLEX")
 
-        target_include_directories(tqs-cuda PRIVATE "${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}")
 
         #FILE(GLOB TPACF_CU_FILES "${HECBENCH_SRC_DIR}/tpacf-cuda/*.cu")
         #target_sources(tpacf-cuda PRIVATE ${TPACF_CU_FILES})
         #set_source_files_properties("${HECBENCH_SRC_DIR}/tpacf-cuda/ACF_kernel.cu" PROPERTIES HEADER_FILE_ONLY ON)
         #set_source_files_properties("${HECBENCH_SRC_DIR}/tpacf-cuda/histogram_kernel.cu" PROPERTIES HEADER_FILE_ONLY ON)
         #set_source_files_properties("${HECBENCH_SRC_DIR}/tpacf-cuda/model_io.cu" PROPERTIES HEADER_FILE_ONLY ON)
-        get_target_property(TPACF_SOURCES tpacf-cuda SOURCES)
-        set_source_files_properties(${TPACF_SOURCES} PROPERTIES LANGUAGE CUDA)
+        SET_SOURCES_CUDA_LANGUAGE(tpacf-cuda)
 
+        target_include_directories(tqs-cuda PRIVATE "${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}")
+        SET_SOURCES_CUDA_LANGUAGE(tqs-cuda)
 
+        SET_SOURCES_CUDA_LANGUAGE(triad-cuda)
 
         #target_compile_options(unfold-cuda PRIVATE "--extended-lambda")
 
@@ -1297,6 +1336,7 @@ IF (BUILD_ALL)
         target_include_directories(warpexchange-cuda PRIVATE "${HECBENCH_SRC_DIR}/blockAccess-cuda")
 
         target_compile_options(warpsort-cuda BEFORE PUBLIC "-DWARP_SIZE=32" "-DHALF_WARP_SIZE=16")
+        SET_SOURCES_CUDA_LANGUAGE(warpsort-cuda)
 
         target_sources(wordcount-cuda PRIVATE "${HECBENCH_SRC_DIR}/wordcount-sycl/main.cpp")
 
