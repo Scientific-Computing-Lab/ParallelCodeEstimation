@@ -10,9 +10,10 @@ mkdir -p ./build
 
 cd ./build
 
-# if you're having issues building, it's most likely due to include issues
-# Add `-H` to the build command to see what include files are being added
-# you can use `make target-name 2>&1 | grep -ni "math.h"` to find the instances
+# if you're having issues building, it's most likely due to include order issues.
+# Add `-H` to the build flags to see what include files are being added and 
+# in what order the include directories get searched at build time.
+# For example, you can use `make target-name 2>&1 | grep -ni "math.h"` to find the instances
 # of the math header being included and decide if clang is including the correct one
 
 # You may need to adjust the order of included directories like we do for Lassen
@@ -29,11 +30,11 @@ LASSEN_CUDA_FLAGS="-isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/cla
 EXTRA_OMP_FLAGS="${LASSEN_OMP_FLAGS}"
 EXTRA_CUDA_FLAGS="${LASSEN_CUDA_FLAGS}"
 
-EXTRA_BUILD_FLAGS="-O3 -v -H" 
-EXTRA_LINK_FLAGS="-v"
+#EXTRA_BUILD_FLAGS="-O3 -v -H" 
+#EXTRA_LINK_FLAGS="-v"
 
-#EXTRA_BUILD_FLAGS="-O3" 
-#EXTRA_LINK_FLAGS=""
+EXTRA_BUILD_FLAGS="-O3" 
+EXTRA_LINK_FLAGS=""
 
 # We have modified all the flags in the build system to be clang-specific
 # We originally had this working with `nvcc` for the CUDA codes, but switched
@@ -48,7 +49,7 @@ cmake -DCMAKE_C_COMPILER=clang \
       -DCMAKE_CUDA_COMPILER=clang++ \
       -DBUILD_ALL=ON \
       -DBUILD_OMP=ON \
-      -DBUILD_CUDA=OFF \
+      -DBUILD_CUDA=ON \
       -DCUDAToolkit_ROOT=/usr/local/cuda-12.6 \
       -DCMAKE_C_FLAGS="${EXTRA_BUILD_FLAGS}" \
       -DCMAKE_CXX_FLAGS="${EXTRA_BUILD_FLAGS}" \
