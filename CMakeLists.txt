@@ -12,6 +12,7 @@ find_package(Boost)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 message("Host System Processor: [${CMAKE_HOST_SYSTEM_PROCESSOR}]")
+message("Requested device arch: [${CUDA_ARCH}]")
 
 #option(OMP_INCLUDE_DIR "OpenMP Include Directory (contains omp.h)" "")
 
@@ -621,7 +622,7 @@ ENDIF()
 
 
 IF (BUILD_CUDA)
-    set_target_properties(${CUDA_TARGETS} PROPERTIES CUDA_ARCHITECTURES "$CMAKE_CUDA_ARCHITECTURES")
+    set_target_properties(${CUDA_TARGETS} PROPERTIES CUDA_ARCHITECTURES "${CUDA_ARCH}")
 
     set_target_properties(${CUDA_TARGETS} PROPERTIES COMPILE_FLAGS "${CUSTOM_CUDA_FLAGS}")
 

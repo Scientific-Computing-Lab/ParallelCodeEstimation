@@ -1,12 +1,13 @@
 #!/bin/bash
 
 # fast delete ./build dir due to IO limitations on shared remote login nodes
+#mkdir -p ./build
+#mkdir -p ./emptydir
+#rsync -a --delete ./emptydir ./build
+#rm -rf ./emptydir
+
+rm -rf ./build 
 mkdir -p ./build
-mkdir -p ./emptydir
-rsync -a --delete ./emptydir ./build
-rm -rf ./emptydir
-mkdir -p ./build
-#rm -rf ./build 
 
 cd ./build
 
@@ -65,6 +66,7 @@ cmake -DCMAKE_C_COMPILER=clang \
       -DCUSTOM_CUDA_FLAGS="${EXTRA_CUDA_FLAGS}" \
       -DCUSTOM_OMP_LINK_FLAGS="${EXTRA_LINK_FLAGS}" \
       -DCUSTOM_CUDA_LINK_FLAGS="${EXTRA_LINK_FLAGS}" \
+      -DCUDA_ARCH="86" \
       -S../ -B./
 
 make -j20 all
