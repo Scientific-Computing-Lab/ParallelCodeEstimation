@@ -10,7 +10,13 @@ mkdir -p ./build
 
 cd ./build
 
-# if you're having issues building, it's most likely due to include order issues.
+# We have designed the CMakeLists.txt for building HeCBench with clang/clang++, as we use
+# clang-specific flags. We originally had it working with NVCC, but for simplification
+# purposes we stick to clang. You may be able to get it working with NVCC, just will
+# need to adjust some build flags for the compilation (which we've left commented
+# in the CMakeLists.txt file)
+
+# If you're having issues building, it's most likely due to include order issues.
 # Add `-H` to the build flags to see what include files are being added and 
 # in what order the include directories get searched at build time.
 # For example, you can use `make target-name 2>&1 | grep -ni "math.h"` to find the instances
@@ -27,8 +33,8 @@ LASSEN_OMP_FLAGS="-isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clan
 
 LASSEN_CUDA_FLAGS="-isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include/cuda_wrappers -isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11 -isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11/ppc64le-redhat-linux -isystem /usr/tce/packages/cuda/cuda-12.2.2/nvidia/targets/ppc64le-linux/include -isystem /usr/tce/packages/gcc/gcc-11.2.1/rh/usr/include/c++/11/backward -isystem /usr/tce/packages/clang/clang-18.1.8/release/lib/clang/18/include -isystem /usr/tce/packages/cuda/cuda-12.2.2/include -nobuiltininc"
 
-EXTRA_OMP_FLAGS="${LASSEN_OMP_FLAGS}"
-EXTRA_CUDA_FLAGS="${LASSEN_CUDA_FLAGS}"
+EXTRA_OMP_FLAGS=""
+EXTRA_CUDA_FLAGS=""
 
 #EXTRA_BUILD_FLAGS="-O3 -v -H" 
 #EXTRA_LINK_FLAGS="-v"
@@ -61,4 +67,4 @@ cmake -DCMAKE_C_COMPILER=clang \
       -DCUSTOM_CUDA_LINK_FLAGS="${EXTRA_LINK_FLAGS}" \
       -S../ -B./
 
-#make -j20 all
+make -j20 all
