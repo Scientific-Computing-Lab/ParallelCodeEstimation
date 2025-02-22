@@ -3,6 +3,12 @@ cmake_minimum_required(VERSION 3.28)
 
 project("HeCBench-roofline")
 
+enable_language(CUDA)
+enable_language(Fortran) # need this for axhelm
+find_package(CUDAToolkit REQUIRED)
+find_package(OpenMP REQUIRED)
+find_package(Boost)
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 message("Host System Processor: [${CMAKE_HOST_SYSTEM_PROCESSOR}]")
@@ -27,13 +33,9 @@ option(BUILD_CUDA "Build CUDA variants of target codes" ON)
     #set(CMAKE_CUDA_ARCHITECTURES_NATIVE "70-real")
 
     # we're requiring CUDA as it is expected for building OMP codes anyways
-    enable_language(CUDA)
     #message("more vars: [${CMAKE_CUDA_ARCHITECTURES_NATIVE_CLAMP}]")
-    find_package(CUDAToolkit REQUIRED)
     #find_package(CUDA REQUIRED)
-    find_package(OpenMP REQUIRED)
 
-    find_package(Boost)
 
     #IF(CUDA_HAS_FP16)
     #    message("\tCUDA has FP16 support")
@@ -524,7 +526,6 @@ IF(BUILD_OMP OR BUILD_CUDA)
     target_compile_options(meschach BEFORE PUBLIC "-DHAVE_CONFIG_H" "-DANSI_C")
     target_link_options(meschach BEFORE PRIVATE "-lm")
 
-    enable_language(Fortran)
     FILE(GLOB BL_FORTRAN_SOURCES "${HECBENCH_SRC_DIR}/axhelm-omp/BlasLapack/*.f")
     add_library(BlasLapack STATIC ${BL_FORTRAN_SOURCES})
 
