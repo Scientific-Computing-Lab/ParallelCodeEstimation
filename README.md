@@ -7,12 +7,11 @@ We might change our automated build and data gathering process in the future, fo
 
 Target codes thus-far:
 - CUDA (omitted MPI-based for now)
-  - We are able to build 453/492 (92%) of the CUDA targets
-  - We purposely skip building 33/491 due to MPI requirements, missing dependencies, or execution errors (mainly segfaults and out-of-memory errors)
-  - You should be able to switch between `g++` and `clang++` for these builds, although I haven't tested with `g++`.
+  - We are able to build 445/491 (90%) of the CUDA targets
+  - We purposely skip building 46/491 due to MPI requirements, missing dependencies, or execution errors (mainly segfaults and out-of-memory errors)
 - OMP
-  - We are able to build 312/320 (97.5%) of the OMP targets
-  - We purposely skip building 8/320 due to MPI requirements or missing build dependencies
+  - We are able to build 303/320 (94.6%) of the OMP targets
+  - We purposely skip building 17/320 due to MPI requirements or missing build dependencies
   
 
 
@@ -24,6 +23,7 @@ By default, we have everything building with `clang++` and `clang`, this should 
 ```
 source ./runBuild.sh
 ```
+We originally had the CUDA codes building with `nvcc` but for simplicity have switch to just LLVM. You may be able to build the codes with `nvcc`, but it may take some modifications to the build pipeline.
 
 
 # Common Build Issues
