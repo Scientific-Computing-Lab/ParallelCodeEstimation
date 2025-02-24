@@ -490,65 +490,139 @@ def check_and_unzip_input_files(targets:list):
     return 
 
 
-'''
-There doesn't seem to be some easy way of extracting the kernel names without executing the program.
-Here we use `cuobjdump` to get the SASS section names, `cu++filt` to demangle, then regex parsing 
-to extract the kernel names. It is possible to get duplicates if the kernels are the same name, but
-with different arguments/signatures from being templated. We drop duplicates. 
-We don't have a smart way of differentiating these kernels during execution either, as `ncu` is not
-able to differentiate the executions at runtime either. Leaving it for future work.
-
-Some kernels make ALL external kernel calls. Because most of the time these are to cuSPARSE
-(or some other closed-source NVIDIA library), we end up skipping these codes for execution. 
-
-Another note to make is that this returns all the kernel names from the binary. Sometimes the program
-will have conditional logic which prevents the program from ever executing a kernel, thus we wont
-have any data on said kernel. (example: deredundancy-cuda). We can't know exactly how the logic will
-execute ahead-of-time, thus we'll trigger a profiling of the un-executed kernel. This is okay, we
-just need to catch ourselves when no `ncu-rep` file is generated.
-'''
-def get_kernel_names_from_target(target:dict):
-
+def get_cuobjdump_kernels(target, filter='cu++filt'):
     basename = target['basename']
     srcDir = target['src']
 
+    cuobjdumpCommand = f'cuobjdump --list-text {BUILD_DIR}/{basename} | {filter}'
+    #print(shlex.split(cuobjdumpCommand))
+    knamesResult = subprocess.run(cuobjdumpCommand, cwd=srcDir, shell=True, 
+                                  timeout=60, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+    assert knamesResult.returncode == 0
+
+    toRegex = knamesResult.stdout.decode('UTF-8')
+    #print(target, 'toRegex', toRegex)
+
+    reMatches = re.finditer(r'((?<= : x-)|(?<= : x-void ))[\w\-\:]*(?=[\(\<].*[\)\>](?:(?:(?:(?:\.sm_)|(?: \(\.sm_)).*\.elf\.bin)|(?: \[clone)))', toRegex, re.MULTILINE)
+
+    matches = [m.group() for m in reMatches]
+
+    # keep non-empty matches
+    matches = [m for m in matches if m]
+
+    return matches
+
+def get_objdump_kernels(target):
+    basename = target['basename']
+    srcDir = target['src']
+
+    objdumpCommand = f'objdump -t --section=omp_offloading_entries {BUILD_DIR}/{basename}'
+    knamesResult = subprocess.run(objdumpCommand, cwd=srcDir, shell=True, 
+                                  timeout=60, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+    assert knamesResult.returncode == 0
+
+    toRegex = knamesResult.stdout.decode('UTF-8')
+
+    #matches = re.findall(r'(?<=\.omp_offloading\.entry\.)(__omp_offloading.*)(?=\n)', toRegex)
+    reMatches = re.finditer(r'(?<=\.omp_offloading\.entry\.)(__omp_offloading.*)(?=\n)', toRegex, re.MULTILINE)
+
+    matches = [m.group() for m in reMatches]
+
+    # keep non-empty matches
+    matches = [m for m in matches if m]
+    # all the OMP codes should have at least one offload region
+    assert len(matches) != 0
+
+    return matches
+
+
+# technically this could give a false negative
+# because a kernel may be pragmaed out at build time
+# but this would say some kernels do exist
+def does_grep_show_global_defs(target):
+    srcDir = target['src']
+
+    command = f'grep -rni "__global__"'
+    grep_results = subprocess.run(command, cwd=srcDir, shell=True, 
+                                  timeout=60, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+
+    # we get a return code of 1 if no matches are found
+    assert grep_results.returncode == 0 or grep_results.returncode == 1
+
+    returnData = grep_results.stdout.decode('UTF-8').strip()
+
+    # returns True if not empty, False if empty
+    return (returnData != '')
+
+
+# simple sanity check to make sure we actually have an omp program
+# that can be offloaded to the GPU
+def does_grep_show_omp_pragmas(target):
+    srcDir = target['src']
+
+    command = f'grep -rni "#pragma.*omp.*target"'
+    grep_results = subprocess.run(command, cwd=srcDir, shell=True, 
+                                  timeout=60, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+
+    # we get a return code of 1 if no matches are found
+    assert grep_results.returncode == 0 or grep_results.returncode == 1
+
+    returnData = grep_results.stdout.decode('UTF-8').strip()
+
+    # returns True if not empty, False if empty
+    return (returnData != '')
+
+
+def get_kernel_names_from_target(target:dict):
+
+    basename = target['basename']
+
+    cleanNames = list()
+
     #print('getting kernel names for', basename)
     if '-cuda' in basename:
-        cuobjdumpCommand = f'cuobjdump --list-text {BUILD_DIR}/{basename} | cu++filt'
-        #print(shlex.split(cuobjdumpCommand))
-        knamesResult = subprocess.run(cuobjdumpCommand, cwd=srcDir, shell=True, 
-                                      timeout=60, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        matches = get_cuobjdump_kernels(target, 'cu++filt')
 
-        assert knamesResult.returncode == 0
+        # if there are no matches, it's sometimes that the mangled names
+        # are not unmangleable by cu++filt, so we use c++filt or llvm-cxxfilt
+        if len(matches) == 0:
+            matches = get_cuobjdump_kernels(target, 'c++filt')
 
-        toRegex = knamesResult.stdout.decode('UTF-8')
-        #print(target, 'toRegex', toRegex)
+            if len(matches) == 0:
+                matches = get_cuobjdump_kernels(target, 'llvm-cxxfilt')
 
-        matches = re.findall(r'(?<= : x-)[\w\-]*(?=\(.*\)\.sm_.*\.elf\.bin)', toRegex)
+                if len(matches) == 0:
+                    assert not does_grep_show_global_defs(target), f'__global__ defs exist for {basename}, but they are NOT in compiled executable'
 
         # check if any matches are templated, so we drop the return type and angle brackets
-        cleanNames = []
         for match in matches:
+            # any kernel that's actually a library function, we omit
+            if ('cub::' in match):
+                continue
             if ('<' in match) or ('>' in match):
-                cleanName = re.findall(r'(?<= ).*(?=<)', match)[0]
+                parts = re.split(r'<|>', match)
+                cleanName = parts[0].split()[-1] if ' ' in parts[0] else parts[0]
             else:
                 cleanName = match
+
+            # if the name has any :: let's grab the last element
+            if ('::' in cleanName):
+                cleanName = cleanName.split('::')[-1]
+
             cleanNames.append(cleanName)
-    # it's an OMP program
+
+
+    # it's an OMP program, need to use regular objdump
     else:
+        matches = get_objdump_kernels(target)
+
+        assert does_grep_show_omp_pragmas(target), f"{target['basename']} doesn't have any target regions!"
+
         # when we build for OpenMP, there's a section with all the kernel names
-        objdumpCommand = f'objdump -t --section=omp_offloading_entries {BUILD_DIR}/{basename}'
-        knamesResult = subprocess.run(objdumpCommand, cwd=srcDir, shell=True, 
-                                      timeout=60, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-
-        assert knamesResult.returncode == 0
-
-        toRegex = knamesResult.stdout.decode('UTF-8')
-
-        matches = re.findall(r'(?<=\.omp_offloading\.entry\.)(__omp_offloading.*)(?=\n)', toRegex)
-
-        # all the OMP codes should have at least one offload region
-        assert len(matches) != 0
         cleanNames = matches
 
     #assert len(matches) != 0
@@ -563,8 +637,46 @@ def get_kernel_names(targets:list):
     assert len(targets) != 0
     for target in tqdm(targets, desc='Gathering kernel names'): 
         knames = get_kernel_names_from_target(target)
+        if len(knames) == 0:
+            bname = target['basename']
+            print(f'{bname} DOES NOT HAVE ANY KERNELS!')
         target['kernelNames'] = knames
     return targets
+
+import signal
+def execute_subprocess(exeCommand, srcDir, timeout):
+
+    try:
+        # Start the process in a new process group
+        process = subprocess.Popen(
+            shlex.split(exeCommand),
+            cwd=srcDir,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            start_new_session=True  # Creates a new process group
+        )
+        stdout_output, stderr_output = process.communicate(timeout=timeout)
+        execResult = subprocess.CompletedProcess(
+            process.args, process.returncode, stdout_output, stderr_output
+        )
+    except subprocess.TimeoutExpired:
+        # Terminate the entire process group on timeout
+        os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+        # Collect output and return code
+        stdout_output, stderr_output = process.communicate()
+        execResult = subprocess.CompletedProcess(
+            process.args, -signal.SIGKILL, stdout_output, stderr_output
+        )
+        # Optionally re-raise or handle the timeout
+        raise  # Or handle as needed
+    except Exception as e:
+        print('UNEXPECTED EXCEPTION HAS OCCURED!!')
+        # Handle other exceptions
+        execResult = subprocess.CompletedProcess(
+            shlex.split(exeCommand), -1, stdout=b'', stderr=str(e).encode()
+        )
+        raise
+    return execResult
 
 '''
 Something to consider when executing a target is the fact that Nsight Compute (ncu)
@@ -606,7 +718,9 @@ def execute_target(target:dict, kernelName:str):
 
     reportFileName = f'{basename}-[{kernelName}]-report'
     #ncuCommand = f'ncu -f -o {reportFileName} --section SpeedOfLight_RooflineChart -c 2 -k "regex:{kernelName}"'
-    ncuCommand = f'ncu -f -o {reportFileName} --clock-control=none --set roofline --metrics smsp__sass_thread_inst_executed_op_integer_pred_on -c 2 -k "regex:{kernelName}"'
+    # without clock-control=none, the GPU executes at the base/default clock speed that NCU selects for it
+    #ncuCommand = f'ncu -f -o {reportFileName} --clock-control=none --set roofline --metrics smsp__sass_thread_inst_executed_op_integer_pred_on -c 2 -k "regex:{kernelName}"'
+    ncuCommand = f'ncu -f -o {reportFileName} --set roofline --metrics smsp__sass_thread_inst_executed_op_integer_pred_on -c 2 -k "regex:{kernelName}"'
     exeCommand = f'{ncuCommand} {BUILD_DIR}/{basename} {exeArgs}'.rstrip()
 
     print('executing command:', exeCommand)
@@ -615,14 +729,23 @@ def execute_target(target:dict, kernelName:str):
     # 15 minute timeout for now?
     # cm-cuda goes over 10 mins to run!
     try:
-        execResult = subprocess.run(shlex.split(exeCommand), cwd=srcDir, timeout=30, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        # lsqt gives us zombie processes that take up GPU and do not respect the timeout
+        # this is because the timeout doesn't kill the process -- we need to manually do it 
+        # but the source code for subprocess.run shows that it'll call the `kill()` command
+        # so we need to figure out something else.
+        #execResult = subprocess.run(shlex.split(exeCommand), cwd=srcDir, timeout=30, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        execResult = execute_subprocess(exeCommand, srcDir, timeout=30)
+        pass
 
     # temporarily doing this to skip slow runs
     except subprocess.TimeoutExpired:
+        print(f'\tTIMEOUT OCCURED for {basename}-[{kernelName}]')
         return (None, None)
 
     # temporarily doing this to skip breaking runs
+    # although sometimes the ncu-rep file will get generated even if the program segfaults
     if execResult.returncode != 0:
+        print(f'\tExecution Error [{execResult.returncode}] for {basename}-[{kernelName}]')
         return (None, None)
 
     assert execResult.returncode == 0, f'Execution error: {execResult.stdout.decode("UTF-8")}'
@@ -630,7 +753,7 @@ def execute_target(target:dict, kernelName:str):
     # check that the ncu-rep was generated. We'll still get a 0 returncode when it doesn't generate an ncu-rep file
     if os.path.isfile(f'{srcDir}/{reportFileName}.ncu-rep'):
         csvCommand = f'ncu --import {reportFileName}.ncu-rep --csv --print-units base --page raw'
-        print('executing command:', csvCommand)
+        print('\texecuting command:', csvCommand)
         rooflineResults = subprocess.run(shlex.split(csvCommand), cwd=srcDir, timeout=60, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
         assert rooflineResults.returncode == 0, f'Roofline parsing error: {rooflineResults.stdout.decode("UTF-8")}'
@@ -638,7 +761,7 @@ def execute_target(target:dict, kernelName:str):
         return (execResult, rooflineResults)
 
     else:
-        print(f'No report file generated! -- Kernel [{kernelName}] must not have been invoked during execution!')
+        print(f'\tNo report file generated! -- Kernel [{kernelName}] must not have been invoked during execution!')
         # if the report file didn't get generated, return null, indicating the kernel doesn't exist
         return (None, None)
 
@@ -954,10 +1077,10 @@ def main():
 
     #targets = targets[:70]
 
-    #pprint(targets)
+    pprint(targets)
 
-    results = execute_targets(omp_targets, args.outfile)
-    #results = execute_targets(targets, args.outfile)
+    #results = execute_targets(omp_targets, args.outfile)
+    results = execute_targets(targets, args.outfile)
 
     return
 
