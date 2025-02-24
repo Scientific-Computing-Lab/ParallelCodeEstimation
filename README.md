@@ -1,7 +1,7 @@
 # Modified HeCBench for Roofline Analysis
 
 We took this version of HeCBench and are modifying it to build the CUDA and OMP codes to gather their roofline performance data.
-So far we have the CUDA codes building without issue. We use CMake because the `autohecbench.py` was giving us trouble with easily switching out compilers and build options. We also wanted to create distinct phases of building and gathering data which wasn't too easy with `autohecbench.py`.
+So far we have a large portion of the CUDA and OMP codes building without issue. We use CMake because the `autohecbench.py` was giving us trouble with easily switching out compilers and build options. There were also many issues with individual makefiles, so we decided to put all the build commands into one big `CMakeLists.txt` file for simplicity. We also wanted to create distinct phases of building and gathering data which wasn't too easy with `autohecbench.py`.
 
 We might change our automated build and data gathering process in the future, for now what we have is working fine.
 
@@ -15,24 +15,29 @@ Target codes thus-far:
   - We purposely skip building 8/320 due to MPI requirements or missing build dependencies
   
 
+
 ## Building
 
 Execute the following command to get the Makefile generated and to start the build process.
 This will automatically `make` all the programs, **you'll NEED to edit the `runBuild.sh` script to properly set any compilers/options for the codes to build**.
-By default, we have everything building with `clang++` and `nvcc`, this should mostly work out-of-the-box but some include paths may need to be set.
+By default, we have everything building with `clang++` and `clang`, this should mostly work out-of-the-box but some include paths may need to be set/overriden. (SEE BELOW)
 ```
 source ./runBuild.sh
 ```
 
+
 # Common Build Issues
 
-Here's a list of common build issues that might help if you're encountering errors in the build process.
+The biggest build issue is that `clang` isn't assigning the proper order of includes when building a CUDA or OMP program. To get around this we include some extra flags in the `runBuild.sh` script that allow you to overwrite the include directories that `clang` tries to automgically put in. An example with the `LASSEN` build flags is included to guide what directories are required for other machines. 
 
-- .c files intended to be interpreted as C++
+Here's a list of other common build issues that might help if you're encountering errors in the build process. Most of these should have been taken care of already, but we may have missed a few.
+
+- .c files intended to be interpreted as C++ or CUDA
 - .c/.cpp files included as headers
 - sources files that needed to be added (because our script didn't catch them)
 - missing includes
 - missing preprocessor defines
+- source files that need to be unzipped
 - missing libs to link
 - putting some search/include dirs before others when compiling (duplicate filenames can cause header include mixups)
 
@@ -41,12 +46,12 @@ Here's a list of common build issues that might help if you're encountering erro
 Once all the codes are built, we can start the data collection process. We have our own script called `gatherData.py` which can be invoked to gather the roofline benchmarking data of each of the built programs.
 
 ```
-LD_LIBRARY_PATH=/usr/lib/llvm-18/lib:$LD_LIBRARY_PATH DATAPATH=/home/gbolet/HeCBench-roofline/src/prna-cuda/data_tables python3 ./gatherData.py
+LD_LIBRARY_PATH=/usr/lib/llvm-18/lib:$LD_LIBRARY_PATH DATAPATH=/home/gbolet/hecbench-roofline/src/prna-cuda/data_tables python3 ./gatherData.py --outfile=roofline-data.csv 2>&1 | tee runlog.txt
 ```
 
 This will automatically invoke each of the built executables, using `ncu` (NVIDIA Nsight Compute) to profile each of the kernels in the executable. Some of the codes require files to be downloaded proir, this script takes care of the downloading process and makes sure that all the requested files are in place.
 The `DATAPATH` environment variable is only needed by `frna-cuda` and `prna-cuda`, so if you're not running those, you can drop it.
-The `LD_LIBRARY_PATH` environment variable is for all the OMP codes, this is the path to the `libomptarget.so` library. We should probably `rpath` this in in the future, but for now this is fine.
+The `LD_LIBRARY_PATH` environment variable is for all the OMP codes, this is the path to the `libomptarget.so` library. One some machines CMake isn't adding the path, so we just manually add it. We should probably `rpath` this in in the future, but for now this is fine.
 
 The internal workflow at a high leve looks like the following:
 1. Download rodinia dataset (skip if requested with `--skipRodiniaDownload`).
@@ -60,22 +65,21 @@ The internal workflow at a high leve looks like the following:
 9. Write gathered data to output `roofline-data.csv` file.
 
 
-The `gatherData.py` script will emit a CSV file containing all the benchmarking data. After each kernel is run, the data is written out to the last line of the CSV file.
+The `gatherData.py` script will emit a CSV file containing all the benchmarking data. After each kernel is run, the data is written out to the last line of the CSV file. We encourage writing the results of the execution to a log file for later error/execution analysis. 
 
 ## Scraping the CUDA kernels
 
-Once all the roofline benchmarking data has been collected, we can go ahead and scrape the sampled targets for their CUDA kernels. We do this with a script called `analysis/scrapeCUDAKernels.py`, which will do the following:
+Once all the roofline benchmarking data has been collected, we can go ahead and scrape the sampled targets for their CUDA/OMP kernels. We do this with a script called `analysis/simpleScrapeKernels.py`, which will do the following:
 
-1. Check if there exists already-gathered CUDA kernels
-2. Go through all the executables in the `build` dir and extract their kernel names
-3. Search through each executable's directories for the source function definition 
+1. Go through all the executables in the `build` dir and extract their kernel names via `cuobjdump` or `objdump`
+2. Create a dictionary assiging to each kernel the `cat` contents of all the source files used by the target
 
-The scraped output will be in JSON format, with a nesting structure of `executable/target --> kernel --> code`. 
+The scraped output will be in JSON format. We particularly do this simple form of scraping because we're struggling to have a proper AST traversal script that can properly extract CUDA kernels from source. This is a future step we're working on. 
 
 ## Building the LLM Dataset (TODO)
 
 Once both the roofline data and CUDA kernels are collected, we will amalgamate the data with another script. We use the script called `analysis/createLLMDataset.py`.
-A design decision was made to make the LLM dataset into a JSON format, following a chat style. This is because lots of the current models are trained in this manner.
+A design decision was made to make the LLM dataset into a JSON format, following a chat style. This is because lots of the current models are trained in this manner. We have not gotten to this part yet.
 
 ## Dataset Visualization (TODO)
 
@@ -89,12 +93,10 @@ Once we've gathered hundreds of data samples, we want to check the data to be su
 ### Future (less-important) Features (TODO)
 These are features we would like to have, but they're not a priority at the moment because what we have so far is giving us a good amount of data.
 
-- update `has_already_been_sampled` to include `exeArgs` when checking
-- get remaining OMP codes building correctly
 - for targets with multiple `run` makefile invocations, store all to invocations run (instead of just the first)
 - support for weird precisions? -- what CUDA counters do we need?
-- support for integer data type roofline? (we only have single and double precision float roofline)
 - can we do the `ncu` regex with all the kernels -- so we just need to do one run instead of a run for each kernel
+- add `nvprof` support for systems that `ncu` can't gather on
 - perform a trial run with `nvprof`, gather all kernel launches with different launch bounds, use `ncu` `-skip` flag to target profiling each launch
   - this will gather more data as some kernels change grid-size and block-size between calls
   - this may be slower to gather data though

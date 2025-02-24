@@ -12,6 +12,7 @@ We don't really put much error checking in here because we are mainly trying to
 get something that works. Later on we may build this program up some more.
 '''
 
+import signal
 import os
 import argparse
 import pandas as pd
@@ -249,6 +250,13 @@ def download_files_for_some_targets(targets):
                 command = f'tar -xf ./testcase.tar.gz' 
                 result = subprocess.run(command, cwd=f'{srcDir}/../grep-cuda', shell=True)
                 assert result.returncode == 0
+
+        elif (basename == 'gmm-omp'):
+            if not os.path.isfile(f'{srcDir}/data'):
+                command = f'tar -xf ./data.tar.gz' 
+                result = subprocess.run(command, cwd=f'{srcDir}', shell=True)
+                assert result.returncode == 0
+
         elif (basename == 'd2q9-bgk-omp') or (basename == 'd2q9-bgk-cuda'):
             if not os.path.exists(f'{srcDir}/Inputs/input_256x256.params'):
                 command = f'tar -xf ./test.tar.gz' 
@@ -643,9 +651,8 @@ def get_kernel_names(targets:list):
         target['kernelNames'] = knames
     return targets
 
-import signal
-def execute_subprocess(exeCommand, srcDir, timeout):
 
+def execute_subprocess(exeCommand, srcDir, timeout):
     try:
         # Start the process in a new process group
         process = subprocess.Popen(
@@ -734,7 +741,7 @@ def execute_target(target:dict, kernelName:str):
         # but the source code for subprocess.run shows that it'll call the `kill()` command
         # so we need to figure out something else.
         #execResult = subprocess.run(shlex.split(exeCommand), cwd=srcDir, timeout=30, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        execResult = execute_subprocess(exeCommand, srcDir, timeout=30)
+        execResult = execute_subprocess(exeCommand, srcDir, timeout=60)
         pass
 
     # temporarily doing this to skip slow runs
