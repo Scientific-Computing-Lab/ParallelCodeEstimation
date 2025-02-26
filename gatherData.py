@@ -741,7 +741,7 @@ def execute_target(target:dict, kernelName:str):
         # but the source code for subprocess.run shows that it'll call the `kill()` command
         # so we need to figure out something else.
         #execResult = subprocess.run(shlex.split(exeCommand), cwd=srcDir, timeout=30, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        execResult = execute_subprocess(exeCommand, srcDir, timeout=60)
+        execResult = execute_subprocess(exeCommand, srcDir, timeout=300)
         pass
 
     # temporarily doing this to skip slow runs
