@@ -29,17 +29,17 @@ import json
 ROOT_DIR = ''
 SRC_DIR = ''
 BUILD_DIR = ''
-LIBCLANG_PATH = ''
+#LIBCLANG_PATH = ''
 
 
-def setup_dirs(buildDir, srcDir, libclangPath):
+def setup_dirs(buildDir, srcDir): #libclangPath):
     global ROOT_DIR
     global SRC_DIR
     global BUILD_DIR
     global LIBCLANG_PATH
 
-    LIBCLANG_PATH = os.path.abspath(libclangPath)
-    assert os.path.isfile(LIBCLANG_PATH)
+    #LIBCLANG_PATH = os.path.abspath(libclangPath)
+    #assert os.path.isfile(LIBCLANG_PATH)
 
     ROOT_DIR = os.path.abspath(f'{srcDir}/../')
     assert os.path.exists(ROOT_DIR)
@@ -305,7 +305,7 @@ def main():
 
     args = parser.parse_args()
 
-    setup_dirs(args.buildDir, args.srcDir, args.libclangPath)
+    setup_dirs(args.buildDir, args.srcDir)#, args.libclangPath)
 
     print('Starting CUDA kernel gathering process!')
 

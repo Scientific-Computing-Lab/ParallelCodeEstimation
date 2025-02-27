@@ -74,16 +74,24 @@ Once all the roofline benchmarking data has been collected, we can go ahead and 
 1. Go through all the executables in the `build` dir and extract their kernel names via `cuobjdump` or `objdump`
 2. Create a dictionary assiging to each kernel the `cat` contents of all the source files used by the target
 
-The scraped output will be in JSON format. We particularly do this simple form of scraping because we're struggling to have a proper AST traversal script that can properly extract CUDA kernels from source. This is a future step we're working on. 
+Commands below:
+```
+cd ./analysis
+python3 simpleScrapeKernels.py
+```
 
-## Building the LLM Dataset (TODO)
+The scraped output will be a file called `simple-scraped-kernels.json` in JSON format. We particularly do this simple form of scraping because we're struggling to have a proper AST traversal script that can properly extract CUDA kernels from source. This is a future step we're working on. For now, this file contains all the source files from each executable that was built in the `build` directory.
 
-Once both the roofline data and CUDA kernels are collected, we will amalgamate the data with another script. We use the script called `analysis/createLLMDataset.py`.
-A design decision was made to make the LLM dataset into a JSON format, following a chat style. This is because lots of the current models are trained in this manner. We have not gotten to this part yet.
+## Building the LLM Dataset
+
+We use the `analysis/vizAndPruneScrapedKernels.ipynb` notebook to ingest the `analysis/simple-scraped-kernels.json` file and emit two new JSON files with the pruned source data: `dataset-gen/simple-scraped-kernels-CUDA-pruned.json` and `dataset-gen/simple-scraped-kernels-OMP-pruned.json`. Given that some codes have very long input contexts, we drop these codes from inference/testing to save on inference/training costs. The cap we set is at 8k tokens for now.  
+
+After these two files have been generated, we can use the `analysis/createZeroShotDataset.ipynb` notebook to take in all three files of `dataset-gen/simple-scraped-kernels-CUDA-pruned.json`, `dataset-gen/simple-scraped-kernels-OMP-pruned.json`, and `roofline-data.csv` and emit a JSONL file for zero-shot inferencing; the file is called: `zero-shot-inference-data.jsonl`. 
+
 
 ## Dataset Visualization (TODO)
 
-Once we've gathered hundreds of data samples, we want to check the data to be sure it's alright. We have some visualization scripts to help with seeing the data we collected at a high level. We do this with a Jupyter Notebook called `visualizeGatheredData.ipynb` and `visualizeLLMDataset.ipynb`. 
+Once we've gathered hundreds of data samples, we want to check the data to be sure it's alright. We have some visualization scripts to help with seeing the data we collected at a high level. We do this with a Jupyter Notebook called `visualizeGatheredData-withLaunchData.ipynb` and `visualizeAndPruntScrapedKernels.ipynb`. 
 
 ## Limitations
 
