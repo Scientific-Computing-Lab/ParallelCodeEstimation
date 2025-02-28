@@ -1,0 +1,1379 @@
+"targetName","kernelName","language","answer","guess","isCorrect"
+"haccmk-cuda","haccmk_kernel(int, int, const float *, const float *, const float *, const float *, float *, float *, float *, float, float, float)","CUDA","Compute","Compute",True
+"bitpermute-cuda","bit_rev_permutation(long *, const long *, unsigned int)","CUDA","Bandwidth","Bandwidth",True
+"bitpermute-cuda","bit_rev_permutation_z(long *, const long *, unsigned int)","CUDA","Bandwidth","Bandwidth",True
+"heat-cuda","initial_value(unsigned int, double, double, double *)","CUDA","Bandwidth","Compute",False
+"heat-cuda","solve(unsigned int, double, double, double, double, double, double *, double *)","CUDA","Bandwidth","Compute",False
+"heat-cuda","zero(unsigned int, double *)","CUDA","Bandwidth","Compute",False
+"crc64-cuda","crc64_kernel(unsigned long *, unsigned long *, const unsigned char *, const unsigned long *, const unsigned long *, unsigned long, int)","CUDA","Bandwidth","Compute",False
+"backprop-cuda","kernel_layerforward(const float *, float *, float *, int)","CUDA","Bandwidth","Compute",False
+"backprop-cuda","kernel_adjust_weights(const float *, float *, const float *, float *, int)","CUDA","Bandwidth","Compute",False
+"haccmk-omp","__omp_offloading_10309_2f26c9a__Z6haccmkIfEvimiT_S0_S0_PKS0_S2_S2_S2_PS0_S3_S3__l35","OMP","Bandwidth","Compute",False
+"lud-omp","__omp_offloading_10309_2fc4a44_main_l114","OMP","Bandwidth","Compute",False
+"lud-omp","__omp_offloading_10309_2fc4a44_main_l156","OMP","Bandwidth","Compute",False
+"lud-omp","__omp_offloading_10309_2fc4a44_main_l156","OMP","Bandwidth","Compute",False
+"lud-omp","__omp_offloading_10309_2fc4a44_main_l114","OMP","Bandwidth","Compute",False
+"lud-omp","__omp_offloading_10309_2fc4a44_main_l234","OMP","Bandwidth","Compute",False
+"sc-cuda","StreamCompaction(int, int, int, float, int *, const int *, int *)","CUDA","Bandwidth","Compute",False
+"eikonal-cuda","run_reduction(const bool *, bool *, const unsigned int *, unsigned int)","CUDA","Bandwidth","Compute",False
+"eikonal-cuda","run_solver(const double *, const bool *, const double *, double *, bool *, const unsigned int *, int, int, int, int, unsigned int)","CUDA","Bandwidth","Compute",False
+"eikonal-cuda","run_check_neighbor(const double *, const bool *, const double *, double *, bool *, const unsigned int *, int, int, int, unsigned int, unsigned int)","CUDA","Bandwidth","Compute",False
+"interleave-cuda","add_kernel_interleaved(INTERLEAVED_T *, const INTERLEAVED_T *, unsigned int)","CUDA","Bandwidth","Compute",False
+"interleave-cuda","add_kernel_non_interleaved(NON_INTERLEAVED_T *, const NON_INTERLEAVED_T *, unsigned int)","CUDA","Bandwidth","Bandwidth",True
+"maxpool3d-cuda","maxpool3d(const float *, float *, int, int, int, int, int, int, int, int)","CUDA","Bandwidth","Bandwidth",True
+"rfs-omp","__omp_offloading_10309_2fc582e_main_l136","OMP","Bandwidth","Compute",False
+"rfs-omp","__omp_offloading_10309_2fc582e__Z9sumArraysiiPKfPfS0__l72","OMP","Bandwidth","Bandwidth",True
+"rfs-omp","__omp_offloading_10309_2fc582e__Z8sumArrayfiPKfPf_l57","OMP","Bandwidth","Compute",False
+"rfs-omp","__omp_offloading_10309_2fc582e__Z8sumArrayfiPKfPf_l57","OMP","Bandwidth","Compute",False
+"fwt-omp","__omp_offloading_10309_2f08680__Z11modulateGPUPfPKfi_l198","OMP","Bandwidth","Bandwidth",True
+"fwt-omp","__omp_offloading_10309_2f08680__Z11fwtBatchGPUPfii_l114","OMP","Bandwidth","Compute",False
+"fwt-omp","__omp_offloading_10309_2f08680__Z11fwtBatchGPUPfii_l31","OMP","Bandwidth","Compute",False
+"tonemapping-cuda","toneMapping(const float *, float *, float, float, float, float, unsigned int, unsigned int, unsigned int)","CUDA","Bandwidth","Compute",False
+"nbody-cuda","update_particles(Particle *, float *, int, float)","CUDA","Bandwidth","Compute",False
+"nbody-cuda","accelerate_particles(Particle *, int, float, float)","CUDA","Compute","Compute",True
+"nbody-cuda","accumulate_energy(float *, int)","CUDA","Bandwidth","Bandwidth",True
+"log2-cuda","compute_log(float *, const float *, int, int, int)","CUDA","Bandwidth","Compute",False
+"iso2dfd-omp","__omp_offloading_10309_2fc34ee__Z15iso_2dfd_kernelPfPKfS1_fmm_l149","OMP","Bandwidth","Compute",False
+"mandelbrot-omp","__omp_offloading_10309_2fc4aa3__ZN14MandelParallel8EvaluateEv_l182","OMP","Compute","Compute",True
+"attention-omp","__omp_offloading_10309_2f043ab__Z16attention_devicePKfS0_S0_iii_l44","OMP","Bandwidth","Compute",False
+"attention-omp","__omp_offloading_10309_2f043ab__Z16attention_devicePKfS0_S0_iii_l40","OMP","Bandwidth","Compute",False
+"attention-omp","__omp_offloading_10309_2f043ab__Z16attention_devicePKfS0_S0_iii_l40","OMP","Bandwidth","Compute",False
+"divergence-cuda","div_kernel(double *, double *, double *, double *, double *, int)","CUDA","Bandwidth","Compute",False
+"ntt-cuda","intt_3_64k_modcrt(unsigned int *, const unsigned long *)","CUDA","Bandwidth","Compute",False
+"phmm-cuda","pair_HMM_forward(int, int, const double (*)[41][4][2], const double (*)[4][2][3], const double (*)[41][4][2], const double (*)[2][4][2], const double (*)[2], double (*)[41][4][2])","CUDA","Bandwidth","Bandwidth",True
+"layout-cuda","void SoAKernel<4096>(const ApplesOnTrees *, int *)","CUDA","Bandwidth","Compute",False
+"layout-cuda","void AoSKernel<4096>(const AppleTree *, int *)","CUDA","Bandwidth","Compute",False
+"layout-cuda","void AoSKernel<4096>(const AppleTree *, int *)","CUDA","Bandwidth","Compute",False
+"cooling-cuda","cool_kernel(int, double, const double *, double *, int)","CUDA","Bandwidth","Compute",False
+"rsc-cuda","RANSAC_kernel_block(const float *, const flowvector *, int, int, int, float, int *, int *, int *)","CUDA","Compute","Compute",True
+"dslash-cuda","make_back(const dsu3_matrix *, const dsu3_matrix *, const unsigned long *, const unsigned long *, dsu3_matrix *, dsu3_matrix *, int)","CUDA","Bandwidth","Compute",False
+"dslash-cuda","dslash(const dsu3_matrix *, const dsu3_matrix *, const dsu3_matrix *, const dsu3_matrix *, const dsu3_vector *, dsu3_vector *, const unsigned long *, const unsigned long *, const unsigned long *, const unsigned long *, int)","CUDA","Bandwidth","Compute",False
+"bwt-omp","__omp_offloading_10309_2f0473b__Z14generate_tablePiii_l8","OMP","Bandwidth","Compute",False
+"bwt-omp","__omp_offloading_10309_2f0473b__Z20reconstruct_sequencePKiPKcPci_l43","OMP","Bandwidth","Bandwidth",True
+"bwt-omp","__omp_offloading_10309_2f0473b__Z17bitonic_sort_stepPiiiiPKci_l26","OMP","Bandwidth","Compute",False
+"concurrentKernels-cuda","sum(long *, int)","CUDA","Bandwidth","Bandwidth",True
+"deredundancy-cuda","kernel_updateRepresentative(int *, int *, int)","CUDA","Bandwidth","Compute",False
+"deredundancy-cuda","kernel_mergeIndex(const long *, const unsigned short *, unsigned short *, const long *, int)","CUDA","Bandwidth","Bandwidth",True
+"deredundancy-cuda","kernel_makeTable(const long *, const unsigned short *, const unsigned short *, const long *, unsigned short *, int)","CUDA","Bandwidth","Bandwidth",True
+"deredundancy-cuda","kernel_baseToNumber(char *, long)","CUDA","Bandwidth","Bandwidth",True
+"deredundancy-cuda","kernel_createIndex7(const char *, const int *, const long *, unsigned short *, unsigned short *, long *, int *, int)","CUDA","Bandwidth","Bandwidth",True
+"deredundancy-cuda","kernel_filter(float, int, const int *, const long *, const unsigned short *, const unsigned short *, const long *, const int *, int *, const unsigned short *, int)","CUDA","Bandwidth","Bandwidth",True
+"minkowski-omp","__omp_offloading_10309_2fc51a2_main_l73","OMP","Compute","Compute",True
+"nbody-omp","__omp_offloading_10309_2fc5340__ZN11GSimulation5StartEv_l169","OMP","Bandwidth","Compute",False
+"nbody-omp","__omp_offloading_10309_2fc5340__ZN11GSimulation5StartEv_l115","OMP","Compute","Compute",True
+"nbody-omp","__omp_offloading_10309_2fc5340__ZN11GSimulation5StartEv_l115","OMP","Compute","Compute",True
+"multimaterial-omp","__omp_offloading_10309_2fc52b7__Z20compact_cell_centric9full_data12compact_dataiPPc_l148","OMP","Bandwidth","Compute",False
+"multimaterial-omp","__omp_offloading_10309_2fc52b7__Z20compact_cell_centric9full_data12compact_dataiPPc_l212","OMP","Bandwidth","Compute",False
+"multimaterial-omp","__omp_offloading_10309_2fc52b7__Z20compact_cell_centric9full_data12compact_dataiPPc_l212","OMP","Bandwidth","Compute",False
+"multimaterial-omp","__omp_offloading_10309_2fc52b7__Z20compact_cell_centric9full_data12compact_dataiPPc_l212","OMP","Bandwidth","Compute",False
+"multimaterial-omp","__omp_offloading_10309_2fc52b7__Z20compact_cell_centric9full_data12compact_dataiPPc_l199","OMP","Bandwidth","Compute",False
+"accuracy-omp","__omp_offloading_10309_2f04138_main_l57","OMP","Bandwidth","Bandwidth",True
+"srad-omp","__omp_offloading_10309_2fc5ddb_main_l403","OMP","Bandwidth","Compute",False
+"srad-omp","__omp_offloading_10309_2fc5ddb_main_l403","OMP","Bandwidth","Compute",False
+"srad-omp","__omp_offloading_10309_2fc5ddb_main_l403","OMP","Bandwidth","Compute",False
+"srad-omp","__omp_offloading_10309_2fc5ddb_main_l403","OMP","Bandwidth","Compute",False
+"srad-omp","__omp_offloading_10309_2fc5ddb_main_l202","OMP","Bandwidth","Compute",False
+"srad-omp","__omp_offloading_10309_2fc5ddb_main_l403","OMP","Bandwidth","Compute",False
+"mixbench-omp","__omp_offloading_10309_2fc51ce__Z14benchmark_funcPfiii_l20","OMP","Bandwidth","Bandwidth",True
+"fdtd3d-cuda","finite_difference(float *, const float *, const float *, int, int, int, int)","CUDA","Bandwidth","Bandwidth",True
+"concat-omp","__omp_offloading_10309_2f04b71__Z6concatIfEvPKT_S2_PS0_iiii_l16","OMP","Bandwidth","Bandwidth",True
+"sptrsv-cuda","sptrsv_mix(const int *, const int *, const double *, int *, int, const double *, double *, const int *, int)","CUDA","Bandwidth","Bandwidth",True
+"split-omp","__omp_offloading_10309_2fc5d59_main_l140","OMP","Bandwidth","Bandwidth",True
+"chacha20-cuda","test_keystreams(const char *, const char *, const char *, const unsigned char *, unsigned char *, unsigned char *, unsigned char *, unsigned char *, int, int, int)","CUDA","Bandwidth","Bandwidth",True
+"phmm-omp","__omp_offloading_10309_2fc557b__Z16pair_HMM_forwardiiiiPA41_A4_A2_KdPA4_A2_A3_S_S3_PA2_S1_PS0_PA41_A4_A2_d_l20","OMP","Bandwidth","Bandwidth",True
+"vote-cuda","VoteAnyKernel3(bool *, int, int)","CUDA","Bandwidth","Bandwidth",True
+"deredundancy-cuda","kernel_magic(float, const int *, const int *, int *, int, int)","CUDA","Bandwidth","Bandwidth",True
+"deredundancy-cuda","kernel_compressData(const int *, const long *, const char *, unsigned int *, int *, int)","CUDA","Bandwidth","Bandwidth",True
+"deredundancy-cuda","kernel_cleanTable(const long *, const unsigned short *, const unsigned short *, const long *, unsigned short *, int)","CUDA","Bandwidth","Bandwidth",True
+"deredundancy-cuda","kernel_createCutoff(float, int, const int *, long *, int *, int)","CUDA","Bandwidth","Compute",False
+"colorwheel-cuda","color(unsigned char *, int, int, float, float)","CUDA","Bandwidth","Bandwidth",True
+"atomicAggregate-cuda","k(int *, int)","CUDA","Bandwidth","Bandwidth",True
+"matrixT-cuda","copy(float *, const float *, int, int)","CUDA","Bandwidth","Bandwidth",True
+"matrixT-cuda","copySharedMem(float *, const float *, int, int)","CUDA","Bandwidth","Bandwidth",True
+"matrixT-cuda","transposeFineGrained(float *, const float *, int, int)","CUDA","Bandwidth","Bandwidth",True
+"matrixT-cuda","transposeNaive(float *, const float *, int, int)","CUDA","Bandwidth","Bandwidth",True
+"matrixT-cuda","transposeCoalesced(float *, const float *, int, int)","CUDA","Bandwidth","Bandwidth",True
+"matrixT-cuda","transposeCoarseGrained(float *, const float *, int, int)","CUDA","Bandwidth","Bandwidth",True
+"matrixT-cuda","transposeDiagonal(float *, const float *, int, int)","CUDA","Bandwidth","Bandwidth",True
+"matrixT-cuda","transposeNoBankConflicts(float *, const float *, int, int)","CUDA","Bandwidth","Bandwidth",True
+"simpleMultiDevice-cuda","reduceKernel(float *, const float *, int)","CUDA","Bandwidth","Compute",False
+"ising-omp","__omp_offloading_10309_2fc34dd__Z14update_latticeILb0EEvPaS0_Pffxx_l54","OMP","Bandwidth","Bandwidth",True
+"ising-omp","__omp_offloading_10309_2fc34dd__Z14update_latticeILb1EEvPaS0_Pffxx_l54","OMP","Bandwidth","Bandwidth",True
+"ising-omp","__omp_offloading_10309_2fc34dd__Z10init_spinsPaPKfxx_l38","OMP","Bandwidth","Bandwidth",True
+"f16max-cuda","void hmax<__half2>(const T1 *, const T1 *, T1 *, unsigned long)","CUDA","Bandwidth","Compute",False
+"lombscargle-cuda","lombscargle(int, int, const float *, const float *, const float *, float *, float)","CUDA","Compute","Compute",True
+"gd-omp","__omp_offloading_10309_2f20c71_main_l119","OMP","Bandwidth","Compute",False
+"gd-omp","__omp_offloading_10309_2f20c71_main_l71","OMP","Bandwidth","Compute",False
+"gd-omp","__omp_offloading_10309_2f20c71_main_l119","OMP","Bandwidth","Compute",False
+"lud-cuda","lud_diagonal(float *, int, int)","CUDA","Bandwidth","Compute",False
+"lud-cuda","lud_internal(float *, int, int)","CUDA","Bandwidth","Compute",False
+"lud-cuda","lud_perimeter(float *, int, int)","CUDA","Bandwidth","Bandwidth",True
+"rodrigues-cuda","rotate(int, float, float3, float3 *)","CUDA","Bandwidth","Compute",False
+"rodrigues-cuda","rotate2(int, float, float3, float4 *)","CUDA","Bandwidth","Compute",False
+"grep-cuda","parallelMatch(char *, const unsigned int *, int, char *, const unsigned int *, unsigned char *, State *)","CUDA","Bandwidth","Compute",False
+"b+tree-cuda","findK(long, const knode *, long, const record *, long *, long *, const int *, record *)","CUDA","Bandwidth","Compute",False
+"b+tree-cuda","findRangeK(long, const knode *, long, long *, long *, long *, long *, const int *, const int *, int *, int *)","CUDA","Bandwidth","Compute",False
+"lanczos-omp","__omp_offloading_10309_2fc35fb__Z18device_dot_productIdET_iPKS0_S2__l54","OMP","Bandwidth","Compute",False
+"lanczos-omp","__omp_offloading_10309_2fc35fb__Z20saxpy_inplace_kernelIdEviPT_PKS0_S0__l42","OMP","Bandwidth","Compute",False
+"lanczos-omp","__omp_offloading_10309_2fc35fb__Z23multiply_inplace_kernelIdEviPT_S0__l25","OMP","Bandwidth","Compute",False
+"lanczos-omp","__omp_offloading_10309_2fc35fb__Z11gpu_lanczosIdE19symm_tridiag_matrixIT_ERK10csr_matrixIS1_ERKSt6vectorIS1_SaIS1_EEi_l113","OMP","Bandwidth","Compute",False
+"minimap2-omp","__omp_offloading_10309_2fc5138__Z27device_chain_kernel_wrapperRSt6vectorI10control_dtSaIS0_EERS_I9anchor_dtSaIS4_EERS_I9return_dtSaIS8_EEiii_l96","OMP","Bandwidth","Bandwidth",True
+"pnpoly-cuda","pnpoly_base(int *, const float2 *, const float2 *, int)","CUDA","Compute","Bandwidth",False
+"pnpoly-cuda","void pnpoly_opt<1>(int *, const float2 *, const float2 *, int)","CUDA","Compute","Compute",True
+"tqs-omp","__omp_offloading_10309_2fc605e__Z18call_TaskQueue_gpuiiPK6task_tPiS2_iii_l47","OMP","Bandwidth","Bandwidth",True
+"unfold-cuda","void unfold_backward_elementwise_kernel<64, 4, void unfold_backward_internal_kernel<int>(T1 *, const T1 *, const long *, long, long, long, long, long, long)::[lambda(int) (instance 1)]>(int, T3)","CUDA","Bandwidth","Bandwidth",True
+"aes-omp","__omp_offloading_10309_2f041b2__Z10AESEncryptP6uchar4PKS_S2_PKhjjj_l109","OMP","Bandwidth","Compute",False
+"jaccard-cuda","void jaccard_is<1, float>(int, int, const int *, const int *, const T2 *, const T2 *, T2 *, T2 *)","CUDA","Bandwidth","Bandwidth",True
+"jaccard-cuda","void jaccard_jw<1, float>(int, const T2 *, T2, const T2 *, const T2 *, T2 *)","CUDA","Bandwidth","Bandwidth",True
+"jaccard-cuda","void fill<1, float>(int, T2 *, T2)","CUDA","Bandwidth","Bandwidth",True
+"jaccard-cuda","void fill<0, float>(int, T2 *, T2)","CUDA","Bandwidth","Bandwidth",True
+"jaccard-cuda","void jaccard_row_sum<1, float>(int, const int *, const int *, const T2 *, T2 *)","CUDA","Bandwidth","Bandwidth",True
+"hausdorff-omp","__omp_offloading_10309_2f28495__Z15computeDistancePK6float2S1_Pfii_l21","OMP","Compute","Bandwidth",False
+"libor-cuda","Pathcalc_Portfolio_KernelGPU2(float *, const float *, const int *, const float *, float, int, int, int)","CUDA","Bandwidth","Compute",False
+"black-scholes-omp","__omp_offloading_10309_2f04554__Z29runBlackScholesAnalyticEnginei_l237","OMP","Bandwidth","Compute",False
+"warpexchange-cuda","void k<256, 1024>(const int *, int *, int)","CUDA","Bandwidth","Bandwidth",True
+"nms-cuda","reduce_nms_bitmap(unsigned char *, unsigned char *, int)","CUDA","Bandwidth","Bandwidth",True
+"nms-cuda","generate_nms_bitmap(const float4 *, unsigned char *, float)","CUDA","Bandwidth","Bandwidth",True
+"jenkins-hash-cuda","kernel(const unsigned int *, const unsigned int *, const unsigned int *, unsigned int *, int)","CUDA","Bandwidth","Bandwidth",True
+"kalman-omp","__omp_offloading_10309_2fc3525__Z6kalmanILi8EEvPKdiS1_S1_S1_S1_S1_bS1_iPdS2_S2_iiS2_bS2__l113","OMP","Bandwidth","Compute",False
+"adv-cuda","advCubatureHex3D(int, const float *, const float *, const float *, const float *, int, const float *, float *)","CUDA","Bandwidth","Compute",False
+"ntt-omp","__omp_offloading_10309_2fc53ed__Z17intt_3_64k_modcrtjPjPKm_l16","OMP","Bandwidth","Compute",False
+"grep-omp","__omp_offloading_10309_2f26c54_main_l171","OMP","Bandwidth","Compute",False
+"d2q9-bgk-omp","__omp_offloading_10309_2f060ef_main_l245","OMP","Bandwidth","Compute",False
+"su3-omp","__omp_offloading_10309_2fc5f1b__Z10su3_mat_nnRSt6vectorI4siteSaIS0_EERS_I11dsu3_matrixSaIS4_EES3_mmmi_l41","OMP","Bandwidth","Compute",False
+"atomicCost-cuda","void wiAtomicOnGlobalMem<double>(T1 *, int)","CUDA","Bandwidth","Bandwidth",True
+"hybridsort-omp","__omp_offloading_10309_2fc33c6__Z10bucketSortPfS_iPiS0_ffPj_l4","OMP","Bandwidth","Bandwidth",True
+"hybridsort-omp","__omp_offloading_10309_2fc33c7__Z12runMergeSortiiP6float4S0_PiS1_Pj_l1","OMP","Bandwidth","Bandwidth",True
+"hybridsort-omp","__omp_offloading_10309_2fc33c4__Z10bucketSortPfS_iPiS0_ffPj_l1","OMP","Bandwidth","Bandwidth",True
+"hybridsort-omp","__omp_offloading_10309_2fc33c3__Z10bucketSortPfS_iPiS0_ffPj_l1","OMP","Bandwidth","Bandwidth",True
+"hybridsort-omp","__omp_offloading_10309_2fc33c8__Z12runMergeSortiiP6float4S0_PiS1_Pj_l133","OMP","Bandwidth","Bandwidth",True
+"hybridsort-omp","__omp_offloading_10309_2fc33c8__Z12runMergeSortiiP6float4S0_PiS1_Pj_l211","OMP","Bandwidth","Bandwidth",True
+"hybridsort-omp","__omp_offloading_10309_2fc33c3__Z10bucketSortPfS_iPiS0_ffPj_l1","OMP","Bandwidth","Bandwidth",True
+"flame-cuda","kernel_generate_points(float3 *, short2 *, short *, const unsigned short *, int, const float *, ConstMemParams)","CUDA","Bandwidth","Compute",False
+"flame-cuda","kernel_initialize(short2 *, short *, const unsigned short *, int, float2 *, const float *, ConstMemParams)","CUDA","Bandwidth","Bandwidth",True
+"flame-cuda","kernel_iterate(short2 *, short *, const unsigned short *, int, const float *, ConstMemParams)","CUDA","Bandwidth","Bandwidth",True
+"atan2-cuda","compute_s(int, const float *, const float *, short *)","CUDA","Bandwidth","Compute",False
+"atan2-cuda","compute_f(int, const float *, const float *, float *)","CUDA","Bandwidth","Compute",False
+"atan2-cuda","compute_i(int, const float *, const float *, int *)","CUDA","Bandwidth","Compute",False
+"spm-omp","__omp_offloading_10309_2fc5d69__Z3spmPKfiPKhS2_4int3S3_PhS4_Pb_l77","OMP","Bandwidth","Compute",False
+"minimod-cuda","target_inner_3d_kernel(long long, long long, long long, int, int, int, long long, long long, long long, long long, long long, long long, long long, long long, long long, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, const float *, float *, const float *, const float *, const float *)","CUDA","Bandwidth","Compute",False
+"minimod-cuda","kernel_add_source_kernel(float *, long long, float)","CUDA","Bandwidth","Bandwidth",True
+"minimod-cuda","kernel_add_source_kernel(float *, long long, float)","CUDA","Bandwidth","Bandwidth",True
+"minimod-cuda","target_pml_3d_kernel(long long, long long, long long, int, int, int, long long, long long, long long, long long, long long, long long, long long, long long, long long, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, const float *, float *, const float *, float *, const float *)","CUDA","Bandwidth","Compute",False
+"pathfinder-cuda","pathfinder(const int *, const int *, int *, int *, int, int, int, int, int)","CUDA","Bandwidth","Bandwidth",True
+"reverse-cuda","reverse(int *, int)","CUDA","Bandwidth","Bandwidth",True
+"lr-omp","__omp_offloading_10309_2fc49b1__Z8rsquarediPK6float2fS_PS__l63","OMP","Bandwidth","Compute",False
+"lr-omp","__omp_offloading_10309_2fc49b1__Z17linear_regressioniPK6float2P6float4_l20","OMP","Bandwidth","Compute",False
+"scel-cuda","SigmoidCrossEntropyWithLogitsKernel(int, bool, bool, const float *, const float *, float *)","CUDA","Bandwidth","Compute",False
+"medianfilter-omp","__omp_offloading_10309_2fc4bdf__Z15MedianFilterGPUP6uchar4Pjii_l141","OMP","Bandwidth","Bandwidth",True
+"minibude-omp","__omp_offloading_10309_2fc5107__Z11fasten_mainmimmmmPK4AtomS1_PKfS3_S3_S3_S3_S3_PK8FFParamsPf_l40","OMP","Compute","Compute",True
+"keogh-cuda","lb_keogh(const float *, const float *, const float *, float *, const float *, const float *, int, int)","CUDA","Compute","Bandwidth",False
+"background-subtract-cuda","findMovingPixels(unsigned long, const unsigned char *, const unsigned char *, const unsigned char *, const unsigned char *, unsigned char *)","CUDA","Bandwidth","Bandwidth",True
+"background-subtract-cuda","updateThreshold(unsigned long, const unsigned char *, const unsigned char *, const unsigned char *, unsigned char *)","CUDA","Bandwidth","Bandwidth",True
+"background-subtract-cuda","updateBackground(unsigned long, const unsigned char *, const unsigned char *, unsigned char *)","CUDA","Bandwidth","Bandwidth",True
+"cross-cuda","void cross3_kernel<float>(int, T1 *, const T1 *, const T1 *)","CUDA","Bandwidth","Compute",False
+"cross-cuda","void cross_kernel<float, int>(int, T1 *, const T1 *, const T1 *, T2, T2, T2)","CUDA","Bandwidth","Compute",False
+"cross-cuda","void cross2_kernel<float, int>(int, T1 *, const T1 *, const T1 *, T2, T2, T2)","CUDA","Bandwidth","Compute",False
+"collision-cuda","checkDuplicates(int, const int *)","CUDA","Bandwidth","Bandwidth",True
+"collision-cuda","checkDuplicateMask(int, const int *)","CUDA","Bandwidth","Bandwidth",True
+"swish-omp","__omp_offloading_10309_2fc5f98__Z11SwishKernelIfEviPKT_PS0__l13","OMP","Bandwidth","Compute",False
+"swish-omp","__omp_offloading_10309_2fc5f98__Z19SwishGradientKernelIfEviPKT_S2_S2_PS0__l27","OMP","Bandwidth","Compute",False
+"divergence-omp","__omp_offloading_10309_2f06b06__Z21divergence_sphere_gpuILi4EdEvPKT0_RK10derivativeIXT_ES0_ERK7elementIXT_ES0_EPS0__l77","OMP","Bandwidth","Bandwidth",True
+"divergence-omp","__omp_offloading_10309_2f06b06__Z21divergence_sphere_gpuILi4EdEvPKT0_RK10derivativeIXT_ES0_ERK7elementIXT_ES0_EPS0__l77","OMP","Bandwidth","Bandwidth",True
+"convolution3D-omp","__omp_offloading_10309_2f0566f__Z6conv3DIfEviiiiiii_l84","OMP","Compute","Compute",True
+"matrix-rotate-omp","__omp_offloading_10309_2fc4af4__Z22rotate_matrix_parallelPfii_l13","OMP","Bandwidth","Bandwidth",True
+"zoom-cuda","zoom_in_kernel(const float *, float *, int, int, int, int, int, int, int, int, int)","CUDA","Bandwidth","Bandwidth",True
+"zoom-cuda","zoom_out_edge_pad(float *, int, int, int, int, int, int, int)","CUDA","Bandwidth","Bandwidth",True
+"zoom-cuda","zoom_out_kernel(const float *, float *, int, int, int, int, int, int, int, int, int)","CUDA","Bandwidth","Bandwidth",True
+"bwt-cuda","bitonic_sort_step(int *, int, int, int, const char *, int)","CUDA","Bandwidth","Compute",False
+"bwt-cuda","reconstruct_sequence(const int *, const char *, char *, int)","CUDA","Bandwidth","Bandwidth",True
+"bwt-cuda","generate_table(int *, int, int)","CUDA","Bandwidth","Bandwidth",True
+"boxfilter-cuda","col_kernel(const unsigned int *, unsigned int *, unsigned int, unsigned int, int, float)","CUDA","Bandwidth","Bandwidth",True
+"boxfilter-cuda","row_kernel(const uchar4 *, unsigned int *, unsigned int, unsigned int, int, int, float, unsigned int)","CUDA","Bandwidth","Bandwidth",True
+"heartwall-cuda","hw(int, params_common, const float *, int *, int *, int *, int *, int *, int *, int *, int *, float *, float *, float *, float *, float *, float *, float *, float *, float *, float *, float *, float *, float *, float *, float *, float *, float *, float *, float *, float *, float *, float *)","CUDA","Bandwidth","Compute",False
+"hwt1d-cuda","dwtHaar1D(const float *, float *, float *, unsigned int, unsigned int, unsigned int, unsigned int)","CUDA","Bandwidth","Compute",False
+"bincount-cuda","void bincount<int, float, int, 1>(T1 *, const T2 *, T3, T2, T2, T3, T3)","CUDA","Bandwidth","Bandwidth",True
+"murmurhash3-cuda","MurmurHash3_x64_128_kernel(const unsigned char *, const unsigned int *, const unsigned int *, unsigned long *, unsigned int)","CUDA","Bandwidth","Compute",False
+"particlefilter-cuda","kernel_likelihood(float *, float *, const float *, const float *, int *, const int *, float *, const unsigned char *, float *, int *, float *, int, int, int, int, int, int)","CUDA","Bandwidth","Compute",False
+"particlefilter-cuda","kernel_sum(float *, int)","CUDA","Bandwidth","Bandwidth",True
+"particlefilter-cuda","kernel_normalize_weights(float *, const float *, float *, float *, int *, int)","CUDA","Bandwidth","Bandwidth",True
+"particlefilter-cuda","kernel_find_index(const float *, const float *, const float *, const float *, float *, float *, int)","CUDA","Bandwidth","Bandwidth",True
+"bitonic-sort-omp","__omp_offloading_10309_2f04513__Z19ParallelBitonicSortPii_l66","OMP","Bandwidth","Bandwidth",True
+"mcpr-omp","__omp_offloading_10309_2fc4b69__Z25compute_probs_unitStridesPKdS0_Pdiiiii_l53","OMP","Bandwidth","Bandwidth",True
+"mcpr-omp","__omp_offloading_10309_2fc4b69__Z13compute_probsPKdS0_Pdiiiii_l8","OMP","Bandwidth","Compute",False
+"mcpr-omp","__omp_offloading_10309_2fc4b69__Z35compute_probs_unitStrides_sharedMemPKdS0_Pdiiiii_l100","OMP","Bandwidth","Bandwidth",True
+"spm-cuda","spm(const float *, int, const unsigned char *, const unsigned char *, int3, int3, unsigned char *, unsigned char *, bool *)","CUDA","Bandwidth","Compute",False
+"projectile-cuda","CalculateRange(const Projectile *, Projectile *)","CUDA","Bandwidth","Compute",False
+"filter-omp","__omp_offloading_10309_2f06e1e_main_l44","OMP","Bandwidth","Bandwidth",True
+"norm2-omp","__omp_offloading_10309_2fc53bf_main_l51","OMP","Bandwidth","Compute",False
+"pointwise-cuda","elementWise_fp(int, int, const float *, const float *, const float *, float *, float *, float *, const float *, float *)","CUDA","Bandwidth","Compute",False
+"pointwise-cuda","init(float *, int)","CUDA","Bandwidth","Bandwidth",True
+"black-scholes-cuda","getOutValOption(const optionInputStruct *, float *, int)","CUDA","Bandwidth","Compute",False
+"softmax-omp","__omp_offloading_10309_2fc5cba_main_l52","OMP","Bandwidth","Compute",False
+"all-pairs-distance-cuda","k1(const char *, int *)","CUDA","Bandwidth","Bandwidth",True
+"all-pairs-distance-cuda","k2(const char *, int *)","CUDA","Bandwidth","Bandwidth",True
+"all-pairs-distance-cuda","k3(const char *, int *)","CUDA","Bandwidth","Bandwidth",True
+"streamcluster-cuda","compute_cost(const Point_Struct *, const float *, float *, const int *, char *, int, int, long, int)","CUDA","Bandwidth","Compute",False
+"crossEntropy-cuda","void loss_bwd<__half, __half>(const T1 *, const T2 *, const T2 *, const long *, const T1 *, const long *, T2 *)","CUDA","Bandwidth","Compute",False
+"rodrigues-omp","__omp_offloading_10309_2fc5867__Z6rotateif6float3PS__l22","OMP","Bandwidth","Compute",False
+"rodrigues-omp","__omp_offloading_10309_2fc5867__Z7rotate2if6float3P6float4_l54","OMP","Bandwidth","Compute",False
+"svd3x3-omp","__omp_offloading_10309_2fc5f4c__Z9runDevicePfS_ii_l20","OMP","Bandwidth","Compute",False
+"ecdh-omp","__omp_offloading_10309_2f06c37__Z6k_slowiiiPiS_jii_l158","OMP","Bandwidth","Bandwidth",True
+"ecdh-omp","__omp_offloading_10309_2f06c37__Z6k_fastiiiPiS_jii_l173","OMP","Bandwidth","Compute",False
+"sad-omp","__omp_offloading_10309_2fc59ba__Z17compute_sad_arrayPiPKhS1_iRiS2_iiiiiRd_l27","OMP","Bandwidth","Bandwidth",True
+"sad-omp","__omp_offloading_10309_2fc59ba__Z17compute_sad_arrayPiPKhS1_iRiS2_iiiiiRd_l66","OMP","Bandwidth","Bandwidth",True
+"sad-omp","__omp_offloading_10309_2fc59ba__Z17compute_sad_arrayPiPKhS1_iRiS2_iiiiiRd_l66","OMP","Bandwidth","Bandwidth",True
+"particle-diffusion-cuda","Simulation(float *, float *, const float *, const float *, unsigned long *, unsigned long, unsigned int, int, float)","CUDA","Bandwidth","Bandwidth",True
+"ccsd-trpdrv-cuda","ccsd_kernel(const double *, const double *, const double *, const double *, const double *, const double *, const double *, const double *, const double *, const double *, const double *, const double *, const double *, const double *, const double *, double, double *, double *, double *, double *, int, int, int)","CUDA","Bandwidth","Bandwidth",True
+"rng-wallace-cuda","rng_wallace(unsigned int, float *, float *, float *)","CUDA","Bandwidth","Compute",False
+"ga-omp","__omp_offloading_10309_2f08697_main_l83","OMP","Bandwidth","Bandwidth",True
+"ga-omp","__omp_offloading_10309_2f08697__Z2gaPKcS0_Pcjiiii_l18","OMP","Bandwidth","Bandwidth",True
+"snake-cuda","sneaky_snake(const unsigned int *, const unsigned int *, int *, int, int)","CUDA","Bandwidth","Bandwidth",True
+"bitcracker-cuda","kernel_w_block(const unsigned char *, const unsigned char *, unsigned int *)","CUDA","Bandwidth","Compute",False
+"urng-cuda","noise_uniform(const uchar4 *, uchar4 *, int)","CUDA","Bandwidth","Compute",False
+"warpsort-cuda","sortDevice(DeviceTensor<float, 1, int, DefaultPtrTraits>, DeviceTensor<float, 1, int, DefaultPtrTraits>)","CUDA","Bandwidth","Bandwidth",True
+"perplexity-omp","__omp_offloading_10309_2fc5568__Z17perplexity_searchIifEvPKT0_PS0_fifT_iRd_l41","OMP","Bandwidth","Compute",False
+"randomAccess-omp","__omp_offloading_10309_2fc5771_main_l109","OMP","Bandwidth","Bandwidth",True
+"randomAccess-omp","__omp_offloading_10309_2fc5771_main_l103","OMP","Bandwidth","Bandwidth",True
+"blas-gemm-cuda","void matrix_mul<__half>(T1 *, T1 *, T1 *, int, int, int, T1, T1)","CUDA","Bandwidth","Compute",False
+"blas-gemm-cuda","void matrix_mul<float>(T1 *, T1 *, T1 *, int, int, int, T1, T1)","CUDA","Bandwidth","Compute",False
+"nw-omp","__omp_offloading_10309_2fc53fe_main_l169","OMP","Bandwidth","Compute",False
+"nw-omp","__omp_offloading_10309_2fc53fe_main_l238","OMP","Bandwidth","Compute",False
+"gaussian-omp","__omp_offloading_10309_2f086e8__Z10ForwardSubPfS_S_ii_l186","OMP","Bandwidth","Compute",False
+"gaussian-omp","__omp_offloading_10309_2f086e8__Z10ForwardSubPfS_S_ii_l192","OMP","Bandwidth","Compute",False
+"hausdorff-cuda","computeDistance(const float2 *, const float2 *, float *, int, int)","CUDA","Compute","Bandwidth",False
+"laplace3d-omp","__omp_offloading_10309_2fc3650__Z9laplace3diiiiPKfPf_l36","OMP","Bandwidth","Compute",False
+"axhelm-cuda","axhelm(int, int, const float *, const float *, const float *, const float *, float *)","CUDA","Bandwidth","Bandwidth",True
+"hotspot3D-cuda","hotspot3d(const float *, const float *, float *, int, int, int, float, float, float, float, float, float, float, float)","CUDA","Bandwidth","Compute",False
+"sampling-omp","__omp_offloading_10309_2fc59cb_main_l222","OMP","Bandwidth","Bandwidth",True
+"sampling-omp","__omp_offloading_10309_2fc59cb_main_l190","OMP","Bandwidth","Bandwidth",True
+"aobench-omp","__omp_offloading_10309_2f042e2__Z6renderPhiiiPK7_SphereRK6_Plane_l303","OMP","Compute","Compute",True
+"qtclustering-cuda","compute_degrees(int *, int *, int, int)","CUDA","Bandwidth","Compute",False
+"qtclustering-cuda","QTC_device(float *, char *, char *, int *, int *, int *, float *, int *, int, int, int, float, int, int, int)","CUDA","Bandwidth","Compute",False
+"qtclustering-cuda","update_clustered_pnts_mask(char *, char *, int)","CUDA","Bandwidth","Bandwidth",True
+"qtclustering-cuda","trim_ungrouped_pnts_indr_array(int, int *, float *, int *, char *, char *, int *, int *, float *, int *, int, int, int, float)","CUDA","Bandwidth","Bandwidth",True
+"qtclustering-cuda","reduce_card_device(int *, int)","CUDA","Bandwidth","Compute",False
+"atan2-omp","__omp_offloading_10309_2f04339__Z9compute_iiPKfS0_Pi_l306","OMP","Bandwidth","Compute",False
+"atan2-omp","__omp_offloading_10309_2f04339__Z9compute_fiPKfS0_Pf_l269","OMP","Bandwidth","Compute",False
+"atan2-omp","__omp_offloading_10309_2f04339__Z9compute_siPKfS0_Ps_l289","OMP","Bandwidth","Compute",False
+"rng-wallace-omp","__omp_offloading_10309_2fc5856_main_l65","OMP","Bandwidth","Bandwidth",True
+"meanshift-omp","__omp_offloading_10309_2fc4bc6__ZN10mean_shift3gpu10mean_shiftEPKfPfii_l12","OMP","Compute","Compute",True
+"meanshift-omp","__omp_offloading_10309_2fc4bc6__ZN10mean_shift3gpu17mean_shift_tilingEPKfPfii_l39","OMP","Compute","Bandwidth",False
+"bilateral-omp","__omp_offloading_10309_2f044be__Z15bilateralFilterILi3EEvPKfPfiifff_l18","OMP","Compute","Bandwidth",False
+"bilateral-omp","__omp_offloading_10309_2f044be__Z15bilateralFilterILi6EEvPKfPfiifff_l18","OMP","Compute","Bandwidth",False
+"bilateral-omp","__omp_offloading_10309_2f044be__Z15bilateralFilterILi9EEvPKfPfiifff_l18","OMP","Compute","Bandwidth",False
+"popcount-omp","__omp_offloading_10309_2fc55f6_main_l149","OMP","Bandwidth","Compute",False
+"popcount-omp","__omp_offloading_10309_2fc55f6_main_l149","OMP","Bandwidth","Compute",False
+"popcount-omp","__omp_offloading_10309_2fc55f6_main_l149","OMP","Bandwidth","Compute",False
+"popcount-omp","__omp_offloading_10309_2fc55f6_main_l149","OMP","Bandwidth","Compute",False
+"popcount-omp","__omp_offloading_10309_2fc55f6_main_l149","OMP","Bandwidth","Compute",False
+"popcount-omp","__omp_offloading_10309_2fc55f6_main_l149","OMP","Bandwidth","Compute",False
+"gd-cuda","compute(const float *, float *, const int *, const int *, const float *, const int *, float *, int *, int)","CUDA","Bandwidth","Compute",False
+"gd-cuda","update(float *, const float *, int, int, float, float)","CUDA","Bandwidth","Bandwidth",True
+"gd-cuda","L2_norm(const float *, float *, int)","CUDA","Bandwidth","Compute",False
+"inversek2j-omp","__omp_offloading_10309_2fc34bc_main_l171","OMP","Bandwidth","Compute",False
+"chi2-omp","__omp_offloading_10309_2f04983_main_l55","OMP","Bandwidth","Bandwidth",True
+"bonds-cuda","bonds(inArgsStruct, resultsStruct, int)","CUDA","Bandwidth","Bandwidth",True
+"sort-cuda","bottom_scan(unsigned int *, const unsigned int *, const unsigned int *, unsigned long, unsigned int)","CUDA","Bandwidth","Compute",False
+"sort-cuda","reduce(const unsigned int *, unsigned int *, unsigned long, unsigned int)","CUDA","Bandwidth","Compute",False
+"sort-cuda","top_scan(unsigned int *, unsigned long)","CUDA","Bandwidth","Bandwidth",True
+"chi2-cuda","kernel(unsigned int, unsigned int, int, int, const unsigned char *, float *)","CUDA","Bandwidth","Bandwidth",True
+"rainflow-omp","__omp_offloading_10309_2fc5762_main_l180","OMP","Bandwidth","Bandwidth",True
+"dct8x8-cuda","IDCT8x8_kernel(float *, const float *, unsigned int, unsigned int, unsigned int)","CUDA","Bandwidth","Compute",False
+"dct8x8-cuda","DCT8x8_kernel(float *, const float *, unsigned int, unsigned int, unsigned int)","CUDA","Bandwidth","Compute",False
+"che-cuda","cahnHilliard(double (*)[256][256], const double (*)[256][256], const double (*)[256][256], double, double, double, double, double)","CUDA","Bandwidth","Compute",False
+"che-cuda","Swap(double (*)[256][256], double (*)[256][256])","CUDA","Bandwidth","Bandwidth",True
+"che-cuda","chemicalPotential(const double (*)[256][256], double (*)[256][256], double, double, double, double, double, double, double)","CUDA","Bandwidth","Compute",False
+"che-cuda","localFreeEnergyFunctional(const double (*)[256][256], double (*)[256][256], double, double, double, double, double, double, double)","CUDA","Bandwidth","Compute",False
+"crc64-omp","__omp_offloading_10309_2f056fc_crc64_omp_l1428","OMP","Bandwidth","Bandwidth",True
+"ace-omp","__omp_offloading_10309_2f0414b__Z14calculateForcePA400_A400_dS1_S1_S1_dddddd_l117","OMP","Bandwidth","Bandwidth",True
+"ace-omp","__omp_offloading_10309_2f0414b__Z19boundaryConditionsUPA400_A400_dd_l230","OMP","Bandwidth","Bandwidth",True
+"ace-omp","__omp_offloading_10309_2f0414b__Z15thermalEquationPA400_A400_dS1_S1_S1_ddddd_l214","OMP","Bandwidth","Compute",False
+"ace-omp","__omp_offloading_10309_2f0414b__Z21boundaryConditionsPhiPA400_A400_d_l180","OMP","Bandwidth","Bandwidth",True
+"ace-omp","__omp_offloading_10309_2f0414b__Z8swapGridPA400_A400_dS1__l261","OMP","Bandwidth","Bandwidth",True
+"ace-omp","__omp_offloading_10309_2f0414b__Z9allenCahnPA400_A400_dS1_S1_S1_S1_S1_dddddddd_l160","OMP","Bandwidth","Compute",False
+"ss-omp","__omp_offloading_10309_2fc5e0a_main_l306","OMP","Bandwidth","Bandwidth",True
+"vol2col-omp","__omp_offloading_10309_2fc61d2__Z14col2vol_kernelIffEvPKT_mjjjjjjjjjjjjjjjjjjPS0__l89","OMP","Bandwidth","Bandwidth",True
+"vol2col-omp","__omp_offloading_10309_2fc61d2__Z14vol2col_kernelIfEvPKT_iiiiiiiiiiiiiiiiiiiPS0__l35","OMP","Bandwidth","Bandwidth",True
+"frechet-cuda","distance_norm2(int, int, double *, const double *, const double *)","CUDA","Bandwidth","Compute",False
+"frechet-cuda","distance_norm3(int, int, double *, const double *, const double *)","CUDA","Bandwidth","Compute",False
+"frechet-cuda","distance_norm1(int, int, double *, const double *, const double *)","CUDA","Bandwidth","Compute",False
+"jenkins-hash-omp","__omp_offloading_10309_2fc3517_main_l226","OMP","Bandwidth","Compute",False
+"wordcount-omp","__omp_offloading_10309_2fc6292__Z10word_countRKSt6vectorIcSaIcEE_l43","OMP","Bandwidth","Bandwidth",True
+"eigenvalue-cuda","calNumEigenValueInterval(unsigned int *, const float *, const float *, const float *, unsigned int)","CUDA","Compute","Compute",True
+"eigenvalue-cuda","recalculateEigenIntervals(float *, const float *, const unsigned int *, const float *, const float *, unsigned int, float)","CUDA","Bandwidth","Compute",False
+"lombscargle-omp","__omp_offloading_10309_2fc4989_main_l121","OMP","Compute","Compute",True
+"fpdc-omp","__omp_offloading_10309_2f085ec__Z17CompressionKerneliiiPKyPcPKiPi_l91","OMP","Bandwidth","Bandwidth",True
+"histogram-cuda","void histogram_smem_accum<1024, 1, 256>(const unsigned int *, int, unsigned int *)","CUDA","Bandwidth","Bandwidth",True
+"histogram-cuda","void histogram_gmem_atomics<1024, 1, 256, uchar1>(const T4 *, int, int, unsigned int *)","CUDA","Bandwidth","Bandwidth",True
+"histogram-cuda","void histogram_smem_atomics<1024, 1, 256, uchar1>(const T4 *, int, int, unsigned int *)","CUDA","Bandwidth","Bandwidth",True
+"histogram-cuda","void histogram_gmem_accum<1024, 1, 256>(const unsigned int *, int, unsigned int *)","CUDA","Bandwidth","Bandwidth",True
+"fft-omp","__omp_offloading_10309_2f06dfe_main_l247","OMP","Bandwidth","Compute",False
+"fft-omp","__omp_offloading_10309_2f06dfe_main_l247","OMP","Bandwidth","Compute",False
+"distort-omp","__omp_offloading_10309_2f06ac2__Z14barrel_distortPK6uchar3PS_PK10Properties_l76","OMP","Bandwidth","Bandwidth",True
+"minisweep-cuda","wavefronts(int, int, int, int, int, Dimensions, StepInfoAll, double *, double *, double *, double *, double *, double *, double *, double *)","CUDA","Bandwidth","Compute",False
+"minisweep-cuda","init_faceyz(int, int, int, int, int, int, int, int, int, StepInfoAll, double *)","CUDA","Bandwidth","Bandwidth",True
+"minisweep-cuda","init_faceyz(int, int, int, int, int, int, int, int, int, StepInfoAll, double *)","CUDA","Bandwidth","Bandwidth",True
+"minisweep-cuda","init_facexz(int, int, int, int, int, int, int, int, int, StepInfoAll, double *)","CUDA","Bandwidth","Bandwidth",True
+"minisweep-cuda","init_facexy(int, int, int, int, int, int, int, int, double *)","CUDA","Bandwidth","Bandwidth",True
+"lebesgue-cuda","kernel(double *, double *, const double *, const double *, int, int)","CUDA","Bandwidth","Compute",False
+"secp256k1-cuda","secp256k1(const secp256k1_ge_storage *, unsigned char *)","CUDA","Bandwidth","Compute",False
+"hotspot3D-omp","__omp_offloading_10309_2fc2e6a_main_l94","OMP","Bandwidth","Compute",False
+"distort-cuda","barrel_distort(const uchar3 *, uchar3 *, const Properties *)","CUDA","Bandwidth","Bandwidth",True
+"knn-omp","__omp_offloading_10309_2fc35bf_main_l183","OMP","Compute","Bandwidth",False
+"knn-omp","__omp_offloading_10309_2fc35bf_main_l254","OMP","Bandwidth","Bandwidth",True
+"knn-omp","__omp_offloading_10309_2fc35bf_main_l310","OMP","Bandwidth","Bandwidth",True
+"atomicPerf-omp","__omp_offloading_10309_2f0437f__Z27BlockRangeAtomicOnSharedMemIdEvPT_i_l41","OMP","Bandwidth","Bandwidth",True
+"atomicPerf-omp","__omp_offloading_10309_2f0437f__Z27BlockRangeAtomicOnSharedMemIdEvPT_i_l41","OMP","Bandwidth","Bandwidth",True
+"atomicPerf-omp","__omp_offloading_10309_2f0437f__Z28SingleRangeAtomicOnGlobalMemIfEvPT_ii_l31","OMP","Bandwidth","Bandwidth",True
+"atomicPerf-omp","__omp_offloading_10309_2f0437f__Z28SingleRangeAtomicOnGlobalMemIfEvPT_ii_l31","OMP","Bandwidth","Bandwidth",True
+"atomicPerf-omp","__omp_offloading_10309_2f0437f__Z26WarpRangeAtomicOnSharedMemIfEvPT_i_l63","OMP","Compute","Bandwidth",False
+"atomicPerf-omp","__omp_offloading_10309_2f0437f__Z26WarpRangeAtomicOnSharedMemIfEvPT_i_l63","OMP","Compute","Bandwidth",False
+"atomicPerf-omp","__omp_offloading_10309_2f0437f__Z27BlockRangeAtomicOnGlobalMemIfEvPT_i_l11","OMP","Bandwidth","Bandwidth",True
+"atomicPerf-omp","__omp_offloading_10309_2f0437f__Z27BlockRangeAtomicOnGlobalMemIfEvPT_i_l11","OMP","Bandwidth","Bandwidth",True
+"atomicPerf-omp","__omp_offloading_10309_2f0437f__Z26WarpRangeAtomicOnSharedMemIdEvPT_i_l63","OMP","Bandwidth","Bandwidth",True
+"atomicPerf-omp","__omp_offloading_10309_2f0437f__Z28SingleRangeAtomicOnSharedMemIdEvPT_ii_l85","OMP","Bandwidth","Bandwidth",True
+"atomicPerf-omp","__omp_offloading_10309_2f0437f__Z28SingleRangeAtomicOnGlobalMemIiEvPT_ii_l31","OMP","Bandwidth","Bandwidth",True
+"atomicPerf-omp","__omp_offloading_10309_2f0437f__Z28SingleRangeAtomicOnGlobalMemIiEvPT_ii_l31","OMP","Bandwidth","Bandwidth",True
+"atomicPerf-omp","__omp_offloading_10309_2f0437f__Z26WarpRangeAtomicOnGlobalMemIfEvPT_i_l21","OMP","Bandwidth","Bandwidth",True
+"atomicPerf-omp","__omp_offloading_10309_2f0437f__Z26WarpRangeAtomicOnGlobalMemIiEvPT_i_l21","OMP","Bandwidth","Bandwidth",True
+"atomicPerf-omp","__omp_offloading_10309_2f0437f__Z28SingleRangeAtomicOnSharedMemIiEvPT_ii_l85","OMP","Bandwidth","Bandwidth",True
+"atomicPerf-omp","__omp_offloading_10309_2f0437f__Z26WarpRangeAtomicOnSharedMemIiEvPT_i_l63","OMP","Bandwidth","Bandwidth",True
+"atomicPerf-omp","__omp_offloading_10309_2f0437f__Z26WarpRangeAtomicOnSharedMemIiEvPT_i_l63","OMP","Bandwidth","Bandwidth",True
+"atomicPerf-omp","__omp_offloading_10309_2f0437f__Z27BlockRangeAtomicOnSharedMemIiEvPT_i_l41","OMP","Bandwidth","Bandwidth",True
+"atomicPerf-omp","__omp_offloading_10309_2f0437f__Z27BlockRangeAtomicOnGlobalMemIdEvPT_i_l11","OMP","Bandwidth","Bandwidth",True
+"atomicPerf-omp","__omp_offloading_10309_2f0437f__Z27BlockRangeAtomicOnGlobalMemIdEvPT_i_l11","OMP","Bandwidth","Bandwidth",True
+"atomicPerf-omp","__omp_offloading_10309_2f0437f__Z28SingleRangeAtomicOnSharedMemIfEvPT_ii_l85","OMP","Compute","Bandwidth",False
+"atomicPerf-omp","__omp_offloading_10309_2f0437f__Z27BlockRangeAtomicOnSharedMemIfEvPT_i_l41","OMP","Compute","Bandwidth",False
+"atomicPerf-omp","__omp_offloading_10309_2f0437f__Z26WarpRangeAtomicOnGlobalMemIdEvPT_i_l21","OMP","Bandwidth","Bandwidth",True
+"atomicPerf-omp","__omp_offloading_10309_2f0437f__Z26WarpRangeAtomicOnGlobalMemIdEvPT_i_l21","OMP","Bandwidth","Bandwidth",True
+"atomicPerf-omp","__omp_offloading_10309_2f0437f__Z27BlockRangeAtomicOnGlobalMemIiEvPT_i_l11","OMP","Bandwidth","Bandwidth",True
+"atomicPerf-omp","__omp_offloading_10309_2f0437f__Z28SingleRangeAtomicOnGlobalMemIdEvPT_ii_l31","OMP","Bandwidth","Bandwidth",True
+"matrix-rotate-cuda","rotate_matrix_parallel(float *, int)","CUDA","Bandwidth","Bandwidth",True
+"page-rank-omp","__omp_offloading_10309_2fc549e_main_l181","OMP","Bandwidth","Bandwidth",True
+"page-rank-omp","__omp_offloading_10309_2fc549e_main_l181","OMP","Bandwidth","Compute",False
+"page-rank-omp","__omp_offloading_10309_2fc549e_main_l181","OMP","Bandwidth","Bandwidth",True
+"atomicPerf-cuda","void BlockRangeAtomicOnSharedMem<double>(T1 *, int)","CUDA","Bandwidth","Bandwidth",True
+"atomicPerf-cuda","void SingleRangeAtomicOnSharedMem<double>(T1 *, int, int)","CUDA","Bandwidth","Compute",False
+"atomicPerf-cuda","void WarpRangeAtomicOnSharedMem<double>(T1 *, int)","CUDA","Bandwidth","Bandwidth",True
+"atomicPerf-cuda","void SingleRangeAtomicOnGlobalMem<double>(T1 *, int, int)","CUDA","Bandwidth","Bandwidth",True
+"atomicPerf-cuda","void BlockRangeAtomicOnGlobalMem<double>(T1 *, int)","CUDA","Bandwidth","Bandwidth",True
+"atomicPerf-cuda","void WarpRangeAtomicOnGlobalMem<double>(T1 *, int)","CUDA","Bandwidth","Bandwidth",True
+"ccsd-trpdrv-omp","__omp_offloading_10309_2f04826__Z14ccsd_tengy_gpuPKdS0_S0_S0_S0_S0_S0_S0_S0_S0_S0_S0_S0_S0_S0_dPdS1_S1_S1_iii_l44","OMP","Bandwidth","Compute",False
+"rushlarsen-cuda","k_forward_rush_larsen(double *, double, double, const double *, int)","CUDA","Bandwidth","Compute",False
+"ccs-cuda","compute_bicluster(const float *, int, int, int, float, char *, char *, float *, int *, int *, char *, char *)","CUDA","Bandwidth","Compute",False
+"dslash-omp","__omp_offloading_10309_2f06b70__Z9dslash_fnRKSt6vectorI11dsu3_vectorSaIS0_EERS2_RKS_I11dsu3_matrixSaIS6_EESA_RS8_SB_PmSC_SC_SC_mm_l64","OMP","Bandwidth","Compute",False
+"dslash-omp","__omp_offloading_10309_2f06b70__Z9dslash_fnRKSt6vectorI11dsu3_vectorSaIS0_EERS2_RKS_I11dsu3_matrixSaIS6_EESA_RS8_SB_PmSC_SC_SC_mm_l93","OMP","Bandwidth","Compute",False
+"pool-cuda","void KernelPool2DGrad<AvgPoolGrad<float>, float, 11, 11, 4, 4, 1, 1, 1>(int, const T2 *, const T2 *, const T2 *, int, int, int, int, int, T1, T2 *, bool)","CUDA","Bandwidth","Bandwidth",True
+"s3d-cuda","void rdsmh_kernel<float>(const T1 *, T1 *, T1)","CUDA","Bandwidth","Compute",False
+"s3d-cuda","void rdsmh_kernel<float>(const T1 *, T1 *, T1)","CUDA","Bandwidth","Compute",False
+"s3d-cuda","void qssa_kernel<float>(T1 *, T1 *, T1 *)","CUDA","Bandwidth","Compute",False
+"s3d-cuda","void ratt4_kernel<float>(const T1 *, const T1 *, T1 *, const T1 *, T1)","CUDA","Bandwidth","Compute",False
+"s3d-cuda","void ratt_kernel<float>(const T1 *, T1 *, T1)","CUDA","Bandwidth","Bandwidth",True
+"s3d-cuda","void rdwdot7_kernel<float>(const T1 *, const T1 *, T1 *, T1, const T1 *)","CUDA","Bandwidth","Compute",False
+"s3d-cuda","void rdwdot9_kernel<float>(const T1 *, const T1 *, T1 *, T1, const T1 *)","CUDA","Bandwidth","Compute",False
+"s3d-cuda","void ratx2_kernel<float>(const T1 *, T1 *, T1 *)","CUDA","Bandwidth","Compute",False
+"s3d-cuda","void ratxb_kernel<float>(const T1 *, const T1 *, T1 *, T1 *, const T1 *, T1)","CUDA","Bandwidth","Bandwidth",True
+"s3d-cuda","void ratx4_kernel<float>(const T1 *, T1 *, T1 *)","CUDA","Bandwidth","Compute",False
+"s3d-cuda","void ratt6_kernel<float>(const T1 *, const T1 *, T1 *, const T1 *, T1)","CUDA","Bandwidth","Compute",False
+"s3d-cuda","void ratt6_kernel<float>(const T1 *, const T1 *, T1 *, const T1 *, T1)","CUDA","Bandwidth","Bandwidth",True
+"s3d-cuda","void qssab_kernel<float>(T1 *, T1 *, T1 *)","CUDA","Bandwidth","Compute",False
+"s3d-cuda","void rdwdot10_kernel<float>(const T1 *, const T1 *, T1 *, T1, const T1 *)","CUDA","Bandwidth","Compute",False
+"s3d-cuda","void rdwdot_kernel<float>(const T1 *, const T1 *, T1 *, T1, const T1 *)","CUDA","Bandwidth","Compute",False
+"s3d-cuda","void ratt5_kernel<float>(const T1 *, const T1 *, T1 *, const T1 *, T1)","CUDA","Bandwidth","Bandwidth",True
+"s3d-cuda","void ratt8_kernel<float>(const T1 *, const T1 *, T1 *, const T1 *, T1)","CUDA","Bandwidth","Compute",False
+"s3d-cuda","void ratx_kernel<float>(const T1 *, const T1 *, T1 *, T1 *, const T1 *, T1)","CUDA","Bandwidth","Compute",False
+"s3d-cuda","void ratt9_kernel<float>(const T1 *, const T1 *, T1 *, const T1 *, T1)","CUDA","Bandwidth","Compute",False
+"s3d-cuda","void ratt2_kernel<float>(const T1 *, const T1 *, T1 *, const T1 *, T1)","CUDA","Bandwidth","Compute",False
+"s3d-cuda","void qssa2_kernel<float>(T1 *, T1 *, const T1 *)","CUDA","Bandwidth","Compute",False
+"s3d-cuda","void rdwdot2_kernel<float>(const T1 *, const T1 *, T1 *, T1, const T1 *)","CUDA","Bandwidth","Compute",False
+"s3d-cuda","void gr_base<float>(const T1 *, const T1 *, const T1 *, T1 *, T1, T1)","CUDA","Bandwidth","Bandwidth",True
+"s3d-cuda","void rdwdot3_kernel<float>(const T1 *, const T1 *, T1 *, T1, const T1 *)","CUDA","Bandwidth","Compute",False
+"s3d-cuda","void ratt7_kernel<float>(const T1 *, const T1 *, T1 *, const T1 *, T1)","CUDA","Bandwidth","Compute",False
+"s3d-cuda","void ratt10_kernel<float>(const T1 *, T1 *, T1)","CUDA","Bandwidth","Compute",False
+"s3d-cuda","void ratt3_kernel<float>(const T1 *, const T1 *, T1 *, const T1 *, T1)","CUDA","Bandwidth","Bandwidth",True
+"s3d-cuda","void rdwdot6_kernel<float>(const T1 *, const T1 *, T1 *, T1, const T1 *)","CUDA","Bandwidth","Compute",False
+"s3d-cuda","void rdwdot8_kernel<float>(const T1 *, const T1 *, T1 *, T1, const T1 *)","CUDA","Bandwidth","Compute",False
+"mriQ-omp","__omp_offloading_10309_2fc5270__Z12computeQ_GPUiiPfS_S_P7kValuesS1_S_S__l58","OMP","Compute","Compute",True
+"mriQ-omp","__omp_offloading_10309_2fc5271_main_l71","OMP","Bandwidth","Compute",False
+"mriQ-omp","__omp_offloading_10309_2fc5271_main_l99","OMP","Bandwidth","Compute",False
+"fluidSim-omp","__omp_offloading_10309_2f085c9__Z3lbmjjPKdPdPK7double4PS2_S4_S5_PKb7double8S8_S0_d_l83","OMP","Bandwidth","Compute",False
+"rtm8-cuda","rtm8(const float *, const float *, const float *, float *, float *, float *, const float *, unsigned long)","CUDA","Bandwidth","Compute",False
+"softmax-cuda","softMax2(int, int, const float *, float *)","CUDA","Bandwidth","Compute",False
+"dxtc2-omp","__omp_offloading_10309_2f06bc8_main_l111","OMP","Compute","Compute",True
+"affine-omp","__omp_offloading_10309_2f041d2_main_l80","OMP","Compute","Bandwidth",False
+"affine-omp","__omp_offloading_10309_2f041d2_main_l80","OMP","Compute","Bandwidth",False
+"ccs-omp","__omp_offloading_10309_2f047f2__Z17compute_biclusterPKfiiifPcS1_PfPiS3_S1_S1__l112","OMP","Bandwidth","Compute",False
+"ccs-omp","__omp_offloading_10309_2f047f2__Z17compute_biclusterPKfiiifPcS1_PfPiS3_S1_S1__l112","OMP","Bandwidth","Compute",False
+"bonds-omp","__omp_offloading_10309_2f04650__Z18getBondsResultsGpu12inArgsStruct13resultsStructi_l1035","OMP","Bandwidth","Bandwidth",True
+"bh-cuda","InitializationKernel(int *, unsigned int *)","CUDA","Bandwidth","Bandwidth",True
+"bh-cuda","BoundingBoxKernel(int, int, int *, int *, float4 *, float3 *, float3 *, float *, int *, int *, unsigned int *)","CUDA","Bandwidth","Compute",False
+"bh-cuda","ClearKernel1(int, int, int *)","CUDA","Bandwidth","Bandwidth",True
+"bh-cuda","IntegrationKernel(int, float, float, float4 *, float2 *, float4 *)","CUDA","Bandwidth","Compute",False
+"bh-cuda","SummarizationKernel(int, int, volatile int *, const int *, volatile float4 *, int *)","CUDA","Bandwidth","Bandwidth",True
+"bh-cuda","ClearKernel2(int, int *, float4 *, int *)","CUDA","Bandwidth","Compute",False
+"bh-cuda","SortKernel(int, int, int *, const int *, volatile int *, int *, int *)","CUDA","Bandwidth","Bandwidth",True
+"bh-cuda","TreeBuildingKernel(int, int, volatile int *, const float4 *, const float *, int *)","CUDA","Bandwidth","Bandwidth",True
+"bh-cuda","ForceCalculationKernel(int, int, float, float, float, const int *, const int *, const float4 *, float2 *, float4 *, const float *, const int *)","CUDA","Compute","Compute",True
+"overlay-cuda","void DetectionOverlayBox<float3>(const T1 *, T1 *, int, int, int, int, int, int, float4)","CUDA","Bandwidth","Bandwidth",True
+"bitonic-sort-cuda","bitonic_sort(int, int, int *)","CUDA","Bandwidth","Compute",False
+"present-cuda","present(int, int, const unsigned char *, const unsigned char *, unsigned char *, const unsigned char *, const unsigned char *, const unsigned char *, const unsigned char *, const unsigned char *)","CUDA","Bandwidth","Bandwidth",True
+"particles-cuda","bitonicMergeGlobal(unsigned int *, unsigned int *, const unsigned int *, const unsigned int *, unsigned int, unsigned int, unsigned int, unsigned int)","CUDA","Bandwidth","Compute",False
+"particles-cuda","bitonicSortLocal1(unsigned int *, unsigned int *, const unsigned int *, const unsigned int *)","CUDA","Bandwidth","Compute",False
+"particles-cuda","memSetK(unsigned int *, unsigned int, unsigned int)","CUDA","Bandwidth","Compute",False
+"particles-cuda","memSetK(unsigned int *, unsigned int, unsigned int)","CUDA","Bandwidth","Bandwidth",True
+"particles-cuda","collideK(float4 *, const float4 *, const float4 *, const unsigned int *, const unsigned int *, const unsigned int *, simParams_t, unsigned int)","CUDA","Bandwidth","Compute",False
+"particles-cuda","bitonicSortLocal1(unsigned int *, unsigned int *, const unsigned int *, const unsigned int *)","CUDA","Bandwidth","Compute",False
+"particles-cuda","findCellBoundsAndReorderK(unsigned int *, unsigned int *, float4 *, float4 *, const unsigned int *, const unsigned int *, const float4 *, const float4 *, unsigned int)","CUDA","Bandwidth","Bandwidth",True
+"particles-cuda","integrateSystemK(float4 *, float4 *, simParams_t, float, unsigned int)","CUDA","Bandwidth","Compute",False
+"particles-cuda","calcHashK(unsigned int *, unsigned int *, const float4 *, simParams_t, unsigned int)","CUDA","Bandwidth","Compute",False
+"particles-cuda","bitonicMergeLocal(unsigned int *, unsigned int *, const unsigned int *, const unsigned int *, unsigned int, unsigned int, unsigned int, unsigned int)","CUDA","Bandwidth","Compute",False
+"aop-cuda","void generate_paths_kernel<256, PayoffPut>(int, int, T2, double, double, double, double, const double *, double *)","CUDA","Bandwidth","Compute",False
+"aop-cuda","void update_cashflow_kernel<128, PayoffPut>(int, T2, double, const double *, const double *, const int *, double *)","CUDA","Bandwidth","Compute",False
+"aop-cuda","void prepare_svd_kernel<256, PayoffPut>(int, int, T2, const double *, int *, double *)","CUDA","Bandwidth","Compute",False
+"aop-cuda","void compute_final_sum_kernel<128>(int, int, double, double *)","CUDA","Bandwidth","Compute",False
+"aop-cuda","void compute_partial_sums_kernel<128>(int, const double *, double *)","CUDA","Bandwidth","Compute",False
+"aop-cuda","void compute_final_beta_kernel<128>(const int *, double *)","CUDA","Bandwidth","Compute",False
+"aop-cuda","void compute_partial_beta_kernel<128, PayoffPut>(int, T2, const double *, const double *, const double *, const int *, double *)","CUDA","Bandwidth","Compute",False
+"sad-cuda","find_min_in_sad_array(int, const int *, int *)","CUDA","Bandwidth","Compute",False
+"sad-cuda","get_num_of_occurrences(int, const int *, const int *, int *)","CUDA","Bandwidth","Compute",False
+"sad-cuda","compute_sad_array(int *, const unsigned char *, const unsigned char *, int, int, int, int, int, int)","CUDA","Bandwidth","Compute",False
+"dp-omp","__omp_offloading_10309_2f06b34__Z3dotIdEvmi_l61","OMP","Bandwidth","Compute",False
+"dp-omp","__omp_offloading_10309_2f06b34__Z3dotIfEvmi_l61","OMP","Bandwidth","Compute",False
+"lavaMD-cuda","md(const box_str *, const FOUR_VECTOR *, const float *, FOUR_VECTOR *, float, int)","CUDA","Compute","Bandwidth",False
+"ecdh-cuda","k_slow(int, int, int, int *, int *, unsigned int, int, int)","CUDA","Bandwidth","Bandwidth",True
+"ecdh-cuda","k_fast(int, int, int, int *, int *, unsigned int, int, int)","CUDA","Bandwidth","Compute",False
+"zmddft-omp","__omp_offloading_10309_2fc6332__Z30ker_zmddft_fwd_256x256x256_cu2PKdS0_Pd_l1114","OMP","Bandwidth","Compute",False
+"zmddft-omp","__omp_offloading_10309_2fc6332__Z30ker_zmddft_fwd_256x256x256_cu1PKdS0_Pd_l629","OMP","Bandwidth","Compute",False
+"zmddft-omp","__omp_offloading_10309_2fc6332__Z30ker_zmddft_fwd_256x256x256_cu0PKdS0_Pd_l143","OMP","Bandwidth","Compute",False
+"convolutionSeparable-omp","__omp_offloading_10309_2f056c8__Z15convolutionRowsPfPKfS1_iii_l43","OMP","Bandwidth","Bandwidth",True
+"convolutionSeparable-omp","__omp_offloading_10309_2f056c8__Z18convolutionColumnsPfPKfS1_iii_l127","OMP","Bandwidth","Bandwidth",True
+"leukocyte-cuda","kernel_IMGVF(float *, const float *, const int *, const int *, const int *, float, float, float, float, int)","CUDA","Compute","Compute",True
+"leukocyte-cuda","kernel_GICOV(const float *, const float *, const float *, const float *, const int *, const int *, float *, int, int, int)","CUDA","Compute","Bandwidth",False
+"leukocyte-cuda","kernel_dilated(const float *, const float *, float *, int, int, int, int)","CUDA","Bandwidth","Compute",False
+"mask-cuda","void windowMaskKernel<int>(int, int, int, const T1 *, const int *, int, T1, T1 *)","CUDA","Bandwidth","Compute",False
+"mask-cuda","void sequenceMaskKernel<int>(int, int, int, const T1 *, const int *, T1, T1 *)","CUDA","Bandwidth","Compute",False
+"mask-cuda","void lowerDiagMaskKernel<int>(int, int, int, const T1 *, T1, T1 *)","CUDA","Bandwidth","Compute",False
+"mask-cuda","void upperDiagMaskKernel<int>(int, int, int, const T1 *, T1, T1 *)","CUDA","Bandwidth","Compute",False
+"mask-cuda","void lowerMaskKernel<int>(int, int, int, const T1 *, T1, T1 *)","CUDA","Bandwidth","Compute",False
+"mask-cuda","void upperMaskKernel<int>(int, int, int, const T1 *, T1, T1 *)","CUDA","Bandwidth","Compute",False
+"radixsort-cuda","findRadixOffsetsK(const unsigned int *, unsigned int *, unsigned int *, unsigned int, unsigned int)","CUDA","Bandwidth","Bandwidth",True
+"radixsort-cuda","scanExclusiveLocal1K(unsigned int *, const unsigned int *, unsigned int)","CUDA","Bandwidth","Compute",False
+"radixsort-cuda","scanExclusiveLocal2K(unsigned int *, unsigned int *, const unsigned int *, unsigned int, unsigned int)","CUDA","Bandwidth","Compute",False
+"radixsort-cuda","reorderDataKeysOnlyK(unsigned int *, const unsigned int *, unsigned int *, const unsigned int *, unsigned int, unsigned int, unsigned int)","CUDA","Bandwidth","Bandwidth",True
+"radixsort-cuda","uniformUpdateK(unsigned int *, unsigned int *)","CUDA","Bandwidth","Compute",False
+"radixsort-cuda","radixSortBlocksKeysK(const unsigned int *, unsigned int *, unsigned int, unsigned int)","CUDA","Bandwidth","Bandwidth",True
+"fhd-cuda","cmpfhd(const float *, const float *, float *, float *, const float *, const float *, const float *, int, int)","CUDA","Compute","Compute",True
+"cross-omp","__omp_offloading_10309_2f057ab__Z12cross_kernelIdiEviPT_PKS0_S3_T0_S4_S4__l21","OMP","Bandwidth","Compute",False
+"cross-omp","__omp_offloading_10309_2f057ab__Z13cross3_kernelIdEviPT_PKS0_S3__l84","OMP","Bandwidth","Compute",False
+"cross-omp","__omp_offloading_10309_2f057ab__Z13cross2_kernelIfiEviPT_PKS0_S3_T0_S4_S4__l52","OMP","Bandwidth","Compute",False
+"cross-omp","__omp_offloading_10309_2f057ab__Z12cross_kernelIfiEviPT_PKS0_S3_T0_S4_S4__l21","OMP","Bandwidth","Compute",False
+"cross-omp","__omp_offloading_10309_2f057ab__Z13cross3_kernelIfEviPT_PKS0_S3__l84","OMP","Bandwidth","Compute",False
+"cross-omp","__omp_offloading_10309_2f057ab__Z13cross2_kernelIdiEviPT_PKS0_S3_T0_S4_S4__l52","OMP","Bandwidth","Compute",False
+"permute-omp","__omp_offloading_10309_2fc5558__Z7permutePfPKfiiiii_l37","OMP","Bandwidth","Bandwidth",True
+"blockexchange-cuda","void k<256, 1024>(const int *, int *, int)","CUDA","Bandwidth","Bandwidth",True
+"goulash-cuda","gate(double *, long, const double *)","CUDA","Bandwidth","Compute",False
+"tensorT-omp","__omp_offloading_10309_2fc5fb7_main_l70","OMP","Bandwidth","Bandwidth",True
+"nn-cuda","nn(int, float, float, const latLong *, float *)","CUDA","Bandwidth","Compute",False
+"lanczos-cuda","void dot_product_kernel<double>(int, const T1 *, const T1 *, T1 *)","CUDA","Bandwidth","Compute",False
+"lanczos-cuda","void saxpy_inplace_kernel<double>(int, T1 *, const T1 *, T1)","CUDA","Bandwidth","Bandwidth",True
+"lanczos-cuda","void multiply_inplace_kernel<double>(int, T1 *, T1)","CUDA","Bandwidth","Compute",False
+"lanczos-cuda","void warp_multiply_kernel<double>(int, int, int, const int *, const int *, const T1 *, const T1 *, T1 *)","CUDA","Bandwidth","Compute",False
+"nbnxm-cuda","nbnxmKernelTest(const float4 *, BasicVector<float> *, BasicVector<float> *, BasicVector<float> *, nbnxn_cj4_t *, const nbnxn_sci *, const nbnxn_excl_t *, const int *, const float2 *, int, float, float, float, bool)","CUDA","Bandwidth","Compute",False
+"nbnxm-cuda","nbnxmKernelTest(const float4 *, BasicVector<float> *, BasicVector<float> *, BasicVector<float> *, nbnxn_cj4_t *, const nbnxn_sci *, const nbnxn_excl_t *, const int *, const float2 *, int, float, float, float, bool)","CUDA","Bandwidth","Compute",False
+"lebesgue-omp","__omp_offloading_10309_2fc44eb__Z17lebesgue_functioniPdiS__l15","OMP","Bandwidth","Compute",False
+"mis-cuda","init(int, int, const int *, unsigned char *)","CUDA","Bandwidth","Bandwidth",True
+"mis-cuda","findmins(int, const int *, const int *, volatile unsigned char *)","CUDA","Bandwidth","Bandwidth",True
+"affine-cuda","affine(const unsigned short *, unsigned short *)","CUDA","Compute","Bandwidth",False
+"henry-cuda","insertions(double *, const StructureAtom *, int, double)","CUDA","Bandwidth","Compute",False
+"sort-omp","__omp_offloading_10309_2fc5cdf_main_l146","OMP","Bandwidth","Bandwidth",True
+"sort-omp","__omp_offloading_10309_2fc5cdf_main_l146","OMP","Bandwidth","Bandwidth",True
+"atomicCAS-cuda","void atomicMaxDerived<unsigned long long>(T1 *)","CUDA","Bandwidth","Compute",False
+"atomicCAS-cuda","void atomicMinDerived<unsigned long long>(T1 *)","CUDA","Bandwidth","Compute",False
+"wlcpow-cuda","bond_wlcpowallvisc(double *, double *, double *, const float4 *, const float4 *, const int *, const int2 *, const double *, const float *, const float *, const float *, const float *, const float *, const float *, const float *, const float *, float3, int, int, int)","CUDA","Compute","Bandwidth",False
+"wyllie-cuda","wyllie(long *, int)","CUDA","Bandwidth","Bandwidth",True
+"rsc-omp","__omp_offloading_10309_2fc58d6__Z24call_RANSAC_kernel_blockiiPfP10flowvectoriiifPiS2_S2__l44","OMP","Compute","Compute",True
+"simplemoc-omp","__omp_offloading_10309_2fc5b53_main_l379","OMP","Bandwidth","Bandwidth",True
+"split-cuda","radixSortBlocksKeysK(unsigned int *, unsigned int *, unsigned int, unsigned int)","CUDA","Bandwidth","Compute",False
+"easyWave-cuda","kernel(float *, float *, int, int, int, int, int, float, float, int)","CUDA","Bandwidth","Compute",False
+"easyWave-cuda","kernel2(float *, const float *, const float *, const float *, const float *, int, int, int, int, int, int)","CUDA","Bandwidth","Compute",False
+"easyWave-cuda","kernel4(float *, const float *, const float *, const float *, const float *, int *, int *, int *, int *, int, int, float)","CUDA","Bandwidth","Compute",False
+"easyWave-cuda","kernel3(float *, float *, int, int, int, int, int)","CUDA","Bandwidth","Compute",False
+"easyWave-cuda","kernel2(float *, const float *, const float *, const float *, const float *, int, int, int, int, int, int)","CUDA","Bandwidth","Compute",False
+"sosfil-cuda","void sosfilt<float>(int, int, int, int, const T1 *, const T1 *, T1 *)","CUDA","Bandwidth","Compute",False
+"wlcpow-omp","__omp_offloading_10309_2fc6261__Z18bond_wlcpowallviscPdS_S_PK6float4S2_PKiPK4int2PKdPKfSB_SB_SB_SB_SB_SB_SB_6float3iiii_l34","OMP","Bandwidth","Bandwidth",True
+"aidw-omp","__omp_offloading_10309_2f041e4__Z17AIDW_Kernel_TiledPKfS0_S0_iS0_S0_PfifS0__l93","OMP","Compute","Bandwidth",False
+"aidw-omp","__omp_offloading_10309_2f041e4__Z17AIDW_Kernel_TiledPKfS0_S0_iS0_S0_PfifS0__l93","OMP","Compute","Compute",True
+"aidw-omp","__omp_offloading_10309_2f041e4__Z11AIDW_KernelPKfS0_S0_iS0_S0_PfifS0__l47","OMP","Compute","Compute",True
+"shmembench-cuda","benchmark_shmem(float4 *)","CUDA","Bandwidth","Bandwidth",True
+"stddev-omp","__omp_offloading_10309_2fc5e8d__Z6stddevIfiEvPT_PKS0_T0_S4_b_l92","OMP","Bandwidth","Bandwidth",True
+"stddev-omp","__omp_offloading_10309_2fc5e8d__Z6stddevIfiEvPT_PKS0_T0_S4_b_l92","OMP","Bandwidth","Bandwidth",True
+"stddev-omp","__omp_offloading_10309_2fc5e8d__Z6stddevIfiEvPT_PKS0_T0_S4_b_l92","OMP","Bandwidth","Bandwidth",True
+"stddev-omp","__omp_offloading_10309_2fc5e8d__Z6stddevIfiEvPT_PKS0_T0_S4_b_l55","OMP","Bandwidth","Bandwidth",True
+"attention-cuda","kernel2(const float *, const float *, float *, int)","CUDA","Bandwidth","Bandwidth",True
+"attention-cuda","kernel1(const float *, const float *, float *, float *, int, int)","CUDA","Bandwidth","Compute",False
+"attention-cuda","kernel3(const float *, const float *, float *, int, int)","CUDA","Bandwidth","Bandwidth",True
+"pad-cuda","Padding_kernel(int, int, int, int, float, double *, const double *, int *)","CUDA","Bandwidth","Bandwidth",True
+"hybridsort-cuda","mergeSortPass(const float4 *, float4 *, const int *, int, int, int)","CUDA","Bandwidth","Compute",False
+"hybridsort-cuda","histogram1024(unsigned int *, const float *, int, float, float)","CUDA","Bandwidth","Bandwidth",True
+"hybridsort-cuda","mergepack(float *, const float *, const int *, const unsigned int *, const unsigned int *)","CUDA","Bandwidth","Compute",False
+"hybridsort-cuda","bucketprefix(unsigned int *, unsigned int *, int)","CUDA","Bandwidth","Compute",False
+"hybridsort-cuda","bucketcount(const float *, int *, unsigned int *, const float *, int)","CUDA","Bandwidth","Compute",False
+"hybridsort-cuda","bucketsort(const float *, const int *, float *, const unsigned int *, const unsigned int *, int)","CUDA","Bandwidth","Bandwidth",True
+"hybridsort-cuda","sortElement(float4 *, float4 *, int)","CUDA","Bandwidth","Bandwidth",True
+"thomas-cuda","cuThomasBatch(const double *, const double *, double *, double *, int, int)","CUDA","Bandwidth","Compute",False
+"dropout-cuda","void fused_dropout_kernel<float, float, unsigned int, unsigned char>(const T1 *, T1 *, T4 *, T3, T2, pair<unsigned long, unsigned long>)","CUDA","Bandwidth","Compute",False
+"dropout-cuda","void fused_dropout_kernel_vec<float, float, unsigned int, unsigned char, 2>(const T1 *, T1 *, T4 *, T3, T2, pair<unsigned long, unsigned long>)","CUDA","Bandwidth","Bandwidth",True
+"morphology-omp","__omp_offloading_10309_2fc5214__Z10morphologyIL11MorphOpType0EEdPhS1_iiii_l127","OMP","Bandwidth","Bandwidth",True
+"morphology-omp","__omp_offloading_10309_2fc5214__Z10morphologyIL11MorphOpType0EEdPhS1_iiii_l127","OMP","Bandwidth","Bandwidth",True
+"morphology-omp","__omp_offloading_10309_2fc5214__Z10morphologyIL11MorphOpType0EEdPhS1_iiii_l127","OMP","Bandwidth","Bandwidth",True
+"morphology-omp","__omp_offloading_10309_2fc5214__Z10morphologyIL11MorphOpType1EEdPhS1_iiii_l127","OMP","Bandwidth","Bandwidth",True
+"morphology-omp","__omp_offloading_10309_2fc5214__Z10morphologyIL11MorphOpType1EEdPhS1_iiii_l127","OMP","Bandwidth","Bandwidth",True
+"bsearch-cuda","void kernel_BS2<float>(const T1 *, const T1 *, unsigned long *, unsigned long)","CUDA","Bandwidth","Bandwidth",True
+"bsearch-cuda","void kernel_BS4<float>(const T1 *, const T1 *, unsigned long *, unsigned long)","CUDA","Bandwidth","Compute",False
+"bsearch-cuda","void kernel_BS3<float>(const T1 *, const T1 *, unsigned long *, unsigned long)","CUDA","Bandwidth","Compute",False
+"bsearch-cuda","void kernel_BS<float>(const T1 *, const T1 *, unsigned long *, unsigned long)","CUDA","Bandwidth","Compute",False
+"rfs-cuda","sumArrays(int, int, const float *, float *, const float *)","CUDA","Bandwidth","Bandwidth",True
+"rfs-cuda","sumArray(float, int, const float *, float *)","CUDA","Bandwidth","Bandwidth",True
+"gemv-cuda","gemv_quantized_int8(signed char *, __half *, __half *, unsigned int, __half, __half, unsigned int)","CUDA","Bandwidth","Compute",False
+"gemv-cuda","check_int4_quantized_correctness(uint4_2 *, __half *, __half *, __half, __half, int)","CUDA","Bandwidth","Bandwidth",True
+"gemv-cuda","gemv_quantized_int4(uint4_2 *, __half *, __half *, unsigned int, __half, __half, unsigned int)","CUDA","Bandwidth","Compute",False
+"gemv-cuda","check_int8_quantized_correctness(signed char *, __half *, __half *, __half, __half, int)","CUDA","Bandwidth","Bandwidth",True
+"ne-omp","__omp_offloading_10309_2fc535f_main_l126","OMP","Bandwidth","Bandwidth",True
+"stddev-cuda","void sopKernel<float, int, 256, 32>(T1 *, const T1 *, T2, T2)","CUDA","Bandwidth","Bandwidth",True
+"stddev-cuda","void sampleKernel<float, int>(T1 *, T2, T2)","CUDA","Bandwidth","Compute",False
+"leukocyte-omp","__omp_offloading_10309_2fc4650_main_l2","OMP","Compute","Compute",True
+"leukocyte-omp","__omp_offloading_10309_2fc4652_main_l1","OMP","Bandwidth","Compute",False
+"leukocyte-omp","__omp_offloading_10309_2fc4651__Z9IMGVF_GPUPP3MATS1_dddidi_l1","OMP","Compute","Compute",True
+"sobel-omp","__omp_offloading_10309_2fc5c6f_main_l112","OMP","Bandwidth","Compute",False
+"burger-cuda","bound_v(double *, double *, int, int)","CUDA","Bandwidth","Compute",False
+"burger-cuda","core(double *, double *, const double *, const double *, int, int, double, double, double, double)","CUDA","Bandwidth","Compute",False
+"burger-cuda","update(double *, double *, const double *, const double *, int)","CUDA","Bandwidth","Compute",False
+"burger-cuda","bound_h(double *, double *, int, int)","CUDA","Bandwidth","Compute",False
+"crs-cuda","gcrs_m_4_w_5_coding_dotprod(int, int, const long *, long *, const unsigned int *, int)","CUDA","Bandwidth","Compute",False
+"crs-cuda","gcrs_m_2_w_5_coding_dotprod(int, int, const long *, long *, const unsigned int *, int)","CUDA","Bandwidth","Compute",False
+"crs-cuda","gcrs_m_4_w_6_coding_dotprod(int, int, const long *, long *, const unsigned int *, int)","CUDA","Bandwidth","Compute",False
+"crs-cuda","gcrs_m_2_w_6_coding_dotprod(int, int, const long *, long *, const unsigned int *, int)","CUDA","Bandwidth","Compute",False
+"crs-cuda","gcrs_m_1_w_5_coding_dotprod(int, int, const long *, long *, const unsigned int *, int)","CUDA","Bandwidth","Compute",False
+"crs-cuda","gcrs_m_1_w_4_coding_dotprod(int, int, const long *, long *, const unsigned int *, int)","CUDA","Bandwidth","Compute",False
+"crs-cuda","gcrs_m_1_w_6_coding_dotprod(int, int, const long *, long *, const unsigned int *, int)","CUDA","Bandwidth","Compute",False
+"crs-cuda","gcrs_m_3_w_8_coding_dotprod(int, int, const long *, long *, const unsigned int *, int)","CUDA","Bandwidth","Compute",False
+"crs-cuda","gcrs_m_3_w_8_coding_dotprod(int, int, const long *, long *, const unsigned int *, int)","CUDA","Bandwidth","Compute",False
+"crs-cuda","gcrs_m_2_w_4_coding_dotprod(int, int, const long *, long *, const unsigned int *, int)","CUDA","Bandwidth","Compute",False
+"crs-cuda","gcrs_m_4_w_4_coding_dotprod(int, int, const long *, long *, const unsigned int *, int)","CUDA","Bandwidth","Compute",False
+"crs-cuda","gcrs_m_4_w_4_coding_dotprod(int, int, const long *, long *, const unsigned int *, int)","CUDA","Bandwidth","Compute",False
+"crs-cuda","gcrs_m_2_w_7_coding_dotprod(int, int, const long *, long *, const unsigned int *, int)","CUDA","Bandwidth","Compute",False
+"crs-cuda","gcrs_m_4_w_8_coding_dotprod(int, int, const long *, long *, const unsigned int *, int)","CUDA","Bandwidth","Compute",False
+"crs-cuda","gcrs_m_3_w_4_coding_dotprod(int, int, const long *, long *, const unsigned int *, int)","CUDA","Bandwidth","Compute",False
+"crs-cuda","gcrs_m_1_w_8_coding_dotprod(int, int, const long *, long *, const unsigned int *, int)","CUDA","Bandwidth","Compute",False
+"crs-cuda","gcrs_m_3_w_7_coding_dotprod(int, int, const long *, long *, const unsigned int *, int)","CUDA","Bandwidth","Compute",False
+"crs-cuda","gcrs_m_2_w_8_coding_dotprod(int, int, const long *, long *, const unsigned int *, int)","CUDA","Bandwidth","Compute",False
+"crs-cuda","gcrs_m_3_w_6_coding_dotprod(int, int, const long *, long *, const unsigned int *, int)","CUDA","Bandwidth","Compute",False
+"crs-cuda","gcrs_m_3_w_5_coding_dotprod(int, int, const long *, long *, const unsigned int *, int)","CUDA","Bandwidth","Compute",False
+"crs-cuda","gcrs_m_1_w_7_coding_dotprod(int, int, const long *, long *, const unsigned int *, int)","CUDA","Bandwidth","Compute",False
+"crs-cuda","gcrs_m_4_w_7_coding_dotprod(int, int, const long *, long *, const unsigned int *, int)","CUDA","Bandwidth","Compute",False
+"svd3x3-cuda","svd3_SOA(const float *, float *, int)","CUDA","Bandwidth","Compute",False
+"filter-cuda","filter(int *, int *, const int *, int)","CUDA","Bandwidth","Bandwidth",True
+"filter-cuda","filter2(int *, int *, const int *, int)","CUDA","Bandwidth","Bandwidth",True
+"colorwheel-omp","__omp_offloading_10309_2f04ac1_main_l106","OMP","Bandwidth","Compute",False
+"heat-omp","__omp_offloading_10309_2f28537_main_l126","OMP","Bandwidth","Compute",False
+"heat-omp","__omp_offloading_10309_2f28537_main_l126","OMP","Bandwidth","Compute",False
+"heat-omp","__omp_offloading_10309_2f28537_main_l126","OMP","Bandwidth","Compute",False
+"snake-omp","__omp_offloading_10309_2fc5b96__Z12sneaky_snakeiiPKjS0_Piii_l10","OMP","Bandwidth","Bandwidth",True
+"triad-cuda","triad(const float *, const float *, float *, float)","CUDA","Bandwidth","Bandwidth",True
+"interleave-omp","__omp_offloading_10309_2fc340d__Z24add_test_non_interleavedP17NON_INTERLEAVED_TPKS_jj_l114","OMP","Bandwidth","Compute",False
+"interleave-omp","__omp_offloading_10309_2fc340d__Z20add_test_interleavedP13INTERLEAVED_TPKS_jj_l72","OMP","Bandwidth","Compute",False
+"hotspot-cuda","calc_temp(int, const float *, const float *, float *, int, int, int, int, float, float, float, float, float)","CUDA","Bandwidth","Compute",False
+"tissue-cuda","tissue(const int *, const float *, const float *, float *, const float *, const float *, int, int, int, int)","CUDA","Compute","Bandwidth",False
+"tsp-cuda","TwoOpt(int, const float *, const float *, int *, int *, int *)","CUDA","Compute","Compute",True
+"gaussian-cuda","fan2(float *, float *, const float *, int, int)","CUDA","Bandwidth","Bandwidth",True
+"gaussian-cuda","fan1(const float *, float *, int, int)","CUDA","Bandwidth","Bandwidth",True
+"gaussian-cuda","fan1(const float *, float *, int, int)","CUDA","Bandwidth","Bandwidth",True
+"wmma-cuda","gemm(unsigned int, unsigned int, unsigned int, const __half *, const __half *, const float *, float *, unsigned int, unsigned int, unsigned int, unsigned int, float, float)","CUDA","Bandwidth","Compute",False
+"perplexity-cuda","void sigmas_kernel<int, float>(const T2 *, T2 *, float, float, int, float, T1, int)","CUDA","Bandwidth","Compute",False
+"bezier-surface-omp","__omp_offloading_10309_2f04487__Z3runP3XYZiiiiRK6Params_l244","OMP","Compute","Bandwidth",False
+"scan2-omp","__omp_offloading_10309_2fc5a29__Z5bScanjjPKfPfS1__l27","OMP","Bandwidth","Bandwidth",True
+"scan2-omp","__omp_offloading_10309_2fc5a29__Z5pScanjjPKfPf_l78","OMP","Bandwidth","Bandwidth",True
+"scan2-omp","__omp_offloading_10309_2fc5a29__Z9bAdditionjjPKfPf_l128","OMP","Bandwidth","Compute",False
+"aidw-cuda","AIDW_Kernel(const float *, const float *, const float *, int, const float *, const float *, float *, int, float, const float *)","CUDA","Compute","Compute",True
+"aidw-cuda","AIDW_Kernel_Tiled(const float *, const float *, const float *, int, const float *, const float *, float *, int, float, const float *)","CUDA","Compute","Compute",True
+"simplemoc-cuda","att(const int *, const int *, float *, float *, float *, float *, float *, int, int, int)","CUDA","Bandwidth","Bandwidth",True
+"gamma-correction-cuda","gamma_correction(ImgPixel *)","CUDA","Bandwidth","Compute",False
+"gamma-correction-cuda","gamma_correction(ImgPixel *)","CUDA","Bandwidth","Compute",False
+"depixel-omp","__omp_offloading_10309_2f06990__Z13check_connectPK6float3Pjii_l59","OMP","Bandwidth","Bandwidth",True
+"loopback-cuda","tausworthe_lookback(unsigned int, const unsigned int *, float *, float *, const float *, const float *, const float *, const float *, const float *, const float *, const float *)","CUDA","Compute","Compute",True
+"nqueen-omp","__omp_offloading_10309_2fc53da__Z18BP_queens_root_dfsijiPK10queen_rootPyS2__l62","OMP","Bandwidth","Compute",False
+"vote-cuda","VoteAnyKernel1(const unsigned int *, unsigned int *, int)","CUDA","Bandwidth","Bandwidth",True
+"vote-cuda","VoteAnyKernel1(const unsigned int *, unsigned int *, int)","CUDA","Bandwidth","Bandwidth",True
+"vote-cuda","VoteAllKernel2(const unsigned int *, unsigned int *, int)","CUDA","Bandwidth","Bandwidth",True
+"concurrentKernels-cuda","clock_block(long *, long)","CUDA","Bandwidth","Compute",False
+"deredundancy-cuda","kernel_align(float, const int *, const long *, const unsigned int *, const int *, int, int *, int)","CUDA","Bandwidth","Bandwidth",True
+"permutate-cuda","shuffling_kernel(unsigned char *, const unsigned char *, unsigned int, unsigned int)","CUDA","Bandwidth","Bandwidth",True
+"d3q19-bgk-cuda","void collide_and_stream_g<19>(lbm_vars, BoxCU, double, double, bool, int)","CUDA","Bandwidth","Bandwidth",True
+"d3q19-bgk-cuda","void find_wall<19>(char *, char *, int *, BoxCU, int)","CUDA","Bandwidth","Bandwidth",True
+"d3q19-bgk-cuda","make_flag(char *, int *, char *, BoxCU, outer_wall, int, int, int, int)","CUDA","Bandwidth","Bandwidth",True
+"d3q19-bgk-cuda","void init_velocity_g<19>(lbm_vars, BoxCU, BoxCU, double, float, float, float, double)","CUDA","Bandwidth","Bandwidth",True
+"mriQ-cuda","ComputePhiMag_GPU(const float *, const float *, float *, int)","CUDA","Bandwidth","Compute",False
+"mriQ-cuda","ComputeQ_GPU(int, int, const float *, const float *, const float *, float *, float *)","CUDA","Compute","Compute",True
+"openmp-omp","__omp_offloading_10309_2fc540e_main_l75","OMP","Bandwidth","Bandwidth",True
+"nonzero-cuda","void write_indices<long>(long *, TensorDims<T1>, int, T1)","CUDA","Bandwidth","Bandwidth",True
+"memtest-cuda","kernel_write(char *, unsigned long, unsigned long)","CUDA","Bandwidth","Bandwidth",True
+"memtest-cuda","kernel5_check(const char *, unsigned long, unsigned int *, unsigned long *, unsigned long *, unsigned long *, unsigned long *)","CUDA","Bandwidth","Bandwidth",True
+"memtest-cuda","kernel0_write(char *, unsigned long)","CUDA","Bandwidth","Bandwidth",True
+"memtest-cuda","kernel_read_write(char *, unsigned long, unsigned long, unsigned long, unsigned int *, unsigned long *, unsigned long *, unsigned long *, unsigned long *)","CUDA","Bandwidth","Bandwidth",True
+"memtest-cuda","kernel0_read(const char *, unsigned long, unsigned int *, unsigned long *, unsigned long *, unsigned long *, unsigned long *)","CUDA","Bandwidth","Bandwidth",True
+"memtest-cuda","kernel5_move(char *, unsigned long)","CUDA","Bandwidth","Bandwidth",True
+"memtest-cuda","kernel1_write(char *, unsigned long)","CUDA","Bandwidth","Bandwidth",True
+"memtest-cuda","kernel1_read(const char *, unsigned long, unsigned int *, unsigned long *, unsigned long *, unsigned long *, unsigned long *)","CUDA","Bandwidth","Bandwidth",True
+"memtest-cuda","kernel5_init(char *, unsigned long)","CUDA","Bandwidth","Compute",False
+"relu-cuda","ReluGrad_impl1(const __half *, const __half *, __half *, int)","CUDA","Bandwidth","Compute",False
+"relu-cuda","Relu_impl2(int, const int *, int *)","CUDA","Bandwidth","Compute",False
+"relu-cuda","Relu_impl2(int, const int *, int *)","CUDA","Bandwidth","Compute",False
+"relu-cuda","ReluGrad_impl2(const __half *, const __half *, __half *, int)","CUDA","Bandwidth","Compute",False
+"relu-cuda","Relu_impl1(int, const int *, int *)","CUDA","Bandwidth","Compute",False
+"sw4ck-omp","__omp_offloading_10309_2fc5f77__Z7kernel3iiiiiiiiiiiiddPKdS0_S0_S0_S0_PdS0_S0_S0_S0_S0_S0_S0__l23","OMP","Bandwidth","Compute",False
+"sw4ck-omp","__omp_offloading_10309_2fc5f79__Z7kernel5iiiiiiiiiiiiiddPKdS0_S0_S0_S0_PdS0_S0_S0_S0_S0_S0_S0__l25","OMP","Bandwidth","Compute",False
+"sw4ck-omp","__omp_offloading_10309_2fc5f78__Z7kernel4iiiiiiiiiiiiddPKdS0_S0_S0_S0_PdS0_S0_S0_S0_S0_S0_S0__l23","OMP","Bandwidth","Compute",False
+"sw4ck-omp","__omp_offloading_10309_2fc5f75__Z7kernel1iiiiiiiiiiiiddPKdS0_S0_S0_S0_PdS0_S0_S0_S0_S0_S0_S0__l24","OMP","Bandwidth","Compute",False
+"openmp-cuda","addConstant(int *, int, int)","CUDA","Bandwidth","Compute",False
+"kmeans-omp","__omp_offloading_10309_2fc35a4__Z7clusteriiPPfiifPiPS0_S_ii_l54","OMP","Bandwidth","Bandwidth",True
+"kmeans-omp","__omp_offloading_10309_2fc35a4__Z7clusteriiPPfiifPiPS0_S_ii_l54","OMP","Bandwidth","Bandwidth",True
+"kmeans-cuda","feature_transpose(float *, const float *, int, int)","CUDA","Bandwidth","Bandwidth",True
+"kmeans-cuda","find_membership(const float *, const float *, int *, int, int, int)","CUDA","Bandwidth","Bandwidth",True
+"gabor-omp","__omp_offloading_10309_2f086a7__Z25generateGaborKernelDeviceijjjdd_l35","OMP","Bandwidth","Compute",False
+"mdh-omp","__omp_offloading_10309_2fc4baf__Z14run_gpu_kerneliiiiiPKfS0_S0_S0_S0_S0_S0_S0_ffPf_l89","OMP","Compute","Bandwidth",False
+"dwconv-cuda","void conv_depthwise2d_forward_kernel<1, float, float, int>(GenericPackedTensorAccessor<T2, 4, RestrictPtrTraits, int>, GenericPackedTensorAccessor<T2, 4, RestrictPtrTraits, int>, GenericPackedTensorAccessor<T2, 4, RestrictPtrTraits, int>, GenericPackedTensorAccessor<T2, 1, RestrictPtrTraits, int>, bool, T4, int, int, int, int, int, int, int, int, int, int, int, int, int, int)","CUDA","Bandwidth","Compute",False
+"nqueen-cuda","BP_queens_root_dfs(int, unsigned int, int, const queen_root *, unsigned long long *, unsigned long long *)","CUDA","Bandwidth","Compute",False
+"ert-cuda","_Z12block_strideI7__half2TnNSt9enable_ifIXsr3std7is_sameIT_S0_EE5valueEiE4typeELi0EEvjjPS2_","CUDA","Bandwidth","Bandwidth",True
+"gmm-omp","__omp_offloading_10309_2f26b62__Z7clusteriiPiiiPf_l852","OMP","Bandwidth","Compute",False
+"gmm-omp","__omp_offloading_10309_2f26b62__Z7clusteriiPiiiPf_l852","OMP","Bandwidth","Compute",False
+"gmm-omp","__omp_offloading_10309_2f26b62__Z7clusteriiPiiiPf_l573","OMP","Bandwidth","Compute",False
+"gmm-omp","__omp_offloading_10309_2f26b62__Z7clusteriiPiiiPf_l573","OMP","Bandwidth","Compute",False
+"gmm-omp","__omp_offloading_10309_2f26b62__Z7clusteriiPiiiPf_l852","OMP","Bandwidth","Compute",False
+"gmm-omp","__omp_offloading_10309_2f26b62__Z7clusteriiPiiiPf_l379","OMP","Bandwidth","Compute",False
+"gmm-omp","__omp_offloading_10309_2f26b62__Z7clusteriiPiiiPf_l852","OMP","Bandwidth","Compute",False
+"gmm-omp","__omp_offloading_10309_2f26b62__Z7clusteriiPiiiPf_l852","OMP","Bandwidth","Compute",False
+"gmm-omp","__omp_offloading_10309_2f26b62__Z7clusteriiPiiiPf_l552","OMP","Compute","Compute",True
+"gmm-omp","__omp_offloading_10309_2f26b62__Z7clusteriiPiiiPf_l885","OMP","Bandwidth","Compute",False
+"gmm-omp","__omp_offloading_10309_2f26b62__Z7clusteriiPiiiPf_l885","OMP","Bandwidth","Compute",False
+"gmm-omp","__omp_offloading_10309_2f26b62__Z7clusteriiPiiiPf_l716","OMP","Bandwidth","Compute",False
+"hogbom-cuda","k_findPeak(const float *, unsigned long, Peak *)","CUDA","Bandwidth","Bandwidth",True
+"hogbom-cuda","k_subtractPSF(const float *, int, float *, int, int, int, int, int, int, int, float, float)","CUDA","Bandwidth","Bandwidth",True
+"pso-omp","__omp_offloading_10309_2fc566a__Z17kernelUpdatePBestPKfPfS1_i_l45","OMP","Bandwidth","Bandwidth",True
+"pso-omp","__omp_offloading_10309_2fc566a__Z20kernelUpdateParticlePfS_PKfS1_iff_l31","OMP","Bandwidth","Bandwidth",True
+"zeropoint-cuda","zero_point(const float *, const float *, int, int, int, bool, float *, int *)","CUDA","Bandwidth","Bandwidth",True
+"gamma-correction-omp","__omp_offloading_10309_2f086c5_main_l70","OMP","Bandwidth","Compute",False
+"qrg-omp","__omp_offloading_10309_2fc569f_main_l154","OMP","Bandwidth","Compute",False
+"qrg-omp","__omp_offloading_10309_2fc569f_main_l202","OMP","Bandwidth","Compute",False
+"quant-omp","__omp_offloading_10309_2fc5701_main_l119","OMP","Bandwidth","Compute",False
+"atomicSystemWide-cuda","atomicKernel(int *, int)","CUDA","Bandwidth","Bandwidth",True
+"kalman-cuda","void kalman<8>(const double *, int, const double *, const double *, const double *, const double *, const double *, bool, const double *, int, double *, double *, double *, int, int, double *, bool, double *)","CUDA","Bandwidth","Compute",False
+"simpleSpmv-omp","__omp_offloading_10309_2fc5b3a__Z15mv_csr_paralleliimPKmS0_PKfS2_mPfS3__l64","OMP","Bandwidth","Bandwidth",True
+"simpleSpmv-omp","__omp_offloading_10309_2fc5b3a__Z22vector_mv_csr_paralleliimPKmS0_PKfS2_mPfS3__l129","OMP","Bandwidth","Bandwidth",True
+"simpleSpmv-omp","__omp_offloading_10309_2fc5b3a__Z17mv_dense_paralleliimPKfPfS1__l23","OMP","Bandwidth","Compute",False
+"mandelbrot-cuda","mandel(int *, const MandelParameters *, int, int)","CUDA","Compute","Compute",True
+"scan2-cuda","prefixSum(float *, const float *, unsigned int)","CUDA","Bandwidth","Compute",False
+"scan2-cuda","ScanLargeArrays(float *, const float *, unsigned int, float *)","CUDA","Bandwidth","Bandwidth",True
+"scan2-cuda","blockAddition(const float *, float *)","CUDA","Bandwidth","Compute",False
+"merge-cuda","void workloadDiagonals<unsigned int>(const T1 *, unsigned int, const T1 *, unsigned int, unsigned int *)","CUDA","Bandwidth","Bandwidth",True
+"merge-cuda","void mergeSinglePath<unsigned int, 0, 0>(const T1 *, unsigned int, const T1 *, unsigned int, const unsigned int *, T1 *, unsigned int)","CUDA","Bandwidth","Bandwidth",True
+"cfd-omp","__omp_offloading_10309_2f04896__Z20initialize_variablesiPfS__l157","OMP","Bandwidth","Bandwidth",True
+"cfd-omp","__omp_offloading_10309_2f04896__Z4copyPfPKfi_l112","OMP","Bandwidth","Bandwidth",True
+"cfd-omp","__omp_offloading_10309_2f04896__Z17initialize_bufferPffi_l146","OMP","Bandwidth","Bandwidth",True
+"cfd-omp","__omp_offloading_10309_2f04896__Z12compute_fluxiPiPfS0_S0_S0_6Float3S1_S1_S1__l200","OMP","Bandwidth","Compute",False
+"cfd-omp","__omp_offloading_10309_2f04896__Z19compute_step_factoriPfS_S__l167","OMP","Bandwidth","Compute",False
+"cfd-omp","__omp_offloading_10309_2f04896__Z9time_stepiiPKfPfS0_S0__l345","OMP","Bandwidth","Compute",False
+"threadfence-cuda","sum(const float *, int, unsigned int *, volatile float *)","CUDA","Bandwidth","Bandwidth",True
+"pitch-cuda","parallelSimple2DAccess(float *, int, int)","CUDA","Bandwidth","Bandwidth",True
+"pitch-cuda","parallelPitched2DAccess(float *, unsigned long, int, int)","CUDA","Bandwidth","Bandwidth",True
+"pitch-cuda","parallelSimple3DAccess(float *, int, int, int)","CUDA","Bandwidth","Bandwidth",True
+"pitch-cuda","parallelPitched3DAccess(cudaPitchedPtr, int, int, int)","CUDA","Bandwidth","Bandwidth",True
+"adv-omp","__omp_offloading_10309_2f04194_main_l72","OMP","Bandwidth","Bandwidth",True
+"mask-omp","__omp_offloading_10309_2fc4ac4__Z19upperDiagMaskKernelIiEviiiPKT_S0_PS0__l139","OMP","Bandwidth","Bandwidth",True
+"mask-omp","__omp_offloading_10309_2fc4ac4__Z15upperMaskKernelIiEviiiPKT_S0_PS0__l87","OMP","Bandwidth","Bandwidth",True
+"mask-omp","__omp_offloading_10309_2fc4ac4__Z19lowerDiagMaskKernelIiEviiiPKT_S0_PS0__l165","OMP","Bandwidth","Bandwidth",True
+"mask-omp","__omp_offloading_10309_2fc4ac4__Z15lowerMaskKernelIiEviiiPKT_S0_PS0__l113","OMP","Bandwidth","Bandwidth",True
+"mask-omp","__omp_offloading_10309_2fc4ac4__Z18sequenceMaskKernelIiEviiiPKT_PKiS0_PS0__l24","OMP","Bandwidth","Bandwidth",True
+"mask-omp","__omp_offloading_10309_2fc4ac4__Z16windowMaskKernelIiEviiiPKT_PKiiS0_PS0__l55","OMP","Bandwidth","Bandwidth",True
+"mixbench-cuda","benchmark_func(float *, int)","CUDA","Bandwidth","Bandwidth",True
+"che-omp","__omp_offloading_10309_2f0493a__Z17chemicalPotentialPA256_A256_KdPA256_A256_dddddddd_l110","OMP","Bandwidth","Compute",False
+"che-omp","__omp_offloading_10309_2f0493a__Z12cahnHilliardPA256_A256_dPA256_A256_KdS5_ddddd_l159","OMP","Bandwidth","Bandwidth",True
+"che-omp","__omp_offloading_10309_2f0493a__Z25localFreeEnergyFunctionalPA256_A256_KdPA256_A256_dddddddd_l135","OMP","Bandwidth","Compute",False
+"che-omp","__omp_offloading_10309_2f0493a__Z4SwapPA256_A256_dS1__l171","OMP","Bandwidth","Bandwidth",True
+"pool-omp","__omp_offloading_10309_2fc55e6__Z16KernelPool2DGradI11AvgPoolGradIfEfEviPKT0_S4_S4_iiiiiiiiiiiT_bPS2_b_l51","OMP","Bandwidth","Bandwidth",True
+"backprop-omp","__omp_offloading_10309_2f0446a__Z17bpnn_train_kernelP4BPNNPfS1__l139","OMP","Bandwidth","Compute",False
+"backprop-omp","__omp_offloading_10309_2f0446a__Z17bpnn_train_kernelP4BPNNPfS1__l139","OMP","Bandwidth","Compute",False
+"columnarSolver-omp","__omp_offloading_10309_2f04ae1_main_l102","OMP","Bandwidth","Compute",False
+"knn-cuda","cuInsertionSort(float *, int *, int, int, int)","CUDA","Bandwidth","Bandwidth",True
+"knn-cuda","cuComputeDistanceGlobal(const float *, int, const float *, int, int, float *)","CUDA","Compute","Compute",True
+"knn-cuda","cuParallelSqrt(float *, int, int)","CUDA","Bandwidth","Compute",False
+"s8n-omp","__omp_offloading_10309_2fc599d__Z13k_cube_selectiiiPKiPi_l10","OMP","Bandwidth","Bandwidth",True
+"s8n-omp","__omp_offloading_10309_2fc599d__Z18k_cube_select_fouriiiPKiPi_l91","OMP","Bandwidth","Compute",False
+"s8n-omp","__omp_offloading_10309_2fc599d__Z17k_cube_select_twoiiiPKiPi_l45","OMP","Bandwidth","Compute",False
+"reaction-omp","__omp_offloading_10309_2fc578a__Z6updatePfS_PKfS1_S1_S1_jf_l328","OMP","Bandwidth","Compute",False
+"reaction-omp","__omp_offloading_10309_2fc578a__Z22derivative_x2_zerofluxPKfPfjjjj_l79","OMP","Bandwidth","Bandwidth",True
+"reaction-omp","__omp_offloading_10309_2fc578a__Z19reaction_gray_scottPKfS0_PfS1_jff_l13","OMP","Bandwidth","Compute",False
+"reaction-omp","__omp_offloading_10309_2fc578a__Z22derivative_y2_zerofluxPKfPfjjjj_l169","OMP","Bandwidth","Bandwidth",True
+"reaction-omp","__omp_offloading_10309_2fc578a__Z22derivative_z2_zerofluxPKfPfjjjj_l259","OMP","Bandwidth","Bandwidth",True
+"reaction-omp","__omp_offloading_10309_2fc578a__Z19construct_laplacianPfPKfS1_S1_jf_l302","OMP","Bandwidth","Bandwidth",True
+"hellinger-cuda","hellinger(const float *, const float *, float *, int, int, int)","CUDA","Bandwidth","Compute",False
+"attentionMultiHead-cuda","mha(const float *, const float *, const float *, int, int, int, int, int, float, int, float *)","CUDA","Bandwidth","Compute",False
+"resize-cuda","void resize<unsigned char, 8>(T1 *, unsigned long, int, int, const T1 *, int, int, float, float, bool, bool)","CUDA","Bandwidth","Bandwidth",True
+"resize-cuda","void resize_bilinear<unsigned char, 8>(T1 *, unsigned long, int, int, const T1 *, int, int, float, float, bool)","CUDA","Bandwidth","Bandwidth",True
+"vol2col-cuda","void col2vol_kernel<float, float>(unsigned long, const T1 *, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, T1 *)","CUDA","Bandwidth","Bandwidth",True
+"vol2col-cuda","void vol2col_kernel<float>(unsigned long, const T1 *, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, T1 *)","CUDA","Bandwidth","Bandwidth",True
+"hellinger-omp","__omp_offloading_10309_2f28585_main_l79","OMP","Bandwidth","Compute",False
+"ace-cuda","boundaryConditionsPhi(double (*)[400][400])","CUDA","Bandwidth","Bandwidth",True
+"ace-cuda","boundaryConditionsU(double (*)[400][400], double)","CUDA","Bandwidth","Bandwidth",True
+"ace-cuda","swapGrid(double (*)[400][400], double (*)[400][400])","CUDA","Bandwidth","Bandwidth",True
+"ace-cuda","calculateForce(double (*)[400][400], double (*)[400][400], double (*)[400][400], double (*)[400][400], double, double, double, double, double, double)","CUDA","Bandwidth","Compute",False
+"ace-cuda","thermalEquation(double (*)[400][400], double (*)[400][400], double (*)[400][400], double (*)[400][400], double, double, double, double, double)","CUDA","Bandwidth","Compute",False
+"ace-cuda","allenCahn(double (*)[400][400], double (*)[400][400], double (*)[400][400], double (*)[400][400], double (*)[400][400], double (*)[400][400], double, double, double, double, double, double, double, double)","CUDA","Bandwidth","Compute",False
+"nw-cuda","kernel2(int *, const int *, int, int, int, int, int, int)","CUDA","Bandwidth","Bandwidth",True
+"nw-cuda","kernel1(int *, const int *, int, int, int, int, int)","CUDA","Bandwidth","Compute",False
+"boxfilter-omp","__omp_offloading_10309_2f04667__Z12BoxFilterGPUPjS_S_jjiff_l127","OMP","Bandwidth","Bandwidth",True
+"boxfilter-omp","__omp_offloading_10309_2f04667__Z12BoxFilterGPUPjS_S_jjiff_l174","OMP","Bandwidth","Bandwidth",True
+"intrinsics-cast-cuda","cast1_intrinsics(int, const double *, long long *)","CUDA","Bandwidth","Compute",False
+"intrinsics-cast-cuda","cast2_intrinsics(int, const long long *, long long *)","CUDA","Bandwidth","Compute",False
+"inversek2j-cuda","invkin_kernel(const float *, const float *, float *, int)","CUDA","Bandwidth","Compute",False
+"adamw-cuda","void fused_4bit_kernel<float>(T1 *, const T1 *, T1 *, T1 *, signed char *, signed char *, float, float, float, float, float, float, long, float, float, float, float, float, float)","CUDA","Bandwidth","Compute",False
+"heartwall-omp","__omp_offloading_10309_2f284ff__Z18kernel_gpu_wrapper13params_commonPiS0_S0_S0_S0_S0_S0_S0_P5avi_t_l482","OMP","Bandwidth","Compute",False
+"urng-omp","__omp_offloading_10309_2fc6197_main_l97","OMP","Bandwidth","Compute",False
+"sobel-cuda","sobel_filter(const uchar4 *, uchar4 *, unsigned int, unsigned int)","CUDA","Bandwidth","Compute",False
+"depixel-cuda","check_connect(const float3 *, unsigned int *, int, int)","CUDA","Bandwidth","Bandwidth",True
+"depixel-cuda","check_connect(const float3 *, unsigned int *, int, int)","CUDA","Bandwidth","Bandwidth",True
+"lr-cuda","rsquared(const float2 *, float, float2, float2 *)","CUDA","Bandwidth","Compute",False
+"lr-cuda","linear_regression(const float2 *, float4 *)","CUDA","Bandwidth","Compute",False
+"intrinsics-simd-cuda","simd_intrinsics(int, const unsigned int *, unsigned int *)","CUDA","Bandwidth","Compute",False
+"dxtc2-cuda","compress(const unsigned int *, const unsigned int *, uint2 *, int)","CUDA","Compute","Compute",True
+"gru-cuda","void gru_cell_forward<__half, float, int>(T1 *, T1 *, T1 *, T1 *, T1 *, T1 *, T1 *, T3, T3)","CUDA","Bandwidth","Compute",False
+"recursiveGaussian-cuda","Transpose(const unsigned int *, unsigned int *, int, int)","CUDA","Bandwidth","Bandwidth",True
+"recursiveGaussian-cuda","RecursiveRGBA(const unsigned int *, unsigned int *, int, int, float, float, float, float, float, float, float, float)","CUDA","Bandwidth","Compute",False
+"ans-cuda","phase2_synchronise_blocks(unsigned int, unsigned int, unsigned int, unsigned int, unsigned int *, const unsigned int *, uint4 *, unsigned char *, unsigned int, unsigned int, unsigned int)","CUDA","Bandwidth","Compute",False
+"ans-cuda","phase4_decode_write_output(unsigned int, unsigned int, unsigned int, unsigned int *, unsigned char *, unsigned int, const unsigned int *, const uint4 *, unsigned int, unsigned int, unsigned int, unsigned int)","CUDA","Bandwidth","Compute",False
+"ans-cuda","phase3_copy_num_symbols_from_aux_to_sync_points(unsigned int, uint4 *, const unsigned int *)","CUDA","Bandwidth","Bandwidth",True
+"ans-cuda","phase1_decode_subseq(unsigned int, unsigned int, unsigned int, unsigned int *, const unsigned int *, uint4 *, unsigned int, unsigned int, unsigned int, unsigned int)","CUDA","Bandwidth","Compute",False
+"ans-cuda","phase3_copy_num_symbols_from_sync_points_to_aux(unsigned int, const uint4 *, unsigned int *)","CUDA","Bandwidth","Bandwidth",True
+"zerocopy-cuda","vectorAddGPU(float *, float *, float *, int)","CUDA","Compute","Bandwidth",False
+"log2-omp","__omp_offloading_10309_2fc4823__Z11log2_approxRSt6vectorIfSaIfEES2_RS_IiSaIiEEiii_l75","OMP","Bandwidth","Compute",False
+"rotary-cuda","void unrolled_elementwise_kernel_for_multi_outputs<2, lambda(float, float, float, float) (instance 1)], Array<char *, 6>, TrivialOffsetCalculator<4, unsigned int>, TrivialOffsetCalculator<2, unsigned int>>(int, T2, T3, T4, T5)","CUDA","Bandwidth","Bandwidth",True
+"accuracy-cuda","accuracy_kernel(int, int, int, const float *, const int *, int *)","CUDA","Bandwidth","Compute",False
+"chacha20-omp","__omp_offloading_10309_2f048c7_main_l87","OMP","Bandwidth","Bandwidth",True
+"chacha20-omp","__omp_offloading_10309_2f048c7__Z15test_keystreamsPKcS0_S0_PKhPhS3_S3_S3_iii_l30","OMP","Bandwidth","Bandwidth",True
+"car-omp","__omp_offloading_10309_2f04763__Z3carPKfS0_S0_S0_Pf6paramsiim_l35","OMP","Bandwidth","Bandwidth",True
+"f16sp-cuda","scalarProductKernel_native2_fp32(const __half2 *, const __half2 *, float *, unsigned long)","CUDA","Bandwidth","Compute",False
+"f16sp-cuda","scalarProductKernel_native_fp32(const __half2 *, const __half2 *, float *, unsigned long)","CUDA","Bandwidth","Compute",False
+"f16sp-cuda","scalarProductKernel_intrinsics(const __half2 *, const __half2 *, float *, unsigned long)","CUDA","Bandwidth","Compute",False
+"deredundancy-omp","__omp_offloading_10309_2f069aa__Z19kernel_compressDataPKiPKlPKcPjPii_l55","OMP","Bandwidth","Compute",False
+"deredundancy-omp","__omp_offloading_10309_2f069aa__Z19kernel_createIndex7PKcPKiPKlPtS5_PlPii_l261","OMP","Bandwidth","Compute",False
+"deredundancy-omp","__omp_offloading_10309_2f069aa__Z17kernel_cleanTablePKlPKtS2_S0_Pti_l405","OMP","Bandwidth","Compute",False
+"deredundancy-omp","__omp_offloading_10309_2f069aa__Z17kernel_cleanTablePKlPKtS2_S0_Pti_l405","OMP","Bandwidth","Compute",False
+"deredundancy-omp","__omp_offloading_10309_2f069aa__Z19kernel_baseToNumberPcl_l4","OMP","Bandwidth","Compute",False
+"deredundancy-omp","__omp_offloading_10309_2f069aa__Z12kernel_magicfPKiS0_Piii_l423","OMP","Bandwidth","Compute",False
+"deredundancy-omp","__omp_offloading_10309_2f069aa__Z12kernel_magicfPKiS0_Piii_l423","OMP","Bandwidth","Compute",False
+"deredundancy-omp","__omp_offloading_10309_2f069aa__Z20updateRepresentativePiS_i_l362","OMP","Bandwidth","Compute",False
+"deredundancy-omp","__omp_offloading_10309_2f069aa__Z16kernel_makeTablePKlPKtS2_S0_Pti_l384","OMP","Bandwidth","Compute",False
+"deredundancy-omp","__omp_offloading_10309_2f069aa__Z19kernel_createCutofffiPKiPlPii_l315","OMP","Bandwidth","Compute",False
+"deredundancy-omp","__omp_offloading_10309_2f069aa__Z13kernel_filterfiPKiPKlPKtS4_S2_S0_PiS4_i_l476","OMP","Bandwidth","Compute",False
+"deredundancy-omp","__omp_offloading_10309_2f069aa__Z17kernel_mergeIndexPKlPKtPtS0_i_l332","OMP","Bandwidth","Compute",False
+"deredundancy-omp","__omp_offloading_10309_2f069aa__Z12kernel_alignfPKiPKlPKjS0_iPii_l520","OMP","Bandwidth","Compute",False
+"pcc-cuda","ker2(const float *, float *, int, int)","CUDA","Bandwidth","Bandwidth",True
+"gc-cuda","runLarge(int, const int *, const int *, int *, int *, volatile int *, const int *, const int *)","CUDA","Bandwidth","Bandwidth",True
+"gc-cuda","runSmall(int, const int *, const int *, volatile int *, int *)","CUDA","Bandwidth","Bandwidth",True
+"gc-cuda","init(int, int, const int *, const int *, int *, int *, int *, int *, int *, int *)","CUDA","Bandwidth","Bandwidth",True
+"haversine-cuda","compute_haversine_distance(const double4 *, double *, int)","CUDA","Bandwidth","Compute",False
+"lif-cuda","lif(int, int, float, const float *, float *, float *, float, float, const float *, const float *, float *)","CUDA","Bandwidth","Compute",False
+"fpc-omp","__omp_offloading_10309_2f085dd__Z3fpcPKmPjii_l127","OMP","Bandwidth","Bandwidth",True
+"fpc-omp","__omp_offloading_10309_2f085dd__Z4fpc2PKmPjii_l189","OMP","Bandwidth","Bandwidth",True
+"word2vec-cuda","device_memset(float *, int)","CUDA","Bandwidth","Bandwidth",True
+"word2vec-cuda","device_cbow(int, int, int, int, int, int, int, const int *, const int *, float *, float *, unsigned int *)","CUDA","Bandwidth","Bandwidth",True
+"lfib4-cuda","colYGPU(unsigned int *, int)","CUDA","Bandwidth","Compute",False
+"lfib4-cuda","lastEntGPU(unsigned int *, unsigned int *, int, int)","CUDA","Bandwidth","Compute",False
+"lfib4-cuda","firstColGPU(unsigned int *, int)","CUDA","Bandwidth","Compute",False
+"stencil1d-cuda","stencil_1d(const int *, int *)","CUDA","Bandwidth","Bandwidth",True
+"wsm5-omp","__omp_offloading_10309_2fc62a7__Z3wsmPfPKfS_S_S_S_S_S1_S1_S1_S_S_S_S_S_fiiiiiiiiiiiiiiiiiiii_l31","OMP","Compute","Bandwidth",False
+"prefetch-cuda","add(int, const float *, float *)","CUDA","Bandwidth","Compute",False
+"md5hash-omp","__omp_offloading_10309_2fc4b95__Z21FindKeyWithDigest_GPUPKjiiPiPhPj_l378","OMP","Bandwidth","Compute",False
+"tonemapping-omp","__omp_offloading_10309_2fc601f__Z10runKernelsPKfPfffffjjj_l46","OMP","Bandwidth","Bandwidth",True
+"randomAccess-cuda","update(unsigned long long *, unsigned long long *, unsigned long long)","CUDA","Bandwidth","Bandwidth",True
+"randomAccess-cuda","initTable(unsigned long long *, unsigned long long)","CUDA","Bandwidth","Bandwidth",True
+"doh-omp","__omp_offloading_10309_2f06b20__Z18hessian_matrix_detPKfiifPf_l125","OMP","Bandwidth","Compute",False
+"doh-omp","__omp_offloading_10309_2f06b20__Z18hessian_matrix_detPKfiifPf_l125","OMP","Bandwidth","Compute",False
+"conversion-cuda","void cvt<__half, __nv_bfloat16>(T1 *, const T2 *, int)","CUDA","Bandwidth","Bandwidth",True
+"bsw-cuda","sequence_aa_kernel(bool, const char *, const char *, const unsigned int *, const unsigned int *, short *, short *, short *, short *, short *, short, short, const short *, const short *)","CUDA","Bandwidth","Bandwidth",True
+"md5hash-cuda","md5hash_kernel(int *, unsigned char *, unsigned int *, int, int, int, unsigned int, unsigned int, unsigned int, unsigned int)","CUDA","Bandwidth","Bandwidth",True
+"lda-omp","__omp_offloading_10309_2fc44b2__Z11EstepKernelILi500ELi256ELi4000EEvPKiS1_PKbPKfbiiiiS5_S5_PfS6_S6_S6_S6_Pi_l55","OMP","Compute","Bandwidth",False
+"cfd-cuda","initialize_variables(int, float *, const float *)","CUDA","Bandwidth","Bandwidth",True
+"cfd-cuda","compute_flux(int, int *, float *, float *, float *, float *, Float3 *, Float3 *, Float3 *, Float3 *)","CUDA","Bandwidth","Compute",False
+"cfd-cuda","initialize_buffer(float *, float, int)","CUDA","Bandwidth","Bandwidth",True
+"cfd-cuda","compute_step_factor(int, float *, float *, float *)","CUDA","Bandwidth","Compute",False
+"cfd-cuda","time_step(int, int, const float *, float *, const float *, const float *)","CUDA","Bandwidth","Compute",False
+"ss-cuda","StringSearchLoadBalance(const unsigned char *, unsigned int, const unsigned char *, unsigned int, unsigned int *, unsigned int *, unsigned int)","CUDA","Bandwidth","Bandwidth",True
+"myocyte-cuda","kernel(int, float *, float *, float *, float *)","CUDA","Bandwidth","Bandwidth",True
+"lulesh-cuda","calcMonotonicQForElems(const int *, const double *, double *, double *, const double *, const double *, const double *, const double *, const double *, const double *, const double *, const double *, const int *, const int *, const int *, const int *, const int *, const int *, const double *, double, double, double, double, int)","CUDA","Bandwidth","Bandwidth",True
+"lulesh-cuda","calcPositionForNodes(double *, double *, double *, const double *, const double *, const double *, double, int)","CUDA","Bandwidth","Compute",False
+"lulesh-cuda","collect_final_force(const double *, const double *, const double *, double *, double *, double *, const int *, const int *, int)","CUDA","Bandwidth","Bandwidth",True
+"lulesh-cuda","fb(const double *, const double *, const double *, const double *, const double *, const double *, const double *, const double *, const double *, const double *, const double *, const double *, const int *, const double *, double *, double *, double *, double, int)","CUDA","Bandwidth","Bandwidth",True
+"lulesh-cuda","calcStrainRates(double *, double *, double *, const double *, double *, int *, int)","CUDA","Bandwidth","Compute",False
+"lulesh-cuda","applyMaterialPropertiesForElems(const double *, const double *, const double *, const int *, const int *, double *, double *, double *, double *, double *, double *, double, double, double, double, double, double, double, double, double, double, int)","CUDA","Bandwidth","Bandwidth",True
+"lulesh-cuda","calcVelocityForNodes(double *, double *, double *, const double *, const double *, const double *, double, double, int)","CUDA","Bandwidth","Bandwidth",True
+"lulesh-cuda","fill_sig(double *, double *, double *, const double *, const double *, int)","CUDA","Bandwidth","Bandwidth",True
+"lulesh-cuda","calcKinematicsForElems(const double *, const double *, const double *, const double *, const double *, const double *, const int *, const double *, const double *, double *, double *, double *, double *, double *, double *, double, int)","CUDA","Bandwidth","Bandwidth",True
+"lulesh-cuda","calcMonotonicQGradientsForElems(const double *, const double *, const double *, const double *, const double *, const double *, const int *, const double *, double *, double *, double *, double *, double *, double *, const double *, int)","CUDA","Bandwidth","Bandwidth",True
+"lulesh-cuda","applyAccelerationBoundaryConditionsForNodes(const int *, const int *, const int *, double *, double *, double *, int, int, int, int)","CUDA","Bandwidth","Bandwidth",True
+"lulesh-cuda","hgc(double *, double *, double *, double *, double *, double *, double *, const double *, const double *, const double *, const int *, const double *, const double *, int *, int)","CUDA","Bandwidth","Compute",False
+"lulesh-cuda","accelerationForNode(const double *, const double *, const double *, const double *, double *, double *, double *, int)","CUDA","Bandwidth","Bandwidth",True
+"lulesh-cuda","integrateStress(double *, double *, double *, const double *, const double *, const double *, const int *, const double *, const double *, const double *, double *, int)","CUDA","Bandwidth","Bandwidth",True
+"lulesh-cuda","acc_final_force(const double *, const double *, const double *, double *, double *, double *, const int *, const int *, int)","CUDA","Bandwidth","Bandwidth",True
+"conversion-omp","__omp_offloading_10309_2f04bc7__Z7convertIfcEvii_l20","OMP","Bandwidth","Bandwidth",True
+"conversion-omp","__omp_offloading_10309_2f04bc7__Z7convertIhfEvii_l20","OMP","Bandwidth","Bandwidth",True
+"conversion-omp","__omp_offloading_10309_2f04bc7__Z7convertIhfEvii_l20","OMP","Bandwidth","Bandwidth",True
+"conversion-omp","__omp_offloading_10309_2f04bc7__Z7convertIchEvii_l27","OMP","Bandwidth","Bandwidth",True
+"conversion-omp","__omp_offloading_10309_2f04bc7__Z7convertIchEvii_l27","OMP","Bandwidth","Bandwidth",True
+"conversion-omp","__omp_offloading_10309_2f04bc7__Z7convertIiiEvii_l27","OMP","Bandwidth","Bandwidth",True
+"conversion-omp","__omp_offloading_10309_2f04bc7__Z7convertIicEvii_l20","OMP","Bandwidth","Bandwidth",True
+"conversion-omp","__omp_offloading_10309_2f04bc7__Z7convertIihEvii_l20","OMP","Bandwidth","Bandwidth",True
+"conversion-omp","__omp_offloading_10309_2f04bc7__Z7convertIhcEvii_l20","OMP","Bandwidth","Bandwidth",True
+"conversion-omp","__omp_offloading_10309_2f04bc7__Z7convertIfiEvii_l20","OMP","Bandwidth","Bandwidth",True
+"conversion-omp","__omp_offloading_10309_2f04bc7__Z7convertIcfEvii_l20","OMP","Bandwidth","Bandwidth",True
+"conversion-omp","__omp_offloading_10309_2f04bc7__Z7convertIifEvii_l20","OMP","Bandwidth","Bandwidth",True
+"conversion-omp","__omp_offloading_10309_2f04bc7__Z7convertIhcEvii_l20","OMP","Bandwidth","Bandwidth",True
+"conversion-omp","__omp_offloading_10309_2f04bc7__Z7convertIhhEvii_l27","OMP","Bandwidth","Bandwidth",True
+"conversion-omp","__omp_offloading_10309_2f04bc7__Z7convertIciEvii_l20","OMP","Bandwidth","Bandwidth",True
+"conversion-omp","__omp_offloading_10309_2f04bc7__Z7convertIccEvii_l20","OMP","Bandwidth","Bandwidth",True
+"conversion-omp","__omp_offloading_10309_2f04bc7__Z7convertIfhEvii_l27","OMP","Bandwidth","Bandwidth",True
+"conversion-omp","__omp_offloading_10309_2f04bc7__Z7convertIcfEvii_l20","OMP","Bandwidth","Bandwidth",True
+"conversion-omp","__omp_offloading_10309_2f04bc7__Z7convertIffEvii_l27","OMP","Bandwidth","Bandwidth",True
+"conversion-omp","__omp_offloading_10309_2f04bc7__Z7convertIhhEvii_l27","OMP","Bandwidth","Bandwidth",True
+"conversion-omp","__omp_offloading_10309_2f04bc7__Z7convertIfiEvii_l20","OMP","Bandwidth","Bandwidth",True
+"conversion-omp","__omp_offloading_10309_2f04bc7__Z7convertIicEvii_l20","OMP","Bandwidth","Bandwidth",True
+"conversion-omp","__omp_offloading_10309_2f04bc7__Z7convertIifEvii_l20","OMP","Bandwidth","Bandwidth",True
+"conversion-omp","__omp_offloading_10309_2f04bc7__Z7convertIfcEvii_l20","OMP","Bandwidth","Bandwidth",True
+"conversion-omp","__omp_offloading_10309_2f04bc7__Z7convertIhiEvii_l20","OMP","Bandwidth","Bandwidth",True
+"conversion-omp","__omp_offloading_10309_2f04bc7__Z7convertIffEvii_l27","OMP","Bandwidth","Bandwidth",True
+"conversion-omp","__omp_offloading_10309_2f04bc7__Z7convertIccEvii_l20","OMP","Bandwidth","Bandwidth",True
+"conversion-omp","__omp_offloading_10309_2f04bc7__Z7convertIihEvii_l20","OMP","Bandwidth","Bandwidth",True
+"conversion-omp","__omp_offloading_10309_2f04bc7__Z7convertIfhEvii_l27","OMP","Bandwidth","Bandwidth",True
+"conversion-omp","__omp_offloading_10309_2f04bc7__Z7convertIchEvii_l27","OMP","Bandwidth","Bandwidth",True
+"conversion-omp","__omp_offloading_10309_2f04bc7__Z7convertIiiEvii_l27","OMP","Bandwidth","Bandwidth",True
+"conversion-omp","__omp_offloading_10309_2f04bc7__Z7convertIhiEvii_l20","OMP","Bandwidth","Bandwidth",True
+"conversion-omp","__omp_offloading_10309_2f04bc7__Z7convertIciEvii_l20","OMP","Bandwidth","Bandwidth",True
+"marchingCubes-cuda","generatingTriangles(float, const unsigned int *, const unsigned short *, const int *, const uchar4 *, unsigned int *, unsigned int *, unsigned long long *, float *, float *, float *, float *)","CUDA","Bandwidth","Bandwidth",True
+"marchingCubes-cuda","compactLv1(float, const float *, unsigned int *, unsigned int *)","CUDA","Bandwidth","Bandwidth",True
+"marchingCubes-cuda","computeMinMaxLv1(float *)","CUDA","Compute","Bandwidth",False
+"marchingCubes-cuda","computeMinMaxLv2(const unsigned int *, float *)","CUDA","Compute","Bandwidth",False
+"marchingCubes-cuda","compactLv2(float, const float *, const unsigned int *, unsigned int *, unsigned int, unsigned int *)","CUDA","Bandwidth","Bandwidth",True
+"geodesic-cuda","kernel_distance(const float4 *, float *, int)","CUDA","Bandwidth","Compute",False
+"p4-cuda","postprocess(const float *, float *, const float *, const float *, const float *, float *, int *, float, float, float, float, int, int, int, int, int, float, float)","CUDA","Bandwidth","Bandwidth",True
+"sptrsv-omp","__omp_offloading_10309_2fc5dad__Z15sptrsv_syncfreeiPKiS0_PKdiiiPdS2_S2__l91","OMP","Bandwidth","Compute",False
+"pso-cuda","kernelUpdatePBest(const float *, float *, float *, int)","CUDA","Bandwidth","Bandwidth",True
+"pso-cuda","kernelUpdateParticle(float *, float *, const float *, const float *, int, float, float)","CUDA","Bandwidth","Compute",False
+"compute-score-omp","__omp_offloading_10309_2f04b44_main_l318","OMP","Bandwidth","Bandwidth",True
+"compute-score-omp","__omp_offloading_10309_2f04b44_main_l376","OMP","Bandwidth","Bandwidth",True
+"idivide-omp","__omp_offloading_10309_2fc33f6__Z5checki11int_fastdivPi_l56","OMP","Bandwidth","Compute",False
+"idivide-omp","__omp_offloading_10309_2fc33f6__Z15throughput_testI11int_fastdivEviT_S1_S1_iPi_l10","OMP","Bandwidth","Compute",False
+"idivide-omp","__omp_offloading_10309_2fc33f6__Z15throughput_testI11int_fastdivEviT_S1_S1_iPi_l10","OMP","Bandwidth","Compute",False
+"idivide-omp","__omp_offloading_10309_2fc33f6__Z15throughput_testIiEviT_S0_S0_iPi_l10","OMP","Bandwidth","Compute",False
+"idivide-omp","__omp_offloading_10309_2fc33f6__Z12latency_testIiEviT_S0_S0_S0_S0_S0_S0_S0_S0_S0_iPi_l37","OMP","Bandwidth","Compute",False
+"idivide-omp","__omp_offloading_10309_2fc33f6__Z12latency_testI11int_fastdivEviT_S1_S1_S1_S1_S1_S1_S1_S1_S1_iPi_l37","OMP","Bandwidth","Compute",False
+"is-cuda","full_verify_gpu_kernel_3(const int *, int *, int, int)","CUDA","Bandwidth","Compute",False
+"is-cuda","rank_gpu_kernel_5(const int *, int *, int, int)","CUDA","Bandwidth","Bandwidth",True
+"is-cuda","full_verify_gpu_kernel_1(const int *, int *, int, int)","CUDA","Bandwidth","Bandwidth",True
+"is-cuda","create_seq_gpu_kernel(int *, double, double, int, int)","CUDA","Bandwidth","Compute",False
+"is-cuda","rank_gpu_kernel_4(const int *, int *, int *, int, int)","CUDA","Bandwidth","Bandwidth",True
+"is-cuda","rank_gpu_kernel_3(int *, const int *, int, int)","CUDA","Bandwidth","Bandwidth",True
+"is-cuda","rank_gpu_kernel_7(const int *, const int *, const int *, int *, int, int, int)","CUDA","Bandwidth","Bandwidth",True
+"is-cuda","rank_gpu_kernel_6(const int *, int *, const int *, int, int)","CUDA","Bandwidth","Bandwidth",True
+"is-cuda","rank_gpu_kernel_1(int *, int *, const int *, int, int, int)","CUDA","Bandwidth","Compute",False
+"is-cuda","full_verify_gpu_kernel_2(const int *, int *, int *, int, int)","CUDA","Bandwidth","Bandwidth",True
+"is-cuda","rank_gpu_kernel_2(int *, int, int)","CUDA","Bandwidth","Bandwidth",True
+"resize-omp","__omp_offloading_10309_2fc57d5__Z6resizeItLm8EEvPT_miiPKS0_iiffbb_l18","OMP","Bandwidth","Bandwidth",True
+"resize-omp","__omp_offloading_10309_2fc57d5__Z6resizeIjLm8EEvPT_miiPKS0_iiffbb_l18","OMP","Bandwidth","Bandwidth",True
+"resize-omp","__omp_offloading_10309_2fc57d5__Z15resize_bilinearIhLm8EEvPT_miiPKS0_iiffb_l65","OMP","Bandwidth","Bandwidth",True
+"resize-omp","__omp_offloading_10309_2fc57d5__Z15resize_bilinearIjLm8EEvPT_miiPKS0_iiffb_l65","OMP","Bandwidth","Bandwidth",True
+"resize-omp","__omp_offloading_10309_2fc57d5__Z15resize_bilinearItLm8EEvPT_miiPKS0_iiffb_l65","OMP","Bandwidth","Bandwidth",True
+"resize-omp","__omp_offloading_10309_2fc57d5__Z6resizeIhLm8EEvPT_miiPKS0_iiffbb_l18","OMP","Bandwidth","Bandwidth",True
+"remap-cuda","remap_kernel(device_ptr<const int>, device_ptr<const int>, int *, int, int)","CUDA","Bandwidth","Bandwidth",True
+"fwt-cuda","fwtBatch1Kernel(float *, const float *, int)","CUDA","Bandwidth","Compute",False
+"fwt-cuda","fwtBatch2Kernel(float *, const float *, int)","CUDA","Bandwidth","Compute",False
+"fwt-cuda","modulateKernel(float *, const float *, int)","CUDA","Bandwidth","Compute",False
+"softmax-online-cuda","softmax_forward_online_kernel(float *, const float *, int, int)","CUDA","Bandwidth","Compute",False
+"eigenvalue-omp","__omp_offloading_10309_2f06c64__Z24calNumEigenValueIntervalPjPKfS1_S1_j_l44","OMP","Compute","Compute",True
+"eigenvalue-omp","__omp_offloading_10309_2f06c64__Z25recalculateEigenIntervalsPfPKfPKjS1_S1_jf_l66","OMP","Bandwidth","Compute",False
+"entropy-omp","__omp_offloading_10309_2f06cf2__Z7entropyPfPKcii_l13","OMP","Compute","Bandwidth",False
+"entropy-omp","__omp_offloading_10309_2f06cf2__Z11entropy_optILi16ELi16EEvPfPKcPKfii_l61","OMP","Bandwidth","Bandwidth",True
+"fresnel-cuda","kernel(const double *, double *, int)","CUDA","Bandwidth","Bandwidth",True
+"mrc-cuda","MRCGradient(int, const int *, const float *, const float *, const float *, float, float *, float *)","CUDA","Bandwidth","Compute",False
+"mrc-cuda","MRCGradient2(int, const int *, const float *, const float *, const float *, float, float *, float *)","CUDA","Bandwidth","Compute",False
+"linearprobing-cuda","k_hashtable_insert(KeyValue *, const KeyValue *, unsigned int)","CUDA","Bandwidth","Bandwidth",True
+"linearprobing-cuda","k_hashtable_delete(KeyValue *, const KeyValue *, unsigned int)","CUDA","Bandwidth","Bandwidth",True
+"linearprobing-cuda","k_iterate_hashtable(KeyValue *, KeyValue *, unsigned int *)","CUDA","Bandwidth","Bandwidth",True
+"histogram-omp","__omp_offloading_10309_2f285fb__Z16run_smem_atomicsILi3ELi256E6uchar4EdPT1_iiPjb_l56","OMP","Bandwidth","Bandwidth",True
+"histogram-omp","__omp_offloading_10309_2f285fa__Z16run_gmem_atomicsILi1ELi256EhEdPT1_iiPjb_l55","OMP","Bandwidth","Bandwidth",True
+"histogram-omp","__omp_offloading_10309_2f285fb__Z16run_smem_atomicsILi3ELi256E6uchar4EdPT1_iiPjb_l115","OMP","Bandwidth","Bandwidth",True
+"histogram-omp","__omp_offloading_10309_2f285fa__Z16run_gmem_atomicsILi3ELi256E6float4EdPT1_iiPjb_l55","OMP","Bandwidth","Bandwidth",True
+"histogram-omp","__omp_offloading_10309_2f285fb__Z16run_smem_atomicsILi1ELi256EhEdPT1_iiPjb_l56","OMP","Bandwidth","Bandwidth",True
+"histogram-omp","__omp_offloading_10309_2f285fb__Z16run_smem_atomicsILi1ELi256EhEdPT1_iiPjb_l115","OMP","Bandwidth","Bandwidth",True
+"histogram-omp","__omp_offloading_10309_2f285fa__Z16run_gmem_atomicsILi1ELi256EhEdPT1_iiPjb_l103","OMP","Bandwidth","Bandwidth",True
+"histogram-omp","__omp_offloading_10309_2f285fb__Z16run_smem_atomicsILi3ELi256E6float4EdPT1_iiPjb_l56","OMP","Bandwidth","Bandwidth",True
+"histogram-omp","__omp_offloading_10309_2f285fa__Z16run_gmem_atomicsILi3ELi256E6uchar4EdPT1_iiPjb_l55","OMP","Bandwidth","Bandwidth",True
+"histogram-omp","__omp_offloading_10309_2f285fa__Z16run_gmem_atomicsILi3ELi256E6float4EdPT1_iiPjb_l103","OMP","Bandwidth","Bandwidth",True
+"histogram-omp","__omp_offloading_10309_2f285fa__Z16run_gmem_atomicsILi3ELi256E6uchar4EdPT1_iiPjb_l103","OMP","Bandwidth","Bandwidth",True
+"histogram-omp","__omp_offloading_10309_2f285fb__Z16run_smem_atomicsILi3ELi256E6float4EdPT1_iiPjb_l115","OMP","Bandwidth","Bandwidth",True
+"simpleSpmv-cuda","mv_csr(unsigned long, const unsigned long *, const unsigned long *, const float *, const float *, float *)","CUDA","Bandwidth","Bandwidth",True
+"simpleSpmv-cuda","void vector_mv_csr<32>(unsigned long, const unsigned long *, const unsigned long *, const float *, const float *, float *)","CUDA","Bandwidth","Bandwidth",True
+"simpleSpmv-cuda","mv_dense(unsigned long, const float *, const float *, float *)","CUDA","Bandwidth","Compute",False
+"damage-omp","__omp_offloading_10309_2f061c4__Z14damage_of_nodeiPKiS0_PiPd_l17","OMP","Bandwidth","Compute",False
+"medianfilter-cuda","ckMedian(const uchar4 *, unsigned int *, int, int, int)","CUDA","Bandwidth","Compute",False
+"adam-cuda","void adam<float, float>(T1 *, T1 *, T1 *, const T2 *, float, float, float, float, float, int, unsigned long, adamMode_t, float)","CUDA","Compute","Compute",True
+"multimaterial-cuda","ccc_loop3(const int *, const int *, const int *, const double *, const double *, double *, double *, const double *, const double *, int, int, int *)","CUDA","Bandwidth","Compute",False
+"multimaterial-cuda","ccc_loop1(const int *, const int *, const double *, const double *, const double *, const double *, double *, int, int, int *)","CUDA","Bandwidth","Compute",False
+"multimaterial-cuda","ccc_loop1_2(const double *, const double *, const double *, double *, const int *, int, const int *, const int *, int, int)","CUDA","Bandwidth","Bandwidth",True
+"multimaterial-cuda","ccc_loop2(const int *, const int *, const int *, const double *, const double *, const double *, const double *, const double *, const double *, double *, double *, int, int, int *)","CUDA","Bandwidth","Compute",False
+"multimaterial-cuda","ccc_loop2_2(const int *, const double *, const double *, const double *, const double *, double *, int *, int)","CUDA","Bandwidth","Bandwidth",True
+"expdist-cuda","void distance<float>(const T1 *, const T1 *, int, int, const T1 *, const T1 *, T1 *)","CUDA","Compute","Compute",True
+"expdist-cuda","void reduce_cross_term<float>(T1 *, const T1 *, int, int, int)","CUDA","Bandwidth","Compute",False
+"expdist-cuda","void reduce_cross_term<float>(T1 *, const T1 *, int, int, int)","CUDA","Bandwidth","Compute",False
+"mcpr-cuda","compute_probs_unitStrides_sharedMem(const double *, const double *, double *, int, int, int)","CUDA","Bandwidth","Compute",False
+"mcpr-cuda","compute_probs_unitStrides(const double *, const double *, double *, int, int, int)","CUDA","Bandwidth","Compute",False
+"mcpr-cuda","compute_probs(const double *, const double *, double *, int, int, int)","CUDA","Bandwidth","Compute",False
+"floydwarshall-cuda","floydWarshallPass(unsigned int *, unsigned int *, unsigned int, unsigned int)","CUDA","Bandwidth","Compute",False
+"fdtd3d-omp","__omp_offloading_10309_2f06db7__Z7fdtdGPUPfS_PKfiiiiiiPPKc_l70","OMP","Bandwidth","Bandwidth",True
+"nms-omp","__omp_offloading_10309_2fc5385_main_l192","OMP","Bandwidth","Bandwidth",True
+"nms-omp","__omp_offloading_10309_2fc5385_main_l168","OMP","Bandwidth","Bandwidth",True
+"fsm-cuda","MaxKernel(int *, const unsigned char *)","CUDA","Bandwidth","Bandwidth",True
+"fsm-cuda","FSMKernel(int, const unsigned short *, int *, unsigned int *, unsigned char *, unsigned char *, int *, int *, int *)","CUDA","Bandwidth","Compute",False
+"bezier-surface-cuda","BezierGPU(const XYZ *, XYZ *, int, int, int, int)","CUDA","Compute","Compute",True
+"dpid-cuda","kernelGuidance(const uchar3 *, uchar3 *, Params)","CUDA","Bandwidth","Bandwidth",True
+"dpid-cuda","kernelDownsampling(const uchar3 *, const uchar3 *, Params, uchar3 *)","CUDA","Compute","Bandwidth",False
+"columnarSolver-cuda","setupKernel(unsigned int *)","CUDA","Bandwidth","Bandwidth",True
+"langevin-cuda","k1(const float *, float *)","CUDA","Bandwidth","Compute",False
+"langevin-cuda","k0(const float *, float *)","CUDA","Bandwidth","Compute",False
+"langevin-cuda","k2(const float *, float *)","CUDA","Bandwidth","Compute",False
+"aes-cuda","AESEncrypt(uchar4 *, const uchar4 *, const uchar4 *, const unsigned char *, unsigned int, unsigned int)","CUDA","Bandwidth","Compute",False
+"rushlarsen-omp","__omp_offloading_10309_2fc590f__Z21k_forward_rush_larsenPdddPKdi_l7","OMP","Bandwidth","Compute",False
+"romberg-cuda","romberg(double, double, double *)","CUDA","Compute","Compute",True
+"seam-carving-cuda","compute_costs_kernel(const uchar4 *, short *, short *, short *, int, int, int)","CUDA","Bandwidth","Compute",False
+"seam-carving-cuda","compute_M_kernel_step2(const short *, const short *, const short *, int *, int, int, int, int)","CUDA","Bandwidth","Compute",False
+"seam-carving-cuda","min_reduce(const int *, int *, int)","CUDA","Bandwidth","Compute",False
+"seam-carving-cuda","compute_M_kernel_step1(const short *, const short *, const short *, int *, int, int, int, int)","CUDA","Bandwidth","Compute",False
+"seam-carving-cuda","remove_seam_kernel(const uchar4 *, uchar4 *, const int *, int, int, int)","CUDA","Bandwidth","Compute",False
+"seam-carving-cuda","find_seam_kernel(const int *, const int *, int *, int, int, int)","CUDA","Bandwidth","Compute",False
+"seam-carving-cuda","update_costs_kernel(const uchar4 *, const short *, const short *, const short *, short *, short *, short *, const int *, int, int, int)","CUDA","Bandwidth","Compute",False
+"particles-omp","__omp_offloading_10309_2fc54dd__Z17bitonicSortLocal1PjS_PKjS1_jj_l122","OMP","Bandwidth","Compute",False
+"sa-cuda","Compute_SA_From_UniqueRank(const int *, int *, int)","CUDA","Bandwidth","Compute",False
+"sa-cuda","Compute_SA_From_UniqueRank(const int *, int *, int)","CUDA","Bandwidth","Compute",False
+"sa-cuda","Init_d_s12(int *, int)","CUDA","Bandwidth","Bandwidth",True
+"sa-cuda","Set_S0(int *, const int *, const int *, int, int)","CUDA","Bandwidth","Bandwidth",True
+"sa-cuda","InitScan2(const int *, int *, int, int)","CUDA","Bandwidth","Bandwidth",True
+"sa-cuda","keybits(int *, const int *, const int *, int, int)","CUDA","Bandwidth","Compute",False
+"sa-cuda","InitScan(const int *, const int *, int *, int)","CUDA","Bandwidth","Compute",False
+"sa-cuda","merge_suffixes(const int *, const int *, int *, const int *, const int *, int, int, int)","CUDA","Bandwidth","Bandwidth",True
+"sa-cuda","Set_suffix_rank(int *, const int *, const int *, int, int)","CUDA","Bandwidth","Bandwidth",True
+"sa-cuda","Store_unique_ranks(int *, const int *, int)","CUDA","Bandwidth","Bandwidth",True
+"complex-cuda","ref_complex_double(char *, int)","CUDA","Bandwidth","Compute",False
+"complex-cuda","ref_complex_float(char *, int)","CUDA","Compute","Bandwidth",False
+"complex-cuda","complex_float(char *, int)","CUDA","Compute","Bandwidth",False
+"complex-cuda","complex_double(char *, int)","CUDA","Bandwidth","Bandwidth",True
+"debayer-cuda","malvar_he_cutler_demosaic(unsigned int, unsigned int, const unsigned char *, unsigned int, unsigned char *, unsigned int, int)","CUDA","Bandwidth","Bandwidth",True
+"wsm5-cuda","wsm(float *, const float *, float *, float *, float *, float *, float *, const float *, const float *, const float *, float *, float *, float *, float *, float *, float, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int)","CUDA","Compute","Bandwidth",False
+"permutate-omp","__omp_offloading_10309_2fc5542__Z16shuffling_kernelPhPKhjjjj_l51","OMP","Bandwidth","Bandwidth",True
+"adam-omp","__omp_offloading_10309_2f0415e__Z4adamIffEvPT_S1_S1_PKT0_fffffim10adamMode_tf_l25","OMP","Compute","Compute",True
+"tqs-cuda","TaskQueue_gpu(const task_t *, int *, int *, int, int, int)","CUDA","Bandwidth","Compute",False
+"hwt1d-omp","__omp_offloading_10309_2fc3390_main_l124","OMP","Bandwidth","Bandwidth",True
+"bsearch-omp","__omp_offloading_10309_2f0468a__Z2bsIfEvmmPKT_S2_Pmmi_l21","OMP","Bandwidth","Bandwidth",True
+"bsearch-omp","__omp_offloading_10309_2f0468a__Z3bs2IfEvmmPKT_S2_Pmmi_l52","OMP","Bandwidth","Compute",False
+"bsearch-omp","__omp_offloading_10309_2f0468a__Z3bs3IfEvmmPKT_S2_Pmmi_l84","OMP","Bandwidth","Compute",False
+"bsearch-omp","__omp_offloading_10309_2f0468a__Z3bs4IfEvmmPKT_S2_Pmmi_l117","OMP","Bandwidth","Bandwidth",True
+"lulesh-omp","__omp_offloading_10309_2fc4a6c_main_l1731","OMP","Bandwidth","Bandwidth",True
+"lulesh-omp","__omp_offloading_10309_2fc4a6c_main_l1731","OMP","Bandwidth","Bandwidth",True
+"lulesh-omp","__omp_offloading_10309_2fc4a6c_main_l1731","OMP","Bandwidth","Bandwidth",True
+"lulesh-omp","__omp_offloading_10309_2fc4a6c_main_l1731","OMP","Bandwidth","Bandwidth",True
+"lulesh-omp","__omp_offloading_10309_2fc4a6c_main_l1731","OMP","Bandwidth","Bandwidth",True
+"lulesh-omp","__omp_offloading_10309_2fc4a6c_main_l1731","OMP","Bandwidth","Bandwidth",True
+"lulesh-omp","__omp_offloading_10309_2fc4a6c_main_l1731","OMP","Bandwidth","Bandwidth",True
+"lulesh-omp","__omp_offloading_10309_2fc4a6c_main_l1731","OMP","Bandwidth","Bandwidth",True
+"lulesh-omp","__omp_offloading_10309_2fc4a6c_main_l1731","OMP","Bandwidth","Compute",False
+"lulesh-omp","__omp_offloading_10309_2fc4a6c_main_l1731","OMP","Bandwidth","Bandwidth",True
+"lulesh-omp","__omp_offloading_10309_2fc4a6c_main_l1731","OMP","Bandwidth","Bandwidth",True
+"lulesh-omp","__omp_offloading_10309_2fc4a6c_main_l1731","OMP","Bandwidth","Bandwidth",True
+"lulesh-omp","__omp_offloading_10309_2fc4a6c_main_l1731","OMP","Bandwidth","Bandwidth",True
+"lulesh-omp","__omp_offloading_10309_2fc4a6c_main_l1731","OMP","Bandwidth","Bandwidth",True
+"lulesh-omp","__omp_offloading_10309_2fc4a6c_main_l1731","OMP","Bandwidth","Bandwidth",True
+"lulesh-omp","__omp_offloading_10309_2fc4a6c_main_l1731","OMP","Bandwidth","Bandwidth",True
+"lulesh-omp","__omp_offloading_10309_2fc4a6c_main_l1697","OMP","Bandwidth","Bandwidth",True
+"romberg-omp","__omp_offloading_10309_2fc5876_main_l47","OMP","Compute","Compute",True
+"tensorAccessor-cuda","raw_accessor_kernel(long, long, float *, const float *, const float *)","CUDA","Bandwidth","Compute",False
+"tensorAccessor-cuda","tensor_packed_accessor_kernel(GenericPackedTensorAccessor<float, 1, RestrictPtrTraits, long>, GenericPackedTensorAccessor<float, 2, RestrictPtrTraits, long>, GenericPackedTensorAccessor<float, 1, RestrictPtrTraits, long>)","CUDA","Bandwidth","Compute",False
+"minisweep-omp","__omp_offloading_10309_2fc518d_main_l382","OMP","Bandwidth","Compute",False
+"minisweep-omp","__omp_offloading_10309_2fc518d_main_l314","OMP","Bandwidth","Compute",False
+"minisweep-omp","__omp_offloading_10309_2fc518d_main_l314","OMP","Bandwidth","Compute",False
+"minisweep-omp","__omp_offloading_10309_2fc518d_main_l314","OMP","Bandwidth","Compute",False
+"minisweep-omp","__omp_offloading_10309_2fc518d_main_l314","OMP","Bandwidth","Compute",False
+"minisweep-omp","__omp_offloading_10309_2fc518d_main_l314","OMP","Bandwidth","Compute",False
+"shuffle-cuda","bcast_shfl_xor_sg8(int *)","CUDA","Bandwidth","Compute",False
+"shuffle-cuda","bcast_shfl_xor_sg8(int *)","CUDA","Bandwidth","Compute",False
+"shuffle-cuda","bcast_shfl_sg32(int, int *)","CUDA","Bandwidth","Compute",False
+"shuffle-cuda","bcast_shfl_sg32(int, int *)","CUDA","Bandwidth","Compute",False
+"shuffle-cuda","transpose_shfl(float *, const float *)","CUDA","Bandwidth","Bandwidth",True
+"shuffle-cuda","bcast_shfl_xor_sg32(int *)","CUDA","Bandwidth","Compute",False
+"shuffle-cuda","bcast_shfl_xor_sg32(int *)","CUDA","Bandwidth","Compute",False
+"shuffle-cuda","bcast_shfl_sg8(int, int *)","CUDA","Bandwidth","Compute",False
+"shuffle-cuda","bcast_shfl_xor_sg16(int *)","CUDA","Bandwidth","Compute",False
+"shuffle-cuda","bcast_shfl_sg16(int, int *)","CUDA","Bandwidth","Compute",False
+"lif-omp","__omp_offloading_10309_2fc47e1__Z4testiifPfS_S_ffS_S_S__l65","OMP","Bandwidth","Compute",False
+"cobahh-cuda","cobahh(float *, float *, float *, float *, float *, float *, const float *, char *, int, float, float, int, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float, float)","CUDA","Bandwidth","Compute",False
+"aobench-cuda","render_kernel(unsigned char *, const _Sphere *, _Plane, int, int, int)","CUDA","Compute","Compute",True
+"fpdc-cuda","CompressionKernel(int, const unsigned long long *, char *, const int *, int *)","CUDA","Bandwidth","Compute",False
+"reaction-cuda","derivative_z2_zeroflux(const float *, float *, unsigned int, unsigned int, unsigned int, unsigned int)","CUDA","Bandwidth","Compute",False
+"reaction-cuda","construct_laplacian(float *, const float *, const float *, const float *, unsigned int, float)","CUDA","Bandwidth","Compute",False
+"reaction-cuda","reaction_gray_scott(const float *, const float *, float *, float *, unsigned int, float, float)","CUDA","Bandwidth","Compute",False
+"reaction-cuda","update(float *, float *, const float *, const float *, const float *, const float *, unsigned int, float)","CUDA","Bandwidth","Compute",False
+"reaction-cuda","derivative_x2_zeroflux(const float *, float *, unsigned int, unsigned int)","CUDA","Bandwidth","Compute",False
+"reaction-cuda","derivative_y2_zeroflux(const float *, float *, unsigned int, unsigned int, unsigned int)","CUDA","Bandwidth","Bandwidth",True
+"s8n-cuda","k_cube_select_four(int, int, int, const int *, int *)","CUDA","Bandwidth","Compute",False
+"s8n-cuda","k_cube_select(int, int, int, const int *, int *)","CUDA","Bandwidth","Compute",False
+"s8n-cuda","k_cube_select_two(int, int, int, const int *, int *)","CUDA","Bandwidth","Compute",False
+"quicksort-cuda","void gqsort_kernel<unsigned int>(T1 *, T1 *, block_record<T1> *, parent_record *, work_record<T1> *)","CUDA","Bandwidth","Bandwidth",True
+"quicksort-cuda","void lqsort_kernel<unsigned int>(T1 *, T1 *, work_record<T1> *)","CUDA","Bandwidth","Compute",False
+"projectile-omp","__omp_offloading_10309_2fc5657__Z11GpuParallelRSt6vectorI10ProjectileSaIS0_EES3_i_l37","OMP","Bandwidth","Compute",False
+"cobahh-omp","__omp_offloading_10309_2f04a96__Z24neurongroup_stateupdaterPfS_S_S_S_S_S_S_S_Pcii_l73","OMP","Bandwidth","Compute",False
+"mis-omp","__omp_offloading_10309_2fc51be__Z10computeMISiiiPKiS0_PVh_l90","OMP","Bandwidth","Compute",False
+"mis-omp","__omp_offloading_10309_2fc51be__Z10computeMISiiiPKiS0_PVh_l90","OMP","Bandwidth","Bandwidth",True
+"mis-omp","__omp_offloading_10309_2fc51be__Z10computeMISiiiPKiS0_PVh_l90","OMP","Bandwidth","Compute",False
+"entropy-cuda","void entropy_opt<16, 16>(float *, const char *, const float *, int, int)","CUDA","Bandwidth","Compute",False
+"entropy-cuda","entropy(float *, const char *, int, int)","CUDA","Compute","Bandwidth",False
+"morphology-cuda","void vhgw_horiz<1>(unsigned char *, const unsigned char *, int, int, int)","CUDA","Bandwidth","Bandwidth",True
+"morphology-cuda","void vhgw_horiz<0>(unsigned char *, const unsigned char *, int, int, int)","CUDA","Bandwidth","Bandwidth",True
+"morphology-cuda","void vhgw_vert<1>(unsigned char *, const unsigned char *, int, int, int)","CUDA","Bandwidth","Bandwidth",True
+"morphology-cuda","void vhgw_vert<0>(unsigned char *, const unsigned char *, int, int, int)","CUDA","Bandwidth","Bandwidth",True
+"md-omp","__omp_offloading_10309_2fc4b81__Z2mdPK7double4PS_PKiiiddd_l23","OMP","Bandwidth","Bandwidth",True
+"extrema-omp","__omp_offloading_10309_2f06d62__Z7test_1DIdEliibiPKc_l145","OMP","Bandwidth","Bandwidth",True
+"extrema-omp","__omp_offloading_10309_2f06d62__Z7test_1DIfEliibiPKc_l145","OMP","Bandwidth","Bandwidth",True
+"extrema-omp","__omp_offloading_10309_2f06d62__Z7test_2DIiEliiibiiPKc_l206","OMP","Bandwidth","Bandwidth",True
+"extrema-omp","__omp_offloading_10309_2f06d62__Z7test_1DIiEliibiPKc_l145","OMP","Bandwidth","Bandwidth",True
+"extrema-omp","__omp_offloading_10309_2f06d62__Z7test_2DIlEliiibiiPKc_l206","OMP","Bandwidth","Bandwidth",True
+"extrema-omp","__omp_offloading_10309_2f06d62__Z7test_2DIfEliiibiiPKc_l206","OMP","Bandwidth","Bandwidth",True
+"extrema-omp","__omp_offloading_10309_2f06d62__Z7test_2DIdEliiibiiPKc_l206","OMP","Bandwidth","Bandwidth",True
+"extrema-omp","__omp_offloading_10309_2f06d62__Z7test_1DIlEliibiPKc_l145","OMP","Bandwidth","Bandwidth",True
+"bm3d-cuda","DCT2D8x8(float *, const float *, unsigned int)","CUDA","Bandwidth","Compute",False
+"bm3d-cuda","aggregate_block(uint2, const float *, const float *, const unsigned short *, const float *, float *, float *, const unsigned int *, uint2, uint2, Params)","CUDA","Bandwidth","Bandwidth",True
+"bm3d-cuda","get_block(uint2, const unsigned char *, const unsigned short *, const unsigned int *, float *, uint2, uint2, Params)","CUDA","Bandwidth","Bandwidth",True
+"bm3d-cuda","aggregate_final(const float *, const float *, uint2, unsigned char *)","CUDA","Bandwidth","Bandwidth",True
+"bm3d-cuda","hard_treshold_block(uint2, float *, float *, const unsigned int *, uint2, Params, unsigned int)","CUDA","Bandwidth","Bandwidth",True
+"bm3d-cuda","IDCT2D8x8(float *, const float *, unsigned int)","CUDA","Bandwidth","Bandwidth",True
+"bm3d-cuda","block_matching(const unsigned char *, unsigned short *, unsigned int *, uint2, uint2, Params, uint2)","CUDA","Bandwidth","Bandwidth",True
+"sampling-cuda","void sampled_rows_kernel<float, int>(const T2 *, float *, T2, T2, T1 *, T2, T1 *, const T1 *, unsigned long)","CUDA","Bandwidth","Bandwidth",True
+"sampling-cuda","void exact_rows_kernel<float, int>(float *, T2, T2, const T1 *, T2, T1 *, const T1 *)","CUDA","Bandwidth","Compute",False
+"bfs-cuda","Kernel(const Node *, const int *, char *, char *, const char *, int *, int)","CUDA","Bandwidth","Bandwidth",True
+"bfs-cuda","Kernel2(char *, char *, char *, char *, int)","CUDA","Bandwidth","Bandwidth",True
+"axhelm-omp","__omp_offloading_10309_2f043d5_main_l211","OMP","Bandwidth","Bandwidth",True
+"page-rank-cuda","reduce(float *, const float *, int, float *)","CUDA","Bandwidth","Compute",False
+"page-rank-cuda","map(const int *, const float *, float *, const unsigned int *, int)","CUDA","Bandwidth","Bandwidth",True
+"particlefilter-omp","__omp_offloading_10309_2fc54c0__Z14particleFilterPhiiiPii_l496","OMP","Bandwidth","Bandwidth",True
+"particlefilter-omp","__omp_offloading_10309_2fc54c0__Z14particleFilterPhiiiPii_l479","OMP","Bandwidth","Bandwidth",True
+"particlefilter-omp","__omp_offloading_10309_2fc54c0__Z14particleFilterPhiiiPii_l496","OMP","Bandwidth","Compute",False
+"particlefilter-omp","__omp_offloading_10309_2fc54c0__Z14particleFilterPhiiiPii_l496","OMP","Bandwidth","Bandwidth",True
+"su3-cuda","k_mat_nn(const site *, const fsu3_matrix *, site *, int)","CUDA","Bandwidth","Compute",False
+"ga-cuda","ga(const char *, const char *, char *, unsigned int, int, int, int, int)","CUDA","Bandwidth","Bandwidth",True
+"srad-cuda","compress(long, float *)","CUDA","Bandwidth","Bandwidth",True
+"srad-cuda","reduce(long, int, int, float *, float *)","CUDA","Bandwidth","Compute",False
+"srad-cuda","prepare(long, const float *, float *, float *)","CUDA","Bandwidth","Bandwidth",True
+"srad-cuda","extract(long, float *)","CUDA","Bandwidth","Bandwidth",True
+"srad-cuda","srad2(float, int, int, long, const int *, const int *, const int *, const int *, const float *, const float *, const float *, const float *, const float *, float *)","CUDA","Bandwidth","Compute",False
+"srad-cuda","srad(float, int, int, long, const int *, const int *, const int *, const int *, float *, float *, float *, float *, float, float *, const float *)","CUDA","Bandwidth","Compute",False
+"contract-omp","__omp_offloading_10309_2f04baa__Z11contractionIfEvPKT_S2_PS0_iii_l18","OMP","Bandwidth","Bandwidth",True
+"logprob-cuda","void log_probs_kernel<float>(float *, const T1 *, const int *, const int *, int, int, int, int)","CUDA","Bandwidth","Compute",False
+"logprob-cuda","accumulate_log_probs(float *, const float *, const int *, int, int)","CUDA","Bandwidth","Compute",False
+"logprob-cuda","accumulate_log_probs(float *, const float *, const int *, int, int)","CUDA","Bandwidth","Compute",False
+"hbc-cuda","bc_kernel(float *, const int *, const int *, const int *, int, int, const int *, const unsigned long long *, const float *, const int *, const int *, const int *, const int *, int *, unsigned long, unsigned long, unsigned long, unsigned long, unsigned long, unsigned long, unsigned long, int, int, int *, int *, const int *, bool)","CUDA","Bandwidth","Compute",False
+"rtm8-omp","__omp_offloading_10309_2fc58f6_main_l123","OMP","Bandwidth","Compute",False
+"bilateral-cuda","void bilateralFilter<3>(const float *, float *, int, int, float, float, float)","CUDA","Compute","Compute",True
+"lavaMD-omp","__omp_offloading_10309_2fc3673_main_l194","OMP","Compute","Bandwidth",False
+"myocyte-omp","__omp_offloading_10309_2fc5305__Z6masterfPfS_S_S_PdS0_S0__l54","OMP","Bandwidth","Compute",False
+"threadfence-omp","__omp_offloading_10309_2fc5ffe__Z3sumiiPKfiPjPVf_l15","OMP","Bandwidth","Bandwidth",True
+"radixsort-omp","__omp_offloading_10309_2fc573c__Z13uniformUpdatePjS_j_l82","OMP","Bandwidth","Bandwidth",True
+"radixsort-omp","__omp_offloading_10309_2fc573c__Z19scanExclusiveLocal1PjS_jj_l26","OMP","Bandwidth","Bandwidth",True
+"radixsort-omp","__omp_offloading_10309_2fc5739__Z23radixSortBlocksKeysOnlyPjS_jjj_l31","OMP","Bandwidth","Bandwidth",True
+"radixsort-omp","__omp_offloading_10309_2fc573c__Z19scanExclusiveLocal2PjS_S_jj_l57","OMP","Bandwidth","Bandwidth",True
+"radixsort-omp","__omp_offloading_10309_2fc5739__Z16findRadixOffsetsPjS_S_jj_l92","OMP","Bandwidth","Bandwidth",True
+"radixsort-omp","__omp_offloading_10309_2fc5739__Z16findRadixOffsetsPjS_S_jj_l92","OMP","Bandwidth","Bandwidth",True
+"radixsort-omp","__omp_offloading_10309_2fc5739__Z19reorderDataKeysOnlyPjS_S_S_S_jj_l173","OMP","Bandwidth","Bandwidth",True
+"layout-omp","__omp_offloading_10309_2fc36a2_main_l143","OMP","Bandwidth","Compute",False
+"layout-omp","__omp_offloading_10309_2fc36a2_main_l143","OMP","Bandwidth","Compute",False
+"minimap2-cuda","device_chain_tiled(return_dt *, const anchor_dt *, const control_dt *, int *, int *, int, int, int)","CUDA","Bandwidth","Bandwidth",True
+"contract-cuda","void contraction<float>(const T1 *, const T1 *, T1 *, int, int, int)","CUDA","Bandwidth","Compute",False
+"doh-cuda","hessian_matrix_det(const float *, int, int, float, float *)","CUDA","Bandwidth","Compute",False
+"doh-cuda","hessian_matrix_det(const float *, int, int, float, float *)","CUDA","Bandwidth","Compute",False
+"rainflow-cuda","rainflow_count(const double *, const int *, double *, int *, double3 *, int *, int)","CUDA","Bandwidth","Bandwidth",True
+"tsa-cuda","void kernel<float, 1, 16, 96, 3, 4, 16>(T1, T1, int, int, const T1 *, const T1 *, T1 *, T1 *)","CUDA","Bandwidth","Compute",False
+"murmurhash3-omp","__omp_offloading_10309_2fc52d8_main_l185","OMP","Bandwidth","Compute",False
+"easyWave-omp","__omp_offloading_10309_2f06c0f_main_l881","OMP","Bandwidth","Compute",False
+"easyWave-omp","__omp_offloading_10309_2f06c0f_main_l932","OMP","Bandwidth","Compute",False
+"easyWave-omp","__omp_offloading_10309_2f06c0f_main_l860","OMP","Bandwidth","Bandwidth",True
+"easyWave-omp","__omp_offloading_10309_2f06c0f_main_l881","OMP","Bandwidth","Compute",False
+"hypterm-cuda","hypterm_3(double *, double *, double *, double *, double *, const double *, const double *, const double *, const double *, const double *, const double *, const double *, const double *, double, double, double, int, int, int)","CUDA","Bandwidth","Compute",False
+"hypterm-cuda","hypterm_2(double *, double *, double *, double *, double *, const double *, const double *, const double *, const double *, const double *, const double *, const double *, const double *, double, double, double, int, int, int)","CUDA","Bandwidth","Bandwidth",True
+"hypterm-cuda","hypterm_1(double *, double *, double *, double *, double *, const double *, const double *, const double *, const double *, const double *, const double *, const double *, const double *, double, double, double, int, int, int)","CUDA","Bandwidth","Bandwidth",True
+"heat2d-cuda","dev_lapl_iter(float *, const float *, float, float, int, int)","CUDA","Bandwidth","Compute",False
+"haversine-omp","__omp_offloading_10309_2f284a8__Z15distance_devicePK7double4Pdii_l8","OMP","Bandwidth","Compute",False
+"zmddft-cuda","ker_zmddft_fwd_256x256x256_cu1(const double *, double *)","CUDA","Bandwidth","Compute",False
+"zmddft-cuda","ker_zmddft_fwd_256x256x256_cu0(const double *, double *)","CUDA","Bandwidth","Compute",False
+"zmddft-cuda","ker_zmddft_fwd_256x256x256_cu2(const double *, double *)","CUDA","Bandwidth","Compute",False
+"loopback-omp","__omp_offloading_10309_2fc499a__Z19tausworthe_lookbackjPKjPfS1_PKfS3_S3_S3_S3_S3_S3__l102","OMP","Compute","Compute",True
+"mrc-omp","__omp_offloading_10309_2fc5252__Z11MRCGradientiPKiPKfS2_S2_fPfS3__l12","OMP","Bandwidth","Compute",False
+"mrc-omp","__omp_offloading_10309_2fc5252__Z12MRCGradient2iPKiPKfS2_S2_fPfS3__l27","OMP","Bandwidth","Compute",False
+"cbsfil-omp","__omp_offloading_10309_2f0478d__Z9toCoef2DYPfjjjj_l92","OMP","Bandwidth","Bandwidth",True
+"cbsfil-omp","__omp_offloading_10309_2f0478d__Z9toCoef2DXPfjjjj_l77","OMP","Bandwidth","Bandwidth",True
+"langevin-omp","__omp_offloading_10309_2fc3619__Z2k0PKfPfi_l8","OMP","Bandwidth","Compute",False
+"langevin-omp","__omp_offloading_10309_2fc3619__Z2k1PKfPfi_l16","OMP","Bandwidth","Compute",False
+"langevin-omp","__omp_offloading_10309_2fc3619__Z2k2PKfPfi_l52","OMP","Bandwidth","Compute",False
+"s3d-omp","__omp_offloading_10309_2fc594c__Z7RunTestIfEvNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEER12OptionParser_l177","OMP","Bandwidth","Compute",False
+"s3d-omp","__omp_offloading_10309_2fc594c__Z7RunTestIfEvNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEER12OptionParser_l177","OMP","Bandwidth","Compute",False
+"s3d-omp","__omp_offloading_10309_2fc594c__Z7RunTestIfEvNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEER12OptionParser_l177","OMP","Bandwidth","Compute",False
+"s3d-omp","__omp_offloading_10309_2fc594c__Z7RunTestIfEvNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEER12OptionParser_l177","OMP","Bandwidth","Compute",False
+"s3d-omp","__omp_offloading_10309_2fc594c__Z7RunTestIfEvNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEER12OptionParser_l177","OMP","Bandwidth","Compute",False
+"s3d-omp","__omp_offloading_10309_2fc594c__Z7RunTestIfEvNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEER12OptionParser_l177","OMP","Bandwidth","Compute",False
+"s3d-omp","__omp_offloading_10309_2fc594c__Z7RunTestIfEvNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEER12OptionParser_l177","OMP","Bandwidth","Compute",False
+"s3d-omp","__omp_offloading_10309_2fc594c__Z7RunTestIfEvNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEER12OptionParser_l177","OMP","Bandwidth","Compute",False
+"s3d-omp","__omp_offloading_10309_2fc594c__Z7RunTestIfEvNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEER12OptionParser_l177","OMP","Bandwidth","Compute",False
+"s3d-omp","__omp_offloading_10309_2fc594c__Z7RunTestIfEvNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEER12OptionParser_l177","OMP","Bandwidth","Compute",False
+"s3d-omp","__omp_offloading_10309_2fc594c__Z7RunTestIfEvNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEER12OptionParser_l177","OMP","Bandwidth","Compute",False
+"s3d-omp","__omp_offloading_10309_2fc594c__Z7RunTestIfEvNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEER12OptionParser_l177","OMP","Bandwidth","Compute",False
+"s3d-omp","__omp_offloading_10309_2fc594c__Z7RunTestIfEvNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEER12OptionParser_l177","OMP","Bandwidth","Compute",False
+"s3d-omp","__omp_offloading_10309_2fc594c__Z7RunTestIfEvNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEER12OptionParser_l177","OMP","Bandwidth","Compute",False
+"s3d-omp","__omp_offloading_10309_2fc594c__Z7RunTestIfEvNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEER12OptionParser_l177","OMP","Bandwidth","Compute",False
+"s3d-omp","__omp_offloading_10309_2fc594c__Z7RunTestIfEvNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEER12OptionParser_l177","OMP","Bandwidth","Compute",False
+"s3d-omp","__omp_offloading_10309_2fc594c__Z7RunTestIfEvNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEER12OptionParser_l177","OMP","Bandwidth","Compute",False
+"s3d-omp","__omp_offloading_10309_2fc594c__Z7RunTestIfEvNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEER12OptionParser_l177","OMP","Bandwidth","Compute",False
+"s3d-omp","__omp_offloading_10309_2fc594c__Z7RunTestIfEvNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEER12OptionParser_l177","OMP","Bandwidth","Compute",False
+"s3d-omp","__omp_offloading_10309_2fc594c__Z7RunTestIfEvNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEER12OptionParser_l226","OMP","Bandwidth","Compute",False
+"s3d-omp","__omp_offloading_10309_2fc594c__Z7RunTestIfEvNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEER12OptionParser_l177","OMP","Bandwidth","Compute",False
+"s3d-omp","__omp_offloading_10309_2fc594c__Z7RunTestIfEvNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEER12OptionParser_l177","OMP","Bandwidth","Compute",False
+"s3d-omp","__omp_offloading_10309_2fc594c__Z7RunTestIfEvNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEER12OptionParser_l177","OMP","Bandwidth","Compute",False
+"s3d-omp","__omp_offloading_10309_2fc594c__Z7RunTestIfEvNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEER12OptionParser_l177","OMP","Bandwidth","Compute",False
+"s3d-omp","__omp_offloading_10309_2fc594c__Z7RunTestIfEvNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEER12OptionParser_l177","OMP","Bandwidth","Compute",False
+"s3d-omp","__omp_offloading_10309_2fc594c__Z7RunTestIfEvNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEER12OptionParser_l177","OMP","Bandwidth","Compute",False
+"s3d-omp","__omp_offloading_10309_2fc594c__Z7RunTestIfEvNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEER12OptionParser_l226","OMP","Bandwidth","Compute",False
+"s3d-omp","__omp_offloading_10309_2fc594c__Z7RunTestIfEvNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEER12OptionParser_l177","OMP","Bandwidth","Compute",False
+"s3d-omp","__omp_offloading_10309_2fc594c__Z7RunTestIfEvNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEER12OptionParser_l177","OMP","Bandwidth","Compute",False
+"s3d-omp","__omp_offloading_10309_2fc594c__Z7RunTestIfEvNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEER12OptionParser_l177","OMP","Bandwidth","Compute",False
+"s3d-omp","__omp_offloading_10309_2fc594c__Z7RunTestIfEvNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEER12OptionParser_l177","OMP","Bandwidth","Compute",False
+"s3d-omp","__omp_offloading_10309_2fc594c__Z7RunTestIfEvNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEER12OptionParser_l177","OMP","Bandwidth","Compute",False
+"pathfinder-omp","__omp_offloading_10309_2fc54f5_main_l135","OMP","Bandwidth","Bandwidth",True
+"pathfinder-omp","__omp_offloading_10309_2fc54f5_main_l135","OMP","Bandwidth","Bandwidth",True
+"nlll-cuda","void nll_loss_forward_reduce2d_kernel<float, float, int, 64>(T1 *, T1 *, const T1 *, const T3 *, const T1 *, bool, long, long, long)","CUDA","Bandwidth","Compute",False
+"sosfil-omp","__omp_offloading_10309_2fc5cfe__Z9filteringIfEviiiii_l81","OMP","Bandwidth","Bandwidth",True
+"sosfil-omp","__omp_offloading_10309_2fc5cfe__Z9filteringIdEviiiii_l81","OMP","Bandwidth","Bandwidth",True
+"car-cuda","car(const float *, const float *, const float *, const float *, float *, params, int, int, unsigned long)","CUDA","Bandwidth","Compute",False
+"multinomial-cuda","void sampleMultinomialOnce<float, float>(int *, int, int, const T1 *, const T1 *, int, int)","CUDA","Bandwidth","Bandwidth",True
+"extrema-cuda","void relextrema_1D<int>(int, int, bool, const T1 *, bool *)","CUDA","Bandwidth","Compute",False
+"extrema-cuda","void relextrema_2D<int>(int, int, int, bool, int, const T1 *, bool *)","CUDA","Bandwidth","Compute",False
+"atomicIntrinsics-omp","__omp_offloading_10309_2f0436f__Z8testcaseIiEvi_l79","OMP","Bandwidth","Bandwidth",True
+"atomicIntrinsics-omp","__omp_offloading_10309_2f0436f__Z8testcaseIjEvi_l48","OMP","Bandwidth","Bandwidth",True
+"atomicIntrinsics-omp","__omp_offloading_10309_2f0436f__Z8testcaseIiEvi_l79","OMP","Bandwidth","Bandwidth",True
+"atomicIntrinsics-omp","__omp_offloading_10309_2f0436f__Z8testcaseIjEvi_l48","OMP","Bandwidth","Bandwidth",True
+"atomicIntrinsics-omp","__omp_offloading_10309_2f0436f__Z8testcaseIiEvi_l79","OMP","Bandwidth","Bandwidth",True
+"atomicIntrinsics-omp","__omp_offloading_10309_2f0436f__Z8testcaseIiEvi_l79","OMP","Bandwidth","Bandwidth",True
+"atomicIntrinsics-omp","__omp_offloading_10309_2f0436f__Z8testcaseIiEvi_l79","OMP","Bandwidth","Bandwidth",True
+"atomicIntrinsics-omp","__omp_offloading_10309_2f0436f__Z8testcaseIiEvi_l79","OMP","Bandwidth","Bandwidth",True
+"atomicIntrinsics-omp","__omp_offloading_10309_2f0436f__Z8testcaseIjEvi_l48","OMP","Bandwidth","Bandwidth",True
+"atomicIntrinsics-omp","__omp_offloading_10309_2f0436f__Z8testcaseIjEvi_l48","OMP","Bandwidth","Bandwidth",True
+"atomicIntrinsics-omp","__omp_offloading_10309_2f0436f__Z8testcaseIjEvi_l48","OMP","Bandwidth","Bandwidth",True
+"atomicIntrinsics-omp","__omp_offloading_10309_2f0436f__Z8testcaseIiEvi_l79","OMP","Bandwidth","Bandwidth",True
+"atomicIntrinsics-omp","__omp_offloading_10309_2f0436f__Z8testcaseIjEvi_l48","OMP","Bandwidth","Bandwidth",True
+"atomicIntrinsics-omp","__omp_offloading_10309_2f0436f__Z8testcaseIjEvi_l48","OMP","Bandwidth","Bandwidth",True
+"maxpool3d-omp","__omp_offloading_10309_2fc4b22_main_l66","OMP","Bandwidth","Bandwidth",True
+"keogh-omp","__omp_offloading_10309_2fc356b_main_l51","OMP","Compute","Compute",True
+"b+tree-omp","__omp_offloading_10309_2f04419__Z14kernel_wrapperP6recordlP5knodelliliPlS3_PiS0__l43","OMP","Bandwidth","Compute",False
+"b+tree-omp","__omp_offloading_10309_2f04417__Z15kernel2_wrapperP5knodelliliPlS1_S1_S1_PiS2_S2_S2__l53","OMP","Bandwidth","Compute",False
+"bfs-omp","__omp_offloading_10309_2f0449b__Z11run_bfs_gpuiP4NodeiPiPcS2_S2_S1__l100","OMP","Bandwidth","Bandwidth",True
+"bfs-omp","__omp_offloading_10309_2f0449b__Z11run_bfs_gpuiP4NodeiPiPcS2_S2_S1__l100","OMP","Bandwidth","Bandwidth",True
+"swish-cuda","void SwishKernel<float>(int, const T1 *, T1 *)","CUDA","Bandwidth","Compute",False
+"swish-cuda","void SwishGradientKernel<float>(int, const T1 *, const T1 *, const T1 *, T1 *)","CUDA","Bandwidth","Compute",False
+"convolution3D-cuda","void conv3d_s1<float>(const T1 *, const T1 *, T1 *, int, int, int, int, int, int, int, int)","CUDA","Bandwidth","Compute",False
+"convolution3D-cuda","void conv3d_s2<float>(const T1 *, const T1 *, T1 *, int, int, int, int, int, int, int, int)","CUDA","Bandwidth","Compute",False
+"convolution3D-cuda","void conv3d_s2<float>(const T1 *, const T1 *, T1 *, int, int, int, int, int, int, int, int)","CUDA","Bandwidth","Compute",False
+"convolution3D-cuda","void conv3d_s3<float>(const T1 *, const T1 *, T1 *, int, int, int, int, int, int, int, int)","CUDA","Bandwidth","Bandwidth",True
+"testSNAP-omp","__omp_offloading_10309_2fc5fce_main_l406","OMP","Bandwidth","Compute",False
+"testSNAP-omp","__omp_offloading_10309_2fc5fce_main_l594","OMP","Bandwidth","Compute",False
+"testSNAP-omp","__omp_offloading_10309_2fc5fce_main_l406","OMP","Bandwidth","Compute",False
+"testSNAP-omp","__omp_offloading_10309_2fc5fce_main_l406","OMP","Bandwidth","Compute",False
+"testSNAP-omp","__omp_offloading_10309_2fc5fce_main_l406","OMP","Bandwidth","Compute",False
+"testSNAP-omp","__omp_offloading_10309_2fc5fce_main_l406","OMP","Bandwidth","Compute",False
+"testSNAP-omp","__omp_offloading_10309_2fc5fce_main_l406","OMP","Bandwidth","Compute",False
+"testSNAP-omp","__omp_offloading_10309_2fc5fce_main_l406","OMP","Bandwidth","Compute",False
+"testSNAP-omp","__omp_offloading_10309_2fc5fce_main_l406","OMP","Bandwidth","Compute",False
+"tensorT-cuda","tensor_transpose(int, int, int, int, const int *, const int *, const float *, const float *, const int *, const int *, const int *, const double *, double *)","CUDA","Bandwidth","Bandwidth",True
+"asmooth-cuda","normalizeFilter(int, int, float *, const float *)","CUDA","Bandwidth","Bandwidth",True
+"asmooth-cuda","outFilter(int, int, const float *, const int *, float *)","CUDA","Bandwidth","Bandwidth",True
+"asmooth-cuda","smoothingFilter(int, int, int, int, const float *, int *, float *)","CUDA","Bandwidth","Bandwidth",True
+"goulash-omp","__omp_offloading_10309_2f26b96__Z4gatePdlPKd_l18","OMP","Bandwidth","Compute",False
+"reverse-omp","__omp_offloading_10309_2fc5811_main_l52","OMP","Bandwidth","Bandwidth",True
+"qem-cuda","QRdel(int, const float *, const float *, const float *, const float *, float *, float *, float *, float *, float *, float *, float *, float *)","CUDA","Bandwidth","Compute",False
+"qem-cuda","QuarticSolver(int, const float *, const float *, const float *, const float *, const float *, const float *, const float *, const float *, float *, float *, float *, float *, float *, float *, float *)","CUDA","Bandwidth","Compute",False
+"reverse2D-cuda","void reverseKernel<unsigned char, 16>(T1 *, const T1 *, int, int, bool, bool, int)","CUDA","Bandwidth","Bandwidth",True
+"score-cuda","void findTopK<float, 2048, 256>(int *, int *, const T1 *, float, int, int, int)","CUDA","Bandwidth","Bandwidth",True
+"laplace3d-cuda","laplace3d(int, int, int, int, const float *, float *)","CUDA","Bandwidth","Compute",False
+"idivide-cuda","check(int_fastdiv, int *)","CUDA","Bandwidth","Compute",False
+"idivide-cuda","void latency_test<int>(T1, T1, T1, T1, T1, T1, T1, T1, T1, T1, int, int *)","CUDA","Bandwidth","Compute",False
+"idivide-cuda","void latency_test<int_fastdiv>(T1, T1, T1, T1, T1, T1, T1, T1, T1, T1, int, int *)","CUDA","Bandwidth","Bandwidth",True
+"idivide-cuda","void throughput_test<int>(T1, T1, T1, int, int *)","CUDA","Bandwidth","Bandwidth",True
+"idivide-cuda","void throughput_test<int_fastdiv>(T1, T1, T1, int, int *)","CUDA","Bandwidth","Compute",False
+"concat-cuda","void concat<float>(const T1 *, const T1 *, T1 *, int, int, int, int)","CUDA","Bandwidth","Bandwidth",True
+"dxtc1-cuda","compress(const unsigned int *, const unsigned int *, uint2 *, const float *, const int *, const float *, const int *, int)","CUDA","Compute","Bandwidth",False
+"zeropoint-omp","__omp_offloading_10309_2fc6323__Z10zero_pointPKfS0_iiibPfPi_l20","OMP","Bandwidth","Compute",False
+"blockAccess-cuda","reference(const float *, unsigned char *, unsigned int)","CUDA","Bandwidth","Bandwidth",True
+"blockAccess-cuda","void kernel<256, 1024>(const float *, unsigned char *, unsigned int)","CUDA","Bandwidth","Bandwidth",True
+"burger-omp","__omp_offloading_10309_2f0470f_main_l101","OMP","Bandwidth","Compute",False
+"burger-omp","__omp_offloading_10309_2f0470f_main_l77","OMP","Bandwidth","Compute",False
+"burger-omp","__omp_offloading_10309_2f0470f_main_l101","OMP","Bandwidth","Compute",False
+"burger-omp","__omp_offloading_10309_2f0470f_main_l101","OMP","Bandwidth","Compute",False
+"burger-omp","__omp_offloading_10309_2f0470f_main_l77","OMP","Bandwidth","Compute",False
+"fluidSim-cuda","lbm(const double *, double *, const double4 *, double4 *, const double4 *, double4 *, const bool *, double8, double8, const double *, double)","CUDA","Bandwidth","Compute",False
+"all-pairs-distance-omp","__omp_offloading_10309_2f04201_main_l150","OMP","Bandwidth","Compute",False
+"all-pairs-distance-omp","__omp_offloading_10309_2f04201_main_l150","OMP","Bandwidth","Bandwidth",True
+"complex-omp","__omp_offloading_10309_2f04b0f__Z14complex_doublePci_l74","OMP","Bandwidth","Bandwidth",True
+"complex-omp","__omp_offloading_10309_2f04b0f__Z13complex_floatPci_l42","OMP","Compute","Bandwidth",False
+"quicksort-omp","__omp_offloading_10309_2fc571a__Z8GPUQSortIdEvmPT_S1__l1","OMP","Bandwidth","Compute",False
+"quicksort-omp","__omp_offloading_10309_2fc571a__Z8GPUQSortIfEvmPT_S1__l1","OMP","Bandwidth","Compute",False
+"quicksort-omp","__omp_offloading_10309_2fc571a__Z8GPUQSortIjEvmPT_S1__l1","OMP","Bandwidth","Compute",False
+"quicksort-omp","__omp_offloading_10309_2fc571b__Z8GPUQSortIjEvmPT_S1__l1","OMP","Bandwidth","Compute",False
+"quicksort-omp","__omp_offloading_10309_2fc571b__Z8GPUQSortIfEvmPT_S1__l1","OMP","Bandwidth","Compute",False
+"quicksort-omp","__omp_offloading_10309_2fc571b__Z8GPUQSortIdEvmPT_S1__l1","OMP","Bandwidth","Compute",False
+"minkowski-cuda","void minkowski<512, 1024, 2048>(const float *, const float *, float *, float, float)","CUDA","Compute","Compute",True
+"particle-diffusion-omp","__omp_offloading_10309_2fc54ad__Z13motion_devicePfS_S_S_PPimmifPmi_l105","OMP","Bandwidth","Bandwidth",True
+"secp256k1-omp","__omp_offloading_10309_2fc5a8b_main_l1205","OMP","Bandwidth","Bandwidth",True
+"popcount-cuda","pc1(const unsigned long *, int *, int)","CUDA","Bandwidth","Compute",False
+"popcount-cuda","pc3(const unsigned long *, int *, int)","CUDA","Bandwidth","Compute",False
+"popcount-cuda","pc2(const unsigned long *, int *, int)","CUDA","Bandwidth","Compute",False
+"popcount-cuda","pc4(const unsigned long *, int *, int)","CUDA","Bandwidth","Compute",False
+"popcount-cuda","pc4(const unsigned long *, int *, int)","CUDA","Bandwidth","Compute",False
+"popcount-cuda","pc5(const unsigned long *, int *, int)","CUDA","Bandwidth","Compute",False
+"popcount-cuda","pc6(const unsigned long *, int *, int)","CUDA","Bandwidth","Compute",False
+"nlll-omp","__omp_offloading_10309_2fc5372__Z32nll_loss_forward_reduce2d_kernelIffiLi512EEvPT_S1_PKS0_PKT1_S3_blll_l22","OMP","Bandwidth","Bandwidth",True
+"nlll-omp","__omp_offloading_10309_2fc5372__Z32nll_loss_forward_reduce2d_kernelIffiLi512EEvPT_S1_PKS0_PKT1_S3_blll_l22","OMP","Bandwidth","Bandwidth",True
+"nlll-omp","__omp_offloading_10309_2fc5372__Z32nll_loss_forward_reduce2d_kernelIffiLi128EEvPT_S1_PKS0_PKT1_S3_blll_l22","OMP","Bandwidth","Bandwidth",True
+"nlll-omp","__omp_offloading_10309_2fc5372__Z32nll_loss_forward_reduce2d_kernelIffiLi1024EEvPT_S1_PKS0_PKT1_S3_blll_l22","OMP","Bandwidth","Bandwidth",True
+"nlll-omp","__omp_offloading_10309_2fc5372__Z32nll_loss_forward_reduce2d_kernelIffiLi256EEvPT_S1_PKS0_PKT1_S3_blll_l22","OMP","Bandwidth","Bandwidth",True
+"nlll-omp","__omp_offloading_10309_2fc5372__Z32nll_loss_forward_reduce2d_kernelIffiLi64EEvPT_S1_PKS0_PKT1_S3_blll_l22","OMP","Bandwidth","Bandwidth",True
+"spmv-cuda","mv_dense(unsigned long, const float *, const float *, float *)","CUDA","Bandwidth","Compute",False
+"recursiveGaussian-omp","__omp_offloading_10309_2fc57a6__Z13RecursiveRGBAPKjPjiiffffffff_l194","OMP","Bandwidth","Bandwidth",True
+"recursiveGaussian-omp","__omp_offloading_10309_2fc57a6__Z9TransposePKjPjii_l77","OMP","Bandwidth","Bandwidth",True
+"flip-cuda","void flip_kernel<float>(const T1 *, T1 *, long, const long *, long, const long *, const long *, const long *, long)","CUDA","Bandwidth","Bandwidth",True
+"fft-cuda","fft1D_512(double2 *)","CUDA","Bandwidth","Compute",False
+"fft-cuda","ifft1D_512(double2 *)","CUDA","Bandwidth","Compute",False
+"meanshift-cuda","mean_shift(const float *, float *)","CUDA","Compute","Compute",True
+"meanshift-cuda","mean_shift_tiling(const float *, float *)","CUDA","Compute","Compute",True
+"btree-cuda","void search_b_tree<unsigned int, unsigned int, unsigned int, PoolAllocator>(unsigned int *, T1 *, T2 *, T3, T4)","CUDA","Bandwidth","Compute",False
+"btree-cuda","void init_btree<PoolAllocator>(unsigned int *, T1)","CUDA","Bandwidth","Compute",False
+"btree-cuda","void insert_keys<unsigned int, unsigned int, unsigned int, PoolAllocator>(unsigned int *, T1 *, T2 *, T3, T4)","CUDA","Bandwidth","Compute",False
+"qrg-cuda","qrng(float *, const unsigned int *, unsigned int, unsigned int)","CUDA","Bandwidth","Bandwidth",True
+"qrg-cuda","icnd(float *, unsigned int, unsigned int)","CUDA","Bandwidth","Compute",False
+"ising-cuda","void update_lattice<1>(signed char *, const signed char *, const float *, float, long long, long long)","CUDA","Bandwidth","Bandwidth",True
+"ising-cuda","void update_lattice<0>(signed char *, const signed char *, const float *, float, long long, long long)","CUDA","Bandwidth","Bandwidth",True
+"ising-cuda","init_spins(signed char *, const float *, long long, long long)","CUDA","Bandwidth","Compute",False
+"gabor-cuda","gabor(double *, unsigned int, unsigned int, double, double, double, double, double, double, double, double)","CUDA","Bandwidth","Compute",False
+"cmembench-cuda","void benchmark_constant<int>(int *, int)","CUDA","Bandwidth","Bandwidth",True
+"asmooth-omp","__omp_offloading_10309_2f042fe_main_l95","OMP","Bandwidth","Bandwidth",True
+"asmooth-omp","__omp_offloading_10309_2f042fe_main_l95","OMP","Bandwidth","Bandwidth",True
+"asmooth-omp","__omp_offloading_10309_2f042fe_main_l95","OMP","Bandwidth","Bandwidth",True
+"libor-omp","__omp_offloading_10309_2fc47aa_main_l320","OMP","Bandwidth","Compute",False
+"libor-omp","__omp_offloading_10309_2fc47aa_main_l320","OMP","Bandwidth","Compute",False
+"fresnel-omp","__omp_offloading_10309_2f0861e_main_l39","OMP","Bandwidth","Compute",False
+"addBiasResidualLayerNorm-cuda","void generalAddBiasResidualPostLayerNorm<__half>(T1 *, const T1 *, const T1 *, const T1 *, const T1 *, float, int)","CUDA","Bandwidth","Bandwidth",True
+"addBiasResidualLayerNorm-cuda","void addBiasResidualPostLayerNormV2<__half>(T1 *, const T1 *, const T1 *, const T1 *, const T1 *, float, int)","CUDA","Bandwidth","Bandwidth",True
+"addBiasResidualLayerNorm-cuda","void addBiasResidualPostLayerNormV2<__half>(T1 *, const T1 *, const T1 *, const T1 *, const T1 *, float, int)","CUDA","Bandwidth","Bandwidth",True
+"addBiasResidualLayerNorm-cuda","void addBiasResidualPostLayerNorm<__half, 1>(T1 *, const T1 *, const T1 *, const T1 *, const T1 *, float, int)","CUDA","Bandwidth","Bandwidth",True
+"nn-omp","__omp_offloading_10309_2fc539d__Z20FindNearestNeighborsiRSt6vectorI7latLongSaIS0_EEffPfii_l69","OMP","Bandwidth","Compute",False
+"nn-omp","__omp_offloading_10309_2fc539d__Z20FindNearestNeighborsiRSt6vectorI7latLongSaIS0_EEffPfii_l69","OMP","Bandwidth","Compute",False
+"softmax-fused-cuda","void scaled_masked_softmax_warp_forward<__half, __half, float, 6>(T2 *, const T1 *, const unsigned char *, T3, int, int, int)","CUDA","Bandwidth","Bandwidth",True
+"softmax-fused-cuda","void scaled_masked_softmax_warp_forward<__half, __half, float, 6>(T2 *, const T1 *, const unsigned char *, T3, int, int, int)","CUDA","Bandwidth","Bandwidth",True
+"quant-cuda","void kQuantize<256, 256>(const float *, const float *, unsigned char *, int)","CUDA","Bandwidth","Bandwidth",True
+"overlay-omp","__omp_offloading_10309_2fc5458__Z19DetectionOverlayBoxI6float3EvPKT_PS1_iiiiii6float4_l38","OMP","Bandwidth","Bandwidth",True
+"md-cuda","md(const double4 *, double4 *, const int *, int, int, double, double, double)","CUDA","Bandwidth","Bandwidth",True
+"fpc-cuda","fpc2_kernel(const unsigned long *, unsigned int *)","CUDA","Bandwidth","Compute",False
+"fpc-cuda","fpc_kernel(const unsigned long *, unsigned int *)","CUDA","Bandwidth","Bandwidth",True
+"floydwarshall-omp","__omp_offloading_10309_2f06e6d_main_l216","OMP","Bandwidth","Bandwidth",True
+"cbsfil-cuda","toCoef2DY(float *, unsigned int, unsigned int, unsigned int)","CUDA","Bandwidth","Compute",False
+"cbsfil-cuda","toCoef2DX(float *, unsigned int, unsigned int, unsigned int)","CUDA","Bandwidth","Bandwidth",True
+"convolutionSeparable-cuda","conv_cols(float *, const float *, const float *, int, int, int)","CUDA","Bandwidth","Compute",False
+"convolutionSeparable-cuda","conv_rows(float *, const float *, const float *, int, int, int)","CUDA","Bandwidth","Bandwidth",True
+"ne-cuda","ne(const float3 *, float4 *, int, int, int)","CUDA","Bandwidth","Bandwidth",True
+"streamcluster-omp","__omp_offloading_10309_2fc5eea__Z5pgainlP6PointsfPliPbPiPcPdS5_S5_S5_S5__l137","OMP","Bandwidth","Bandwidth",True
+"streamcluster-omp","__omp_offloading_10309_2fc5eea__Z5pgainlP6PointsfPliPbPiPcPdS5_S5_S5_S5__l140","OMP","Bandwidth","Bandwidth",True
+"streamcluster-omp","__omp_offloading_10309_2fc5eea__Z5pgainlP6PointsfPliPbPiPcPdS5_S5_S5_S5__l137","OMP","Bandwidth","Bandwidth",True
+"shmembench-omp","__omp_offloading_10309_2fc5aeb__Z13shmembenchGPUPdli_l60","OMP","Bandwidth","Bandwidth",True
+"scel-omp","__omp_offloading_10309_2fc5a47__Z35SigmoidCrossEntropyWithLogitsKerneliibbPKfS0_Pf_l20","OMP","Bandwidth","Compute",False
+"tissue-omp","__omp_offloading_10309_2fc600c__Z6tissuePKiPKfS2_PfS2_S2_iiii_l59","OMP","Compute","Bandwidth",False
+"present-omp","__omp_offloading_10309_2fc560e_main_l360","OMP","Bandwidth","Bandwidth",True
+"background-subtract-omp","__omp_offloading_10309_2f0444e__Z16updateBackgroundmPKhS0_Ph_l34","OMP","Bandwidth","Bandwidth",True
+"background-subtract-omp","__omp_offloading_10309_2f0444e__Z15updateThresholdmPKhS0_S0_Ph_l48","OMP","Bandwidth","Bandwidth",True
+"background-subtract-omp","__omp_offloading_10309_2f0444e__Z16findMovingPixelsmPKhS0_S0_S0_Ph_l18","OMP","Bandwidth","Bandwidth",True
+"damage-cuda","damage_of_node(int, const int *, const int *, int *, double *)","CUDA","Bandwidth","Compute",False
+"sw4ck-cuda","kernel5(int, int, int, int, int, int, int, int, int, int, int, int, int, double, double, const double *, const double *, const double *, const double *, const double *, double *, const double *, const double *, const double *, const double *, const double *, const double *, const double *)","CUDA","Bandwidth","Compute",False
+"sw4ck-cuda","kernel1(int, int, int, int, int, int, int, int, int, int, int, int, double, double, const double *, const double *, const double *, const double *, const double *, double *, const double *, const double *, const double *, const double *, const double *, const double *, const double *)","CUDA","Bandwidth","Compute",False
+"sw4ck-cuda","kernel3(int, int, int, int, int, int, int, int, int, int, int, int, double, double, const double *, const double *, const double *, const double *, const double *, double *, const double *, const double *, const double *, const double *, const double *, const double *, const double *)","CUDA","Bandwidth","Compute",False
+"sw4ck-cuda","kernel4(int, int, int, int, int, int, int, int, int, int, int, int, double, double, const double *, const double *, const double *, const double *, const double *, double *, const double *, const double *, const double *, const double *, const double *, const double *, const double *)","CUDA","Bandwidth","Compute",False
+"sw4ck-cuda","kernel2(int, int, int, int, int, int, int, int, int, int, int, int, double, double, const double *, const double *, const double *, const double *, const double *, double *, const double *, const double *, const double *, const double *, const double *, const double *, const double *)","CUDA","Bandwidth","Compute",False
+"tsa-omp","__omp_offloading_10309_2fc60f8__Z6kernelIdLi1ELi16ELi32ELi3ELi4ELi16EEviiT_S0_iiPKS0_S2_PS0_S3__l61","OMP","Bandwidth","Compute",False
+"tsa-omp","__omp_offloading_10309_2fc60f8__Z6kernelIfLi1ELi16ELi96ELi3ELi4ELi16EEviiT_S0_iiPKS0_S2_PS0_S3__l61","OMP","Bandwidth","Compute",False
+"cooling-omp","__omp_offloading_10309_2f056df__Z11cool_kernelidPKdPdi_l111","OMP","Bandwidth","Compute",False
+"wedford-cuda","void welford_kernel<float, float, float>(const T1 *, T3 *, T3 *, int, int, int)","CUDA","Bandwidth","Compute",False
+"permute-cuda","permute_kernel(float *, float *, float *, const float *, int, int, int, int)","CUDA","Bandwidth","Bandwidth",True
+"d2q9-bgk-cuda","d2q9_bgk(const float *, const float *, const float *, const float *, const float *, const float *, const float *, const float *, const float *, float *, float *, float *, float *, float *, float *, float *, float *, float *, const int *, float *, int *, float, float, int, int, int)","CUDA","Bandwidth","Bandwidth",True
+"xsbench-omp","__omp_offloading_10309_2fc6308__Z26run_event_based_simulation6Inputs14SimulationDataiPd_l180","OMP","Bandwidth","Bandwidth",True
+"compute-score-cuda","compute(const unsigned int *, const unsigned int *, const unsigned long *, const unsigned long *, const unsigned int *, unsigned int *, unsigned int *)","CUDA","Bandwidth","Compute",False
+"compute-score-cuda","reduction(const unsigned long *, const unsigned int *, const unsigned int *, unsigned long *)","CUDA","Bandwidth","Compute",False
+"aop-omp","__omp_offloading_10309_2f042ef__Z19compute_sums_kernelILi128EEviPKddRd_l793","OMP","Bandwidth","Bandwidth",True
+"aop-omp","__omp_offloading_10309_2f042ef__Z21generate_paths_kernelILi256E9PayoffPutEviiT0_ddddPKdPd_l97","OMP","Bandwidth","Bandwidth",True
+"aop-omp","__omp_offloading_10309_2f042ef__ZL6do_runI9PayoffPutEvPdiiRKT_ddddS1_S1_S1_PiS1_Rd_l836","OMP","Bandwidth","Bandwidth",True
+"aop-omp","__omp_offloading_10309_2f042ef__ZL6do_runI9PayoffPutEvPdiiRKT_ddddS1_S1_S1_PiS1_Rd_l836","OMP","Bandwidth","Bandwidth",True
+"aop-omp","__omp_offloading_10309_2f042ef__Z22update_cashflow_kernelILi128E9PayoffPutEviiT0_dPKdS3_PKiPd_l744","OMP","Bandwidth","Bandwidth",True
+"aop-omp","__omp_offloading_10309_2f042ef__Z18prepare_svd_kernelILi256E9PayoffPutEviiiT0_PKdPiPd_l491","OMP","Bandwidth","Bandwidth",True
+"aop-omp","__omp_offloading_10309_2f042ef__Z19compute_beta_kernelILi128E9PayoffPutEviT0_PKdS3_S3_PKiPd_l648","OMP","Bandwidth","Bandwidth",True
+"iso2dfd-cuda","iso_2dfd_kernel(float *, const float *, const float *, float, unsigned long, unsigned long)","CUDA","Bandwidth","Compute",False
+"atomicIntrinsics-cuda","void testKernel<int>(T1 *)","CUDA","Bandwidth","Compute",False
+"p4-omp","__omp_offloading_10309_2fc5472_main_l198","OMP","Bandwidth","Bandwidth",True
+"lsqt-cuda","gpu_chebyshev_1x(int, const double *, const double *, double *, double *, double)","CUDA","Bandwidth","Bandwidth",True
+"lsqt-cuda","gpu_copy_state(int, const double *, const double *, double *, double *)","CUDA","Bandwidth","Bandwidth",True
+"lsqt-cuda","gpu_chebyshev_01(int, const double *, const double *, const double *, const double *, double *, double *, double, double, int)","CUDA","Bandwidth","Bandwidth",True
+"lsqt-cuda","gpu_set_zero(int, double *, double *)","CUDA","Bandwidth","Compute",False
+"lsqt-cuda","gpu_apply_commutator(int, double, int *, int *, double *, double *, double *, double *, double *, double *, double *)","CUDA","Bandwidth","Compute",False
+"lsqt-cuda","gpu_add_state(int, const double *, const double *, double *, double *)","CUDA","Bandwidth","Compute",False
+"lsqt-cuda","gpu_chebyshev_2(int, double, const int *, const int *, const double *, const double *, const double *, const double *, const double *, const double *, const double *, double *, double *, double *, double *, double, int)","CUDA","Bandwidth","Bandwidth",True
+"lsqt-cuda","gpu_apply_current(int, const int *, const int *, const double *, const double *, const double *, const double *, const double *, double *, double *)","CUDA","Bandwidth","Compute",False
+"lsqt-cuda","gpu_find_inner_product_1(int, const double *, const double *, const double *, const double *, double *, double *, int)","CUDA","Bandwidth","Bandwidth",True
+"lsqt-cuda","gpu_find_inner_product_2(int, const double *, const double *, double *, double *)","CUDA","Bandwidth","Compute",False
+"lsqt-cuda","gpu_kernel_polynomial(int, double, const int *, const int *, const double *, const double *, const double *, const double *, const double *, const double *, const double *, double *, double *)","CUDA","Bandwidth","Compute",False
+"lsqt-cuda","gpu_chebyshev_2x(int, double, const int *, const int *, const double *, const double *, const double *, const double *, const double *, const double *, const double *, const double *, const double *, const double *, const double *, const double *, double *, double *, double *, double *, double *, double *, double, int)","CUDA","Bandwidth","Bandwidth",True
+"lsqt-cuda","gpu_chebyshev_2x(int, double, const int *, const int *, const double *, const double *, const double *, const double *, const double *, const double *, const double *, const double *, const double *, const double *, const double *, const double *, double *, double *, double *, double *, double *, double *, double, int)","CUDA","Bandwidth","Bandwidth",True
+"lsqt-cuda","gpu_apply_hamiltonian(int, double, const int *, const int *, const double *, const double *, const double *, const double *, const double *, double *, double *)","CUDA","Bandwidth","Compute",False
+"epistasis-omp","__omp_offloading_10309_2f06d02_main_l178","OMP","Compute","Bandwidth",False
+"vanGenuchten-cuda","vanGenuchten(const double *, const double *, double *, double *, double *, int)","CUDA","Bandwidth","Compute",False
+"permutate-cuda","statistical_tests_kernel(unsigned int *, const double *, double, double, const unsigned char *, unsigned int, unsigned int, unsigned int, unsigned int)","CUDA","Bandwidth","Compute",False
+"glu-omp","__omp_offloading_10309_2f26b3d__Z10glu_kerneliiiPKfPf_l19","OMP","Bandwidth","Compute",False
+"kernelLaunch-cuda","KernelWithLargeArgs(LargeKernelArgs, char *)","CUDA","Bandwidth","Bandwidth",True
+"kernelLaunch-cuda","KernelWithSmallArgs(SmallKernelArgs, char *)","CUDA","Bandwidth","Bandwidth",True
+"kernelLaunch-cuda","KernelWithSmallArgs(SmallKernelArgs, char *)","CUDA","Bandwidth","Bandwidth",True
+"kernelLaunch-cuda","KernelWithMediumArgs(MediumKernelArgs, char *)","CUDA","Bandwidth","Bandwidth",True
+"kernelLaunch-cuda","KernelWithMediumArgs(MediumKernelArgs, char *)","CUDA","Bandwidth","Bandwidth",True
+"memtest-omp","__omp_offloading_10309_2fc4c08__Z12kernel_writePcmm_l141","OMP","Bandwidth","Bandwidth",True
+"memtest-omp","__omp_offloading_10309_2fc4c08__Z12kernel0_readPKcmPjPmS2_S2_S2__l48","OMP","Bandwidth","Bandwidth",True
+"memtest-omp","__omp_offloading_10309_2fc4c08__Z13kernel5_checkPKcmPjPmS2_S2_S2__l271","OMP","Bandwidth","Bandwidth",True
+"memtest-omp","__omp_offloading_10309_2fc4c08__Z12kernel1_readPKcmPjPmS2_S2_S2__l120","OMP","Bandwidth","Bandwidth",True
+"memtest-omp","__omp_offloading_10309_2fc4c08__Z13kernel0_writePcm_l10","OMP","Bandwidth","Bandwidth",True
+"memtest-omp","__omp_offloading_10309_2fc4c08__Z13kernel1_writePcm_l104","OMP","Bandwidth","Bandwidth",True
+"memtest-omp","__omp_offloading_10309_2fc4c08__Z11kernel_readPKcmmPjPmS2_S2_S2__l192","OMP","Bandwidth","Bandwidth",True
+"memtest-omp","__omp_offloading_10309_2fc4c08__Z17kernel_read_writePcmmmPjPmS1_S1_S1__l159","OMP","Bandwidth","Bandwidth",True
+"memtest-omp","__omp_offloading_10309_2fc4c08__Z12kernel5_initPcm_l214","OMP","Bandwidth","Compute",False
+"memtest-omp","__omp_offloading_10309_2fc4c08__Z12kernel5_movePcm_l243","OMP","Bandwidth","Bandwidth",True
+"memtest-omp","__omp_offloading_10309_2fc4c09__Z5checkPj_l15","OMP","Bandwidth","Bandwidth",True
+"metropolis-omp","__omp_offloading_10309_2fc4c65__Z26kernel_reset_random_gpupcgPiiPmS0__l208","OMP","Bandwidth","Bandwidth",True
+"metropolis-omp","__omp_offloading_10309_2fc4c65__Z12kernel_resetIiEvPT_iS0__l236","OMP","Bandwidth","Bandwidth",True
+"metropolis-omp","__omp_offloading_10309_2fc4c65__Z17kernel_metropolisiiPiPKiffPmS2_i_l57","OMP","Bandwidth","Bandwidth",True
+"metropolis-omp","__omp_offloading_10309_2fc4c66__Z19kernel_gpupcg_setupPmS_imm_l137","OMP","Bandwidth","Bandwidth",True
+"metropolis-omp","__omp_offloading_10309_2fc4c67__Z16kernel_redenergyIfEvPKiiPT_S1_f_l32","OMP","Bandwidth","Bandwidth",True
+"convolution1D-cuda","void conv1d<double>(const T1 *, T1 *, int, int)","CUDA","Bandwidth","Bandwidth",True
+"convolution1D-cuda","void conv1d_tiled_caching<double>(const T1 *, T1 *, int, int)","CUDA","Bandwidth","Bandwidth",True
+"convolution1D-cuda","void conv1d_tiled<double>(const T1 *, T1 *, int, int)","CUDA","Bandwidth","Compute",False
