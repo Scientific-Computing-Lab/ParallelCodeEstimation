@@ -36,3 +36,4 @@ src/geodesic-cuda/locations.txt
 deleteme**
 .*-api-key
 *.jsonl
+**/__pycache__
