@@ -10,7 +10,7 @@ import json
 from pprint import pprint
 from tqdm import tqdm
 
-from autogen_ext.models.openai import AzureOpenAIChatCompletionClient
+from autogen_ext.models.openai import AzureOpenAIChatCompletionClient, OpenAIChatCompletionClient
 from autogen_core.models import UserMessage, SystemMessage, AssistantMessage
 from autogen_core.model_context import UnboundedChatCompletionContext
 from autogen_agentchat.agents import AssistantAgent
@@ -85,3 +85,206 @@ print('These values get passed as LLM context so the model can infer about roofl
 print(f'Peak SP GFLOP/s {round(peakPerfGspFLOPs, 3)} with FMA')
 print(f'Peak DP GFLOP/s {round(peakPerfGdpFLOPs, 3)} with FMA')
 print(f'Peak GINTOP/s {round(peakPerfGINTOPs, 3)} with FMA')
+
+
+
+
+with open('simple-scraped-kernels-CUDA-pruned.json', 'r') as file:
+    scrapedCUDA = json.load(file)
+
+with open('simple-scraped-kernels-OMP-pruned.json', 'r') as file:
+    scrapedOMP = json.load(file)
+
+
+scrapedCodes = scrapedCUDA + scrapedOMP
+
+
+dtypes={'Kernel Name':'string', 
+        'traffic':np.float64,
+        'dpAI':np.float64,
+        'spAI':np.float64,
+        'dpPerf':np.float64,
+        'spPerf':np.float64,
+        'xtime':np.float64,
+        'Block Size': 'string',
+        'Grid Size': 'string',
+        'device': 'string',
+        "intops": np.float64, 
+        "intPerf" : np.float64,
+        "intAI": np.float64,
+        'targetName': 'string',
+        'exeArgs': 'string',
+        'kernelName': 'string',
+        }
+
+
+def chat_history_to_json_line(ctxMessages:list):
+    jsonDict = {'messages':[]}
+    for msg in ctxMessages:
+        if type(msg) == SystemMessage:
+            role = 'system'
+        elif type(msg) == UserMessage:
+            role = 'user'
+        elif type(msg) == AssistantMessage:
+            role = 'assistant'
+        else:
+            assert False, f'Unknown message type: {type(msg)} of {msg}'
+        content = msg.content
+
+        jsonDict['messages'].append({'role':role, 'content':content})
+
+    return json.dumps(jsonDict, allow_nan=False)
+
+
+
+
+def demangle_omp_kernel_name(mangledName):
+
+    regex = r'_(?:[^_]+_){4}(.*)(_l[\d]+)'
+    matches = re.finditer(regex, mangledName, re.MULTILINE)
+
+    matches = [i for i in matches]
+    assert len(matches) == 1
+
+    cleanName = ''
+    for match in matches:
+        groups = match.groups()
+        assert len(groups) == 2
+        cleanName = groups[0]
+        break
+
+    filterCommand = f'llvm-cxxfilt {cleanName}'
+    
+    #print(shlex.split(cuobjdumpCommand))
+    demangleResult = subprocess.run(filterCommand, shell=True, timeout=5, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+    assert demangleResult.returncode == 0
+    
+    demangled = demangleResult.stdout.decode('UTF-8').strip()
+
+    return demangled
+
+# this system message combines the device information and the non-detailed few-shot
+# examples. We need some few-shot breif examples of the output so that the model 
+# knows how to respond.
+systemMessage = '''You are a GPU performance analysis expert that classifies kernels into Arithmetic Intensity Roofline model categories based on their source code characteristics. Your task is to provide one of the following performance boundedness classifications: Compute or Bandwidth.  A kernel is considered Compute bound if its performance is primarily limited by the number of operations it performs, and Bandwidth bound if its performance is primarily limited by the rate at which data can be moved between memory and processing units.
+
+Provide only one word as your response, chosen from the set: ['Compute', 'Bandwidth'].
+**Examples:**
+**Example 1:**
+```
+Kernel Source Code (simplified):
+for i = 0 to 1000000 {
+  a[i] = a[i] + b[i];
+}
+```
+Response: Compute
+
+**Example 2:**
+```
+Kernel Source Code (simplified):
+for i = 0 to 10 {
+  load_data(large_array);   //loads from large memory
+  process_data(large_array); //processes data
+  store_data(large_array);  //stores back to memory
+}
+```
+Response: Bandwidth
+
+**Example 3:**
+```
+Kernel Source Code (simplified):
+for i = 0 to 1000 {
+  vector_add(a,b,c);   //process data in situ
+}
+//Some smaller data movement but mostly compute.
+```
+Response: Compute
+
+Now, analyze the following source codes for the requested CUDA or OpenMP (OMP) target offload kernel of the specified hardware.'''
+
+
+def make_kernel_info_message(device, exeArgs, kernelName, blockSz, gridSz, language):
+    assert kernelName != ''
+
+    if language == 'OMP':
+      cleanKName = demangle_omp_kernel_name(kernelName)
+      assert cleanKName != ''
+      beginPart = f'Classify the {language} kernel in function [{cleanKName}] as Bandwidth or Compute bound.'
+    else:
+      # if were prompting for a CUDA code
+      cleanKName = kernelName
+      beginPart = f'Classify the {language} kernel called [{cleanKName}] as Bandwidth or Compute bound.'
+
+    builtPrompt = f'{beginPart} The system it will execute on is a [{device}] with a peak single-precision performance of {round(peakPerfGspFLOPs,2)} GFLOP/s, a peak double-precision performance of {round(peakPerfGdpFLOPs,2)} GFLOP/s, a peak integer performance of {round(peakPerfGINTOPs,2)} GINTOP/s, and a max bandwidth of {round(memBandwidthGBs,2)} GB/s. The block and grid sizes of the invoked kernel are {blockSz} and {gridSz}, respectively. The executable running this kernel is launched with '
+
+    if exeArgs == '':
+      builtPrompt += 'no command line arguments.'
+    else:
+      builtPrompt += f'the following command line arguments: [{exeArgs}].'
+
+    builtPrompt += ' Below is the source code containing the kernel definition and other source code for the executable.'
+
+    return builtPrompt
+
+
+# the kernel name is from the "Kernel Name" column of the dataframe
+async def make_chat_history(kernel_info, kernelCode, expectedAnswer=''):
+
+    sys_msg = SystemMessage(content=systemMessage)
+    kernel_info_msg = UserMessage(source='User', content=kernel_info)
+    code_msg = UserMessage(source='User', content=f'```{kernelCode}```')
+
+    if expectedAnswer != '':
+      assis_msg = AssistantMessage(source='assistant', content=f'{expectedAnswer}')
+      context = UnboundedChatCompletionContext(initial_messages=[sys_msg, kernel_info_msg, code_msg, assis_msg])
+    else:
+      context = UnboundedChatCompletionContext(initial_messages=[sys_msg, kernel_info_msg, code_msg])
+
+
+    return context
+
+
+
+def writeToFile(filename, lines):
+    # going to overwrite the whole file each time
+    # it's redundant but the file wont be that large
+    # so the speed doesn't matter
+    with open(filename, 'w') as jsonLFile:
+        jsonLFile.write(lines)
+
+
+async def write_df_to_jsonl(df, filename, includeAnswer=False):
+  jsonLLines = ''
+
+  filename += f'-{df.shape[0]}-samples'
+
+  # for each sample we got
+  for index, row in tqdm(df.iterrows(), total=df.shape[0]):
+      targetName = row['targetName']
+      kernelName = row['Kernel Name']
+      exeArgs = row['exeArgs']
+      blockSz = row['Block Size']
+      gridSz = row['Grid Size']
+      language = row['language']
+      device = row['device']
+      kernelCode = row['kernelCode']
+      expectedAnswer = row['answer']
+
+      infoMsg = make_kernel_info_message(device, exeArgs, kernelName, blockSz, gridSz, language)
+
+      chatHist = None
+      if includeAnswer:
+        chatHist = await make_chat_history(infoMsg, kernelCode, expectedAnswer)
+      else:
+        chatHist = await make_chat_history(infoMsg, kernelCode)
+
+      assert chatHist != None
+
+      messageHist = await chatHist.get_messages()
+      resultStr = chat_history_to_json_line(messageHist)
+
+      jsonLLines = jsonLLines + resultStr + '\n'
+      writeToFile(f'{filename}.jsonl', jsonLLines)
+  
+  return
