@@ -191,16 +191,6 @@ for i = 0 to 10 {
 ```
 Response: Bandwidth
 
-**Example 3:**
-```
-Kernel Source Code (simplified):
-for i = 0 to 1000 {
-  vector_add(a,b,c);   //process data in situ
-}
-//Some smaller data movement but mostly compute.
-```
-Response: Compute
-
 Now, analyze the following source codes for the requested CUDA or OpenMP (OMP) target offload kernel of the specified hardware.'''
 
 
