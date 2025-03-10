@@ -37,3 +37,4 @@ deleteme**
 .*-api-key
 *.jsonl
 **/__pycache__
+few-shot-examples/*
