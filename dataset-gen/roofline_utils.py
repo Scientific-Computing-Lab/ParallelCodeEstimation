@@ -99,6 +99,7 @@ with open('simple-scraped-kernels-OMP-pruned.json', 'r') as file:
 scrapedCodes = scrapedCUDA + scrapedOMP
 
 
+
 dtypes={'Kernel Name':'string', 
         'traffic':np.float64,
         'dpAI':np.float64,
@@ -167,11 +168,34 @@ def demangle_omp_kernel_name(mangledName):
 # this system message combines the device information and the non-detailed few-shot
 # examples. We need some few-shot breif examples of the output so that the model 
 # knows how to respond.
-systemMessage = '''You are a GPU performance analysis expert that classifies kernels into Arithmetic Intensity Roofline model categories based on their source code characteristics. Your task is to provide one of the following performance boundedness classifications: Compute or Bandwidth.  A kernel is considered Compute bound if its performance is primarily limited by the number of operations it performs, and Bandwidth bound if its performance is primarily limited by the rate at which data can be moved between memory and processing units.
+#systemMessage = '''You are a GPU performance analysis expert that classifies kernels into Arithmetic Intensity Roofline model categories based on their source code characteristics. Your task is to provide one of the following performance boundedness classifications: Compute or Bandwidth.  A kernel is considered Compute bound if its performance is primarily limited by the number of operations it performs, and Bandwidth bound if its performance is primarily limited by the rate at which data can be moved between memory and processing units.
+#
+#Provide only one word as your response, chosen from the set: ['Compute', 'Bandwidth'].
+#**Examples:**
+#**Example 1:**
+#```
+#Kernel Source Code (simplified):
+#for i = 0 to 1000000 {
+#  a[i] = a[i] + b[i];
+#}
+#```
+#Response: Compute
+#
+#**Example 2:**
+#```
+#Kernel Source Code (simplified):
+#for i = 0 to 10 {
+#  load_data(large_array);   //loads from large memory
+#  process_data(large_array); //processes data
+#  store_data(large_array);  //stores back to memory
+#}
+#```
+#Response: Bandwidth
+#
+#Now, analyze the following source codes for the requested CUDA or OpenMP (OMP) target offload kernel of the specified hardware.'''
+#
 
-Provide only one word as your response, chosen from the set: ['Compute', 'Bandwidth'].
-**Examples:**
-**Example 1:**
+pseudo_code_examples='''**Example 1:**
 ```
 Kernel Source Code (simplified):
 for i = 0 to 1000000 {
@@ -190,8 +214,54 @@ for i = 0 to 10 {
 }
 ```
 Response: Bandwidth
+'''
 
-Now, analyze the following source codes for the requested CUDA or OpenMP (OMP) target offload kernel of the specified hardware.'''
+with open('../few-shot-examples/cuda_BB_kernel.cu', 'r') as file:
+    cuda_BB_example = file.read()
+
+with open('../few-shot-examples/cuda_CB_kernel.cu', 'r') as file:
+    cuda_CB_example = file.read()
+
+with open('../few-shot-examples/omp_BB_kernel.cpp', 'r') as file:
+    omp_BB_example = file.read()
+
+with open('../few-shot-examples/omp_CB_kernel.cpp', 'r') as file:
+    omp_CB_example = file.read()
+
+
+# each system message will have a compute-bound and a bandwidth-bound example
+def make_system_message(exampleType=0):
+
+  start_systemMessage = '''You are a GPU performance analysis expert that classifies kernels into Arithmetic Intensity Roofline model categories based on their source code characteristics. Your task is to provide one of the following performance boundedness classifications: Compute or Bandwidth.  A kernel is considered Compute bound if its performance is primarily limited by the number of operations it performs, and Bandwidth bound if its performance is primarily limited by the rate at which data can be moved between memory and processing units.
+
+Provide only one word as your response, chosen from the set: ['Compute', 'Bandwidth'].
+**Examples:**'''
+
+  # just pseudocode as examples
+  if exampleType == 0: 
+    end_systemMessage = '''Now, analyze the following source codes for the requested CUDA or OpenMP (OMP) target offload kernel of the specified hardware.'''
+    examples = pseudo_code_examples
+  # both OMP and CUDA examples
+  elif exampleType == 1:
+    end_systemMessage = '''Now, analyze the following source codes for the requested CUDA or OpenMP (OMP) target offload kernel of the specified hardware.'''
+    examples = f'**Example 1:**\n```{cuda_BB_example}```\nResponse: Bandwidth\n\n'
+    examples += f'**Example 2:**\n```{cuda_CB_example}```\nResponse: Compute\n\n'
+    examples += f'**Example 3:**\n```{omp_BB_example}```\nResponse: Bandwidth\n\n'
+    examples += f'**Example 4:**\n```{omp_CB_example}```\nResponse: Compute\n'
+  # just OMP examples
+  elif exampleType == 2:
+    end_systemMessage = '''Now, analyze the following source codes for the requested OpenMP (OMP) target offload kernel of the specified hardware.'''
+    examples = f'**Example 1:**\n```{omp_BB_example}```\nResponse: Bandwidth\n\n'
+    examples += f'**Example 2:**\n```{omp_CB_example}```\nResponse: Compute\n'
+  # just CUDA examples
+  elif exampleType == 3:
+    end_systemMessage = '''Now, analyze the following source codes for the requested CUDA kernel of the specified hardware.'''
+    examples = f'**Example 1:**\n```{cuda_BB_example}```\nResponse: Bandwidth\n\n'
+    examples += f'**Example 2:**\n```{cuda_CB_example}```\nResponse: Compute\n'
+  else:
+    assert exampleType < 4 and exampleType >= 0, 'Requested example type D.N.E.'
+
+  return start_systemMessage+'\n'+examples+'\n'+end_systemMessage
 
 
 def make_kernel_info_message(device, exeArgs, kernelName, blockSz, gridSz, language):
@@ -213,14 +283,14 @@ def make_kernel_info_message(device, exeArgs, kernelName, blockSz, gridSz, langu
     else:
       builtPrompt += f'the following command line arguments: [{exeArgs}].'
 
-    builtPrompt += ' Below is the source code containing the kernel definition and other source code for the executable.'
+    builtPrompt += f' Below is the source code containing the {language} kernel definition and other source code for the executable.'
 
     return builtPrompt
 
 
-# the kernel name is from the "Kernel Name" column of the dataframe
-async def make_chat_history(kernel_info, kernelCode, expectedAnswer=''):
+async def make_chat_history(kernel_info, kernelCode, exampleType=0, expectedAnswer=''):
 
+    systemMessage = make_system_message(exampleType)
     sys_msg = SystemMessage(content=systemMessage)
     kernel_info_msg = UserMessage(source='User', content=kernel_info)
     code_msg = UserMessage(source='User', content=f'```{kernelCode}```')
@@ -244,7 +314,7 @@ def writeToFile(filename, lines):
         jsonLFile.write(lines)
 
 
-async def write_df_to_jsonl(df, filename, includeAnswer=False):
+async def write_df_to_jsonl(df, filename, exampleType=0, includeAnswer=False):
   jsonLLines = ''
 
   filename += f'-{df.shape[0]}-samples'
@@ -265,9 +335,9 @@ async def write_df_to_jsonl(df, filename, includeAnswer=False):
 
       chatHist = None
       if includeAnswer:
-        chatHist = await make_chat_history(infoMsg, kernelCode, expectedAnswer)
+        chatHist = await make_chat_history(infoMsg, kernelCode, exampleType, expectedAnswer)
       else:
-        chatHist = await make_chat_history(infoMsg, kernelCode)
+        chatHist = await make_chat_history(infoMsg, kernelCode, exampleType)
 
       assert chatHist != None
 
