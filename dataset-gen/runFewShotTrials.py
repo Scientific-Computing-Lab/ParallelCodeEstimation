@@ -219,6 +219,7 @@ async def main():
 
     args = parser.parse_args()
     
+    print('\n\nData Collection Parameters:\n------------------------------------------------')
     print(f"Model Name: {args.modelName}")
     print(f"Use Azure: {args.useAzure}")
     print(f"Zero Shot: {args.zeroShot}")
@@ -241,6 +242,11 @@ async def main():
     valDF['isTrain'] = 0
 
     df = pd.concat([trainDF, valDF], ignore_index=True)
+
+    print('------------------------------------------------\n\n')
+    print('Will start collecting data, press ENTER to confirm settings are correct!')
+    input()
+    print('Starting data collection!')
 
     await run_all_trials(df, args.outputCSV, args.modelName, args.temps, args.topps, args.numTrials, args.postQuerySleep, args.useAzure, args.zeroShot)
 
