@@ -68,7 +68,7 @@ async def ask_llm_for_roofline_classification(chatHistory, modelName, useAzure=F
 
 
 
-async def run_row_trial(dfRow, modelName, temp, topp, useAzure):
+async def run_row_trial(dfRow, modelName, temp, topp, useAzure, isZeroShot):
     #targetName = dfRow['targetName']
     kernelName = dfRow['Kernel Name']
     exeArgs = dfRow['exeArgs']
@@ -80,8 +80,10 @@ async def run_row_trial(dfRow, modelName, temp, topp, useAzure):
 
     infoMsg = make_kernel_info_message(device, exeArgs, kernelName, blockSz, gridSz, language)
 
+    if isZeroShot:
+        chatHist = await make_chat_history(infoMsg, kernelCode, 0)
     # only include OMP examples
-    if language == 'OMP':
+    elif language == 'OMP':
         chatHist = await make_chat_history(infoMsg, kernelCode, 2)
     # only include CUDA examples
     else:
@@ -96,9 +98,58 @@ async def run_row_trial(dfRow, modelName, temp, topp, useAzure):
     return resultMessages
 
 
-# ### Collect Data
+async def run_row_trial_task(resultsDF, modelName, inRow, trial, temp, topp, useAzure, isZeroShot):
+    targetName = inRow['targetName']
+    kernelName = inRow['Kernel Name']
 
-async def run_all_trials(df, resultsCSV, modelName, temps, topPs, numTrials, postQuerySleepTime, useAzure):
+    # check if we already sampled this point
+    if is_already_sampled(resultsDF, inRow, trial, temp, topp):
+        #print(f'Already sampled, skipping \t{targetName}: [{kernelName}]')
+        #pbar.update(1)
+        #continue
+        return None
+
+    resultMsgs = await run_row_trial(inRow, modelName, temp, topp, useAzure, isZeroShot)
+
+    # make a copy so we can modify it
+    row = inRow.copy().to_frame().T.reset_index(drop=True)
+
+    assert row.shape[0] == 1
+
+    row['trial'] = trial
+    row['topp'] = topp
+    row['temp'] = temp
+    row['llmResponse'] = ''
+    row['llmThought'] = ''
+
+    # get the last message (it's the answer)
+    #pprint(resultMsgs)
+
+    # the last message contains the LLM response and thought message
+    resultStr = resultMsgs[-1].content
+    thoughtStr = resultMsgs[-1].thought
+
+    if not (resultStr in ['Compute', 'Bandwidth']):
+        print(f'{targetName}: [{kernelName}] bad response: [{resultStr}]')
+
+    # we'll re-do the run later
+    if (resultStr == ''):
+        print('Please re-run this script later to retry this sample.')
+        # we will still save the response to the CSV file
+        #pbar.update(1)
+        #continue 
+
+    if thoughtStr == None:
+        thoughtStr = ''
+
+    row['llmResponse'] = resultStr
+    row['llmThought'] = thoughtStr
+
+    return row
+
+
+# collect data
+async def run_all_trials(df, resultsCSV, modelName, temps, topPs, numTrials, postQuerySleepTime, useAzure, isZeroShot):
     # if we already captured some data
     if os.path.isfile(resultsCSV):
         dtypes['topp'] = np.float64
@@ -125,53 +176,13 @@ async def run_all_trials(df, resultsCSV, modelName, temps, topPs, numTrials, pos
                 for topp in topPs:
                     for index, row in df.iterrows():
 
-                        targetName = row['targetName']
-                        kernelName = row['Kernel Name']
+                        newRow = await run_row_trial_task(resultsDF, modelName, row, trial, temp, topp, useAzure, isZeroShot)
 
-                        # check if we already sampled this point
-                        if is_already_sampled(resultsDF, row, trial, temp, topp):
-                            #print(f'Already sampled, skipping \t{targetName}: [{kernelName}]')
+                        if newRow is None:
                             pbar.update(1)
-                            continue
+                            continue 
 
-                        resultMsgs = await run_row_trial(row, modelName, temp, topp, useAzure)
-
-
-                        # make a copy so we can modify it
-                        row = row.copy().to_frame().T.reset_index(drop=True)
-
-                        assert row.shape[0] == 1
-
-                        row['trial'] = trial
-                        row['topp'] = topp
-                        row['temp'] = temp
-                        row['llmResponse'] = ''
-                        row['llmThought'] = ''
-
-                        # get the last message (it's the answer)
-                        pprint(resultMsgs)
-
-                        # the last message contains the LLM response and thought message
-                        resultStr = resultMsgs[-1].content
-                        thoughtStr = resultMsgs[-1].thought
-
-                        if not (resultStr in ['Compute', 'Bandwidth']):
-                            print(f'{targetName}: [{kernelName}] bad response: [{resultStr}]')
-
-                        # we'll re-do the run later
-                        if (resultStr == ''):
-                            print('Please re-run this script later to retry this sample.')
-                            # we will still save the response to the CSV file
-                            #pbar.update(1)
-                            #continue 
-
-                        if thoughtStr == None:
-                            thoughtStr = ''
-
-                        row['llmResponse'] = resultStr
-                        row['llmThought'] = thoughtStr
-
-                        resultsDF = pd.concat([resultsDF, row], ignore_index=True)
+                        resultsDF = pd.concat([resultsDF, newRow], ignore_index=True)
 
                         # spam save the CSV -- it's a small amount of data so it's not much of a time-sink
                         # it'll also help slow down quickly querying the model so we don't get cloudflare banned
@@ -231,7 +242,7 @@ async def main():
 
     df = pd.concat([trainDF, valDF], ignore_index=True)
 
-    await run_all_trials(df, args.outputCSV, args.modelName, args.temps, args.topps, args.numTrials, args.postQuerySleep, args.useAzure)
+    await run_all_trials(df, args.outputCSV, args.modelName, args.temps, args.topps, args.numTrials, args.postQuerySleep, args.useAzure, args.zeroShot)
 
 if __name__ == "__main__":
     asyncio.run(main())
