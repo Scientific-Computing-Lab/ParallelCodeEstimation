@@ -14,7 +14,7 @@ from autogen_ext.models.openai import AzureOpenAIChatCompletionClient, OpenAICha
 from autogen_core.models import UserMessage, SystemMessage, AssistantMessage
 from autogen_core.model_context import UnboundedChatCompletionContext
 from autogen_agentchat.agents import AssistantAgent
-
+import autogen_core
 
 import subprocess
 import shlex
@@ -27,6 +27,9 @@ import tiktoken
 import csv
 from sklearn.model_selection import train_test_split 
 
+import asyncio
+
+print(f"Autogen version: {autogen_core.__version__}")
 
 # GPU specs
 
@@ -348,3 +351,23 @@ async def write_df_to_jsonl(df, filename, exampleType=0, includeAnswer=False):
       writeToFile(f'{filename}.jsonl', jsonLLines)
   
   return
+
+
+def is_already_sampled(df, row, trial, temp, topp):
+
+    targetName = row['targetName']
+    kernelName = row['Kernel Name']
+
+    if df.shape[0] == 0:
+        return False
+
+    resultRow = df[(df['temp'] == temp) & (df['topp'] == topp) & (df['trial'] == trial) & (df['Kernel Name'] == kernelName) & (df['targetName'] == targetName)]
+
+    if resultRow.shape[0] == 0:
+        return False
+
+    assert resultRow.shape[0] == 1, f"resultRow.shape = {resultRow.shape}"
+
+    response = resultRow.iloc[0]['llmResponse']
+
+    return response != ''
