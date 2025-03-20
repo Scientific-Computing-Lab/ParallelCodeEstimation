@@ -14,6 +14,7 @@ with open('./.openrouter-api-key', 'r') as file:
 dtypes['language'] = 'string'
 dtypes['numTokens'] = np.int64
 dtypes['kernelCode'] = 'string'
+dtypes['kernelSASS'] = 'string'
 dtypes['isBB'] = np.int64
 dtypes['class'] = 'string'
 dtypes['answer'] = 'string'
@@ -68,7 +69,7 @@ async def ask_llm_for_roofline_classification(chatHistory, modelName, useAzure=F
 
 
 
-async def run_row_trial(dfRow, modelName, temp, topp, useAzure, isZeroShot):
+async def run_row_trial(dfRow, modelName, temp, topp, useAzure, isZeroShot, useSASS):
     #targetName = dfRow['targetName']
     kernelName = dfRow['Kernel Name']
     exeArgs = dfRow['exeArgs']
@@ -76,19 +77,23 @@ async def run_row_trial(dfRow, modelName, temp, topp, useAzure, isZeroShot):
     gridSz = dfRow['Grid Size']
     language = dfRow['language']
     device = dfRow['device']
-    kernelCode = dfRow['kernelCode']
 
-    infoMsg = make_kernel_info_message(device, exeArgs, kernelName, blockSz, gridSz, language)
+    if useSASS:
+        kernelCode = dfRow['kernelSASS']
+    else:
+        kernelCode = dfRow['kernelCode']
+
+    infoMsg = make_kernel_info_message(device, exeArgs, kernelName, blockSz, gridSz, language, useSASS)
 
     if isZeroShot:
-        chatHist = await make_chat_history(infoMsg, kernelCode, 0)
+        chatHist = await make_chat_history(infoMsg, kernelCode, 0, useSASS=useSASS)
     # only include OMP examples
     elif language == 'OMP':
-        chatHist = await make_chat_history(infoMsg, kernelCode, 2)
+        chatHist = await make_chat_history(infoMsg, kernelCode, 2, useSASS=useSASS)
     # only include CUDA examples
     else:
         assert language == 'CUDA'
-        chatHist = await make_chat_history(infoMsg, kernelCode, 3)
+        chatHist = await make_chat_history(infoMsg, kernelCode, 3, useSASS=useSASS)
 
     assert chatHist != None
     resultHist = await ask_llm_for_roofline_classification(chatHist, modelName, useAzure=useAzure, temp=temp, topp=topp, timeout=120)
@@ -98,18 +103,22 @@ async def run_row_trial(dfRow, modelName, temp, topp, useAzure, isZeroShot):
     return resultMessages
 
 
-async def run_row_trial_task(resultsDF, modelName, inRow, trial, temp, topp, useAzure, isZeroShot):
+async def run_row_trial_task(resultsDF, modelName, inRow, trial, temp, topp, useAzure, isZeroShot, useSASS):
     targetName = inRow['targetName']
     kernelName = inRow['Kernel Name']
 
     # check if we already sampled this point
     if is_already_sampled(resultsDF, inRow, trial, temp, topp):
-        #print(f'Already sampled, skipping \t{targetName}: [{kernelName}]')
+        print(f'Already sampled, skipping \t{targetName}: [{kernelName}]')
         #pbar.update(1)
         #continue
         return None
 
-    resultMsgs = await run_row_trial(inRow, modelName, temp, topp, useAzure, isZeroShot)
+    try:
+        resultMsgs = await run_row_trial(inRow, modelName, temp, topp, useAzure, isZeroShot, useSASS)
+    except TypeError:
+        print(f'Unable to gather sample {targetName} -- [{kernelName}] it may exceed input context limits')
+        return None
 
     # make a copy so we can modify it
     row = inRow.copy().to_frame().T.reset_index(drop=True)
@@ -149,7 +158,7 @@ async def run_row_trial_task(resultsDF, modelName, inRow, trial, temp, topp, use
 
 
 # collect data
-async def run_all_trials(df, resultsCSV, modelName, temps, topPs, numTrials, postQuerySleepTime, useAzure, isZeroShot):
+async def run_all_trials(df, resultsCSV, modelName, temps, topPs, numTrials, postQuerySleepTime, useAzure, isZeroShot, useSASS):
     # if we already captured some data
     if os.path.isfile(resultsCSV):
         dtypes['topp'] = np.float64
@@ -160,8 +169,8 @@ async def run_all_trials(df, resultsCSV, modelName, temps, topPs, numTrials, pos
         dtypes['isTrain'] = np.int64
 
         resultsDF = pd.read_csv(resultsCSV, quotechar='\"', dtype=dtypes)
-        # drop any rows with NA, will need to regather
-        resultsDF = resultsDF.dropna()
+        # drop any rows with NA responses, will need to regather
+        resultsDF = resultsDF.dropna(subset=['llmResponse'])
     else:
         # setup the resultsDF
         resultsDF = pd.DataFrame()
@@ -176,7 +185,7 @@ async def run_all_trials(df, resultsCSV, modelName, temps, topPs, numTrials, pos
                 for topp in topPs:
                     for index, row in df.iterrows():
 
-                        newRow = await run_row_trial_task(resultsDF, modelName, row, trial, temp, topp, useAzure, isZeroShot)
+                        newRow = await run_row_trial_task(resultsDF, modelName, row, trial, temp, topp, useAzure, isZeroShot, useSASS)
 
                         if newRow is None:
                             pbar.update(1)
@@ -202,6 +211,7 @@ async def main():
     parser.add_argument('--modelName', type=str, default='openai/o3-mini', help='Name of the model')
     parser.add_argument('--apiKey', type=str, default='', help='User-provided API key')
     parser.add_argument('--useAzure', action='store_true', default=False, help='Flag to use Azure')
+    parser.add_argument('--useSASS', action='store_true', default=False, help='Use SASS code instead of source')
     parser.add_argument('--zeroShot', action='store_true', default=False, help='Flag for zero-shot inference')
     parser.add_argument('--postQuerySleep', type=float, default=0.5, help='Sleep time after each query')
     parser.add_argument('--numTrials', type=int, default=1, help='Number of trials')
@@ -215,6 +225,9 @@ async def main():
     else:
         outcsvPrefix = 'few-shot'
 
+    if args.useSASS:
+        outcsvPrefix += '-SASS-only'
+
     parser.add_argument('--outputCSV', type=str, default=f'{outcsvPrefix}-inference-results-{args.modelName.split("/")[-1]}.csv', help='Output CSV file name')
 
     args = parser.parse_args()
@@ -222,6 +235,7 @@ async def main():
     print('\n\nData Collection Parameters:\n------------------------------------------------')
     print(f"Model Name: {args.modelName}")
     print(f"Use Azure: {args.useAzure}")
+    print(f"Use SASS: {args.useSASS}")
     print(f"Zero Shot: {args.zeroShot}")
     print(f"Output CSV: {args.outputCSV}")
     print(f"Post Query Sleep: {args.postQuerySleep}")
@@ -248,7 +262,7 @@ async def main():
     input()
     print('Starting data collection!')
 
-    await run_all_trials(df, args.outputCSV, args.modelName, args.temps, args.topps, args.numTrials, args.postQuerySleep, args.useAzure, args.zeroShot)
+    await run_all_trials(df, args.outputCSV, args.modelName, args.temps, args.topps, args.numTrials, args.postQuerySleep, args.useAzure, args.zeroShot, args.useSASS)
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -265,16 +265,26 @@ with open('../few-shot-examples/omp_CB_kernel.cpp', 'r') as file:
 
 
 # each system message will have a compute-bound and a bandwidth-bound example
-def make_system_message(exampleType=0):
+def make_system_message(exampleType=0, useSASS=False):
 
-  start_systemMessage = '''You are a GPU performance analysis expert that classifies kernels into Arithmetic Intensity Roofline model categories based on their source code characteristics. Your task is to provide one of the following performance boundedness classifications: Compute or Bandwidth.  A kernel is considered Compute bound if its performance is primarily limited by the number of operations it performs, and Bandwidth bound if its performance is primarily limited by the rate at which data can be moved between memory and processing units.
+  if useSASS:
+    assert exampleType == 0
+    start_systemMessage = '''You are a GPU performance analysis expert that classifies kernels into Arithmetic Intensity Roofline model categories based on their source code characteristics. Your task is to provide one of the following performance boundedness classifications: Compute or Bandwidth. A kernel is considered Compute bound if its integer, single-precision, or double-precision floating point operations far outweight the number of global memory reads and writes it makes. Alternatively, a kernel can be considered Bandwidth bound if it does not perform enough arithmetic instructions for all the memory transactions it performs.  
+
+Provide only one word as your response, chosen from the set: ['Compute', 'Bandwidth'].
+**Examples:**'''
+  else:
+    start_systemMessage = '''You are a GPU performance analysis expert that classifies kernels into Arithmetic Intensity Roofline model categories based on their source code characteristics. Your task is to provide one of the following performance boundedness classifications: Compute or Bandwidth.  A kernel is considered Compute bound if its performance is primarily limited by the number of operations it performs, and Bandwidth bound if its performance is primarily limited by the rate at which data can be moved between memory and processing units.
 
 Provide only one word as your response, chosen from the set: ['Compute', 'Bandwidth'].
 **Examples:**'''
 
   # just pseudocode as examples
   if exampleType == 0: 
-    end_systemMessage = '''Now, analyze the following source codes for the requested CUDA or OpenMP (OMP) target offload kernel of the specified hardware.'''
+    if useSASS:
+      end_systemMessage = '''Now, analyze the following SASS source codes for the requested CUDA or OpenMP (OMP) target offload kernel of the specified hardware.'''
+    else:
+      end_systemMessage = '''Now, analyze the following source codes for the requested CUDA or OpenMP (OMP) target offload kernel of the specified hardware.'''
     examples = pseudo_code_examples
   # both OMP and CUDA examples
   elif exampleType == 1:
@@ -299,7 +309,7 @@ Provide only one word as your response, chosen from the set: ['Compute', 'Bandwi
   return start_systemMessage+'\n'+examples+'\n'+end_systemMessage
 
 
-def make_kernel_info_message(device, exeArgs, kernelName, blockSz, gridSz, language):
+def make_kernel_info_message(device, exeArgs, kernelName, blockSz, gridSz, language, useSASS=False):
     assert kernelName != ''
 
     if language == 'OMP':
@@ -318,14 +328,16 @@ def make_kernel_info_message(device, exeArgs, kernelName, blockSz, gridSz, langu
     else:
       builtPrompt += f'the following command line arguments: [{exeArgs}].'
 
-    builtPrompt += f' Below is the source code containing the {language} kernel definition and other source code for the executable.'
+    #builtPrompt += f' Below is the source code containing the {language} kernel definition and other source code for the executable.'
+    builtPrompt += f' Below is the SASS kernel source code of the requested {language} kernel.'
 
     return builtPrompt
 
 
-async def make_chat_history(kernel_info, kernelCode, exampleType=0, expectedAnswer=''):
+#async def make_chat_history(kernel_info, kernelCode, exampleType=0, expectedAnswer=''):
+async def make_chat_history(kernel_info, kernelCode, exampleType=0, expectedAnswer='', useSASS=False):
 
-    systemMessage = make_system_message(exampleType)
+    systemMessage = make_system_message(exampleType, useSASS)
     sys_msg = SystemMessage(content=systemMessage)
     kernel_info_msg = UserMessage(source='User', content=kernel_info)
     code_msg = UserMessage(source='User', content=f'```{kernelCode}```')
@@ -349,7 +361,7 @@ def writeToFile(filename, lines):
         jsonLFile.write(lines)
 
 
-async def write_df_to_jsonl(df, filename, exampleType=0, includeAnswer=False):
+async def write_df_to_jsonl(df, filename, exampleType=0, includeAnswer=False, useSASS=False):
   jsonLLines = ''
 
   filename += f'-{df.shape[0]}-samples'
@@ -366,13 +378,13 @@ async def write_df_to_jsonl(df, filename, exampleType=0, includeAnswer=False):
       kernelCode = row['kernelCode']
       expectedAnswer = row['answer']
 
-      infoMsg = make_kernel_info_message(device, exeArgs, kernelName, blockSz, gridSz, language)
+      infoMsg = make_kernel_info_message(device, exeArgs, kernelName, blockSz, gridSz, language, useSASS)
 
       chatHist = None
       if includeAnswer:
-        chatHist = await make_chat_history(infoMsg, kernelCode, exampleType, expectedAnswer)
+        chatHist = await make_chat_history(infoMsg, kernelCode, exampleType, expectedAnswer, useSASS=useSASS)
       else:
-        chatHist = await make_chat_history(infoMsg, kernelCode, exampleType)
+        chatHist = await make_chat_history(infoMsg, kernelCode, exampleType, useSASS=useSASS)
 
       assert chatHist != None
 
