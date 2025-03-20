@@ -92,14 +92,46 @@ print(f'Peak GINTOP/s {round(peakPerfGINTOPs, 3)} with FMA')
 
 
 
-with open('simple-scraped-kernels-CUDA-pruned.json', 'r') as file:
+with open('simple-scraped-kernels-CUDA-pruned-with-sass.json', 'r') as file:
     scrapedCUDA = json.load(file)
 
-with open('simple-scraped-kernels-OMP-pruned.json', 'r') as file:
+with open('simple-scraped-kernels-OMP-pruned-with-sass.json', 'r') as file:
     scrapedOMP = json.load(file)
 
 
 scrapedCodes = scrapedCUDA + scrapedOMP
+
+
+# the kernelName should be the 'kernelName' from the roofline data dataframe
+# FUTURE NOTE: we need to change the simpleScrapeKernels script to emit a JSON dictionary
+# instead of a JSON list -- so we don't have to search it each time.
+def get_sass_and_source_from_scraped_codes(targetName, kernelName):
+
+  kernelSASS = ''
+  kernelSource = ''
+
+  for elem in scrapedCodes:
+    basename = elem['basename']
+    if basename == targetName:
+      # go through the SASS keys to get the kernel
+      sassKeys = list(elem['sass'].keys())
+      for k in sassKeys:
+        if kernelName in k:
+          kernelSASS = elem['sass'][k]
+          break
+
+      # go through the kernels keys to get the proper source
+      sourceKeys = list(elem['kernels'].keys())
+      #print(sourceKeys)
+      for k in sourceKeys:
+        if kernelName in k:
+          kernelSource = elem['kernels'][k]
+          break
+
+      break
+
+  return (kernelSASS, kernelSource)
+
 
 
 

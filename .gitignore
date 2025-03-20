@@ -38,3 +38,4 @@ deleteme**
 *.jsonl
 **/__pycache__
 few-shot-examples/*
+analysis/offload
