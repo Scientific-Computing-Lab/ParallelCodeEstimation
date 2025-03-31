@@ -415,3 +415,21 @@ def is_already_sampled(df, row, trial, temp, topp):
     response = resultRow.iloc[0]['llmResponse']
 
     return response != ''
+
+
+
+def bytes_to_ascii(bytesList):
+    bytes_arr = bytes(bytesList)
+    return bytes_arr.decode('ascii')
+
+# logprobs [ChatCompletionTokenLogprob(token='Bandwidth', logprob=-0.00010902655776590109, top_logprobs=[TopLogprob(logprob=-0.00010902655776590109, bytes=[66, 97, 110, 100, 119, 105, 100, 116, 104]), TopLogprob(logprob=-9.25010871887207, bytes=[67, 111, 109, 112, 117, 116, 101])]
+
+def convert_logprobs_to_json_str(logProbsObj):
+    if logProbsObj is None:
+        return ''
+
+    toReturn = {}
+    for ccTL in logProbsObj:
+        toReturn[ccTL.token] = {'logprob':ccTL.logprob, 'topLogprob':dict([(bytes_to_ascii(top.bytes), top.logprob) for top in ccTL.top_logprobs])}
+
+    return json.dumps(toReturn)

@@ -3,6 +3,8 @@ from roofline_utils import *
 import time
 import argparse
 
+import openai
+
 # please create a file called '.llm-api-key' with your api key and no newline characters
 with open('./.llm-api-key', 'r') as file:
     LLM_API_KEY=file.read().strip()
@@ -21,9 +23,13 @@ dtypes['answer'] = 'string'
 
 
 
-async def ask_llm_for_roofline_classification(chatHistory, modelName, useAzure=False, temp=1.0, topp=0.1, timeout=60):
+async def ask_llm_for_roofline_classification(chatHistory, modelName, useAzure=False, temp=1.0, topp=0.1, timeout=60, storeLogProbs=False):
 
     model_client = None
+    logprob_args = {}
+    if storeLogProbs:
+        logprob_args = {'logprobs': storeLogProbs, 'top_logprobs': 4}
+
     if useAzure:
         model_client = AzureOpenAIChatCompletionClient(
                 # https://galor-m6d0ej1n-eastus2.cognitiveservices.azure.com/openai/deployments/o1/chat/completions?api-version=2024-12-01-preview
@@ -33,10 +39,12 @@ async def ask_llm_for_roofline_classification(chatHistory, modelName, useAzure=F
                 azure_deployment=modelName,
                 api_key=LLM_API_KEY,
                 timeout=timeout,
-                #temperature=temp,
-                #top_p = topp,
-                api_version='2024-12-01-preview',
-                #api_version='2025-01-01-preview',
+                temperature=temp,
+                top_p = topp,
+                #api_version='2024-12-01-preview',
+                api_version='2025-01-01-preview',
+                **logprob_args,
+                model_info = {'vision':False, 'function_calling':True, 'json_output':True, 'family':'unknown'}
         )
     else:
         model_client = OpenAIChatCompletionClient(
@@ -54,22 +62,40 @@ async def ask_llm_for_roofline_classification(chatHistory, modelName, useAzure=F
                 timeout=timeout,
                 top_p = topp,
                 temperature=temp,
-                model_info = {'vision':False, 'function_calling':True, 'json_output':True, 'family':'unknown'}
+                **logprob_args,
+                model_info = {'vision':False, 'function_calling':True, 'json_output':False, 'family':'unknown'}
         )
 
-    agent = AssistantAgent(
-        name="assistant",
-        model_client=model_client,
-        model_context=chatHistory
-    )
+    #agent = AssistantAgent(
+    #    name="assistant",
+    #    model_client=model_client,
+    #    model_context=chatHistory
+    #)
 
-    await agent.run()
-    return agent._model_context
+    #response = await agent.run()
+    #for msg in response.messages:
+    #    print('msg', msg)
+    #    print()
+
+    #result = await model_client.create(messages = await chatHistory.get_messages(), extra_create_args={'logprobs':True, 'top_logprobs':10})
+    result = await model_client.create(messages = await chatHistory.get_messages())
+    #print('type', type(result))
+    #print('cached', result.cached)
+    #print('thought', result.thought)
+    #print('content', result.content)
+    #print('usage', result.usage)
+    #print('logprobs', result.logprobs)
+    #print('finish_reason', result.finish_reason)
+    #print('result modeldump', result.model_dump_json())
+    #print('result modeldump', result.model_dump())
+
+    #return agent._model_context
+    await chatHistory.add_message(result)
+    return chatHistory, result.logprobs
 
 
 
-
-async def run_row_trial(dfRow, modelName, temp, topp, useAzure, isZeroShot, useSASS):
+async def run_row_trial(dfRow, modelName, temp, topp, useAzure, isZeroShot, useSASS, storeLogProbs):
     #targetName = dfRow['targetName']
     kernelName = dfRow['Kernel Name']
     exeArgs = dfRow['exeArgs']
@@ -96,28 +122,31 @@ async def run_row_trial(dfRow, modelName, temp, topp, useAzure, isZeroShot, useS
         chatHist = await make_chat_history(infoMsg, kernelCode, 3, useSASS=useSASS)
 
     assert chatHist != None
-    resultHist = await ask_llm_for_roofline_classification(chatHist, modelName, useAzure=useAzure, temp=temp, topp=topp, timeout=120)
+    resultHist, logProbs = await ask_llm_for_roofline_classification(chatHist, modelName, useAzure=useAzure, temp=temp, topp=topp, timeout=120, storeLogProbs=storeLogProbs)
     assert resultHist != None
 
     resultMessages = await resultHist.get_messages()
-    return resultMessages
+    return resultMessages, logProbs
 
 
-async def run_row_trial_task(resultsDF, modelName, inRow, trial, temp, topp, useAzure, isZeroShot, useSASS):
+async def run_row_trial_task(resultsDF, modelName, inRow, trial, temp, topp, useAzure, isZeroShot, useSASS, storeLogProbs):
     targetName = inRow['targetName']
     kernelName = inRow['Kernel Name']
 
     # check if we already sampled this point
     if is_already_sampled(resultsDF, inRow, trial, temp, topp):
         print(f'Already sampled, skipping \t{targetName}: [{kernelName}]')
-        #pbar.update(1)
-        #continue
         return None
 
     try:
-        resultMsgs = await run_row_trial(inRow, modelName, temp, topp, useAzure, isZeroShot, useSASS)
-    except TypeError:
-        print(f'Unable to gather sample {targetName} -- [{kernelName}] it may exceed input context limits')
+        resultMsgs, logProbs = await run_row_trial(inRow, modelName, temp, topp, useAzure, isZeroShot, useSASS, storeLogProbs)
+    except TypeError as e:
+        print(f'1 Unable to gather sample {targetName} -- [{kernelName}] it may exceed input context limits')
+        print(e)
+        return None
+    except openai.BadRequestError as e:
+        print(f'2 Unable to gather sample {targetName} -- [{kernelName}] it may exceed input context limits')
+        print(e)
         return None
 
     # make a copy so we can modify it
@@ -130,6 +159,7 @@ async def run_row_trial_task(resultsDF, modelName, inRow, trial, temp, topp, use
     row['temp'] = temp
     row['llmResponse'] = ''
     row['llmThought'] = ''
+    row['logprobs'] = ''
 
     # get the last message (it's the answer)
     #pprint(resultMsgs)
@@ -153,18 +183,23 @@ async def run_row_trial_task(resultsDF, modelName, inRow, trial, temp, topp, use
 
     row['llmResponse'] = resultStr
     row['llmThought'] = thoughtStr
+    if storeLogProbs:
+        row['logprobs'] = convert_logprobs_to_json_str(logProbs)
+    else:
+        row['logprobs'] = ''
 
     return row
 
 
 # collect data
-async def run_all_trials(df, resultsCSV, modelName, temps, topPs, numTrials, postQuerySleepTime, useAzure, isZeroShot, useSASS):
+async def run_all_trials(df, resultsCSV, modelName, temps, topPs, numTrials, postQuerySleepTime, useAzure, isZeroShot, useSASS, storeLogProbs):
     # if we already captured some data
     if os.path.isfile(resultsCSV):
         dtypes['topp'] = np.float64
         dtypes['temp'] = np.float64
         dtypes['llmResponse'] = 'string'
         dtypes['llmThought'] = 'string'
+        dtypes['logprobs'] = 'string'
         dtypes['trial'] = np.int64
         dtypes['isTrain'] = np.int64
 
@@ -185,7 +220,11 @@ async def run_all_trials(df, resultsCSV, modelName, temps, topPs, numTrials, pos
                 for topp in topPs:
                     for index, row in df.iterrows():
 
-                        newRow = await run_row_trial_task(resultsDF, modelName, row, trial, temp, topp, useAzure, isZeroShot, useSASS)
+                        newRow = await run_row_trial_task(resultsDF, modelName, row, trial, temp, topp, useAzure, isZeroShot, useSASS, storeLogProbs)
+
+                        #print()
+                        #print(newRow)
+                        #print(newRow['logprobs'][0])
 
                         if newRow is None:
                             pbar.update(1)
@@ -199,6 +238,7 @@ async def run_all_trials(df, resultsCSV, modelName, temps, topPs, numTrials, pos
 
                         pbar.update(1)
                         time.sleep(postQuerySleepTime)
+                    return
     return
 
 
@@ -212,6 +252,7 @@ async def main():
     parser.add_argument('--apiKey', type=str, default='', help='User-provided API key')
     parser.add_argument('--useAzure', action='store_true', default=False, help='Flag to use Azure')
     parser.add_argument('--useSASS', action='store_true', default=False, help='Use SASS code instead of source')
+    parser.add_argument('--includeLogProbs', action='store_true', default=False, help='Record Lob Probabilities for Tokens')
     parser.add_argument('--zeroShot', action='store_true', default=False, help='Flag for zero-shot inference')
     parser.add_argument('--postQuerySleep', type=float, default=0.5, help='Sleep time after each query')
     parser.add_argument('--numTrials', type=int, default=1, help='Number of trials')
@@ -228,6 +269,9 @@ async def main():
     if args.useSASS:
         outcsvPrefix += '-SASS-only'
 
+    if args.includeLogProbs:
+        outcsvPrefix += '-withLogProbs'
+
     parser.add_argument('--outputCSV', type=str, default=f'{outcsvPrefix}-inference-results-{args.modelName.split("/")[-1]}.csv', help='Output CSV file name')
 
     args = parser.parse_args()
@@ -237,6 +281,7 @@ async def main():
     print(f"Use Azure: {args.useAzure}")
     print(f"Use SASS: {args.useSASS}")
     print(f"Zero Shot: {args.zeroShot}")
+    print(f"Include Log Probs: {args.includeLogProbs}")
     print(f"Output CSV: {args.outputCSV}")
     print(f"Post Query Sleep: {args.postQuerySleep}")
     print(f"Number of Trials: {args.numTrials}")
@@ -262,7 +307,7 @@ async def main():
     input()
     print('Starting data collection!')
 
-    await run_all_trials(df, args.outputCSV, args.modelName, args.temps, args.topps, args.numTrials, args.postQuerySleep, args.useAzure, args.zeroShot, args.useSASS)
+    await run_all_trials(df, args.outputCSV, args.modelName, args.temps, args.topps, args.numTrials, args.postQuerySleep, args.useAzure, args.zeroShot, args.useSASS, args.includeLogProbs)
 
 if __name__ == "__main__":
     asyncio.run(main())
