@@ -4,6 +4,7 @@ import time
 import argparse
 
 import openai
+import sys
 
 # please create a file called '.llm-api-key' with your api key and no newline characters
 with open('./.llm-api-key', 'r') as file:
@@ -39,8 +40,8 @@ async def ask_llm_for_roofline_classification(chatHistory, modelName, useAzure=F
                 azure_deployment=modelName,
                 api_key=LLM_API_KEY,
                 timeout=timeout,
-                temperature=temp,
-                top_p = topp,
+                #temperature=temp,
+                #top_p = topp,
                 #api_version='2024-12-01-preview',
                 api_version='2025-01-01-preview',
                 **logprob_args,
@@ -60,8 +61,8 @@ async def ask_llm_for_roofline_classification(chatHistory, modelName, useAzure=F
                 base_url='https://openrouter.ai/api/v1',
                 api_key=OPENROUTER_API_KEY,
                 timeout=timeout,
-                top_p = topp,
-                temperature=temp,
+                #top_p = topp,
+                #temperature=temp,
                 **logprob_args,
                 model_info = {'vision':False, 'function_calling':True, 'json_output':False, 'family':'unknown'}
         )
@@ -238,7 +239,6 @@ async def run_all_trials(df, resultsCSV, modelName, temps, topPs, numTrials, pos
 
                         pbar.update(1)
                         time.sleep(postQuerySleepTime)
-                    return
     return
 
 
