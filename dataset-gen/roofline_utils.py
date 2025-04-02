@@ -101,6 +101,9 @@ with open('simple-scraped-kernels-OMP-pruned-with-sass.json', 'r') as file:
 
 scrapedCodes = scrapedCUDA + scrapedOMP
 
+print('scraped and pruned CUDA programs count', len(scrapedCUDA))
+print('scraped and pruned OMP  programs count', len(scrapedOMP))
+
 
 # the kernelName should be the 'kernelName' from the roofline data dataframe
 # FUTURE NOTE: we need to change the simpleScrapeKernels script to emit a JSON dictionary
