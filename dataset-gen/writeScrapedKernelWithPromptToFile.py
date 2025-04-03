@@ -46,7 +46,7 @@ async def make_query_chat_hist(dfRow, isZeroShot, useSASS=False):
 async def create_output_file(df, kernelName, targetName, isZeroShot, outfileName, useSASS=False):
     subdf = df[(df['kernelName'] == kernelName) & (df['targetName'] == targetName)]
     
-    assert subdf.shape[0] == 1
+    assert subdf.shape[0] == 1, f"subdf shape: {subdf.shape}"
 
     for index, row in subdf.iterrows():
         messages = await make_query_chat_hist(row, isZeroShot, useSASS)

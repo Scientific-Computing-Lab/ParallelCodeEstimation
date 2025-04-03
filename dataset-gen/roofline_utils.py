@@ -285,9 +285,9 @@ Provide only one word as your response, chosen from the set: ['Compute', 'Bandwi
   # just pseudocode as examples
   if exampleType == 0: 
     if useSASS:
-      end_systemMessage = '''Now, analyze the following SASS source codes for the requested CUDA or OpenMP (OMP) target offload kernel of the specified hardware.'''
+      end_systemMessage = '''Now, analyze the following SASS source codes for the requested kernel of the specified hardware.'''
     else:
-      end_systemMessage = '''Now, analyze the following source codes for the requested CUDA or OpenMP (OMP) target offload kernel of the specified hardware.'''
+      end_systemMessage = '''Now, analyze the following source codes for the requested kernel of the specified hardware.'''
     examples = pseudo_code_examples
   # both OMP and CUDA examples
   elif exampleType == 1:
@@ -331,8 +331,10 @@ def make_kernel_info_message(device, exeArgs, kernelName, blockSz, gridSz, langu
     else:
       builtPrompt += f'the following command line arguments: [{exeArgs}].'
 
-    #builtPrompt += f' Below is the source code containing the {language} kernel definition and other source code for the executable.'
-    builtPrompt += f' Below is the SASS kernel source code of the requested {language} kernel.'
+    if useSASS:
+      builtPrompt += f' Below is the SASS kernel source code of the requested {language} kernel.'
+    else:
+      builtPrompt += f' Below is the source code containing the {language} kernel definition and other source code for the executable.'
 
     return builtPrompt
 
