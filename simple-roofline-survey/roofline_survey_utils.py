@@ -31,65 +31,6 @@ import random
 
 print(f"Autogen version: {autogen_core.__version__}")
 
-# GPU specs
-
-# you can get this from deviceQuery
-gpuName = 'NVIDIA RTX 3080'
-
-# you can call nvidia-smi -i 0 -q to see what the clock is set to 
-# you can also set the clock with nvidia-smi -lgc 1440,1440 for consistent measurements
-# vendor specs show the base clock
-baseClockHz = 1.440e9
-
-# find these values here: https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#arithmetic-instructions
-SPinstPerCyclePerSM = 128
-DPinstPerCyclePerSM = 2
-intInstPerCyclePerSM = 64
-
-# find this in deviceQuery or GPU vendor specs
-numSMs = 68
-
-# we always assume you're doing FMA 
-numFMAopPerInst = 2
-
-# conversion multiplier
-tflopPerflop = 1e-12
-
-# get this from your GPU vendor specs, mine was 760.3 GB/s
-maxBandwidthTBPerSec = 0.7603
-
-spOPMaxPerfTFLOP = SPinstPerCyclePerSM * numSMs * baseClockHz * numFMAopPerInst * tflopPerflop
-dpOPMaxPerfTFLOP = DPinstPerCyclePerSM * numSMs * baseClockHz * numFMAopPerInst * tflopPerflop
-intOPMaxPerfTFLOP = intInstPerCyclePerSM * numSMs * baseClockHz * numFMAopPerInst * tflopPerflop
-
-spOPMaxPerfTFLOP_noFMA = spOPMaxPerfTFLOP / 2
-dpOPMaxPerfTFLOP_noFMA = dpOPMaxPerfTFLOP / 2
-
-print('Max SP TFLOP/s with FMA', round(spOPMaxPerfTFLOP, 3))
-print('Max DP TFLOP/s with FMA', round(dpOPMaxPerfTFLOP, 3))
-print('Max SP TFLOP/s w/out FMA', round(spOPMaxPerfTFLOP_noFMA, 3))
-print('Max DP TFLOP/s w/out FMA', round(dpOPMaxPerfTFLOP_noFMA, 3))
-print('Max TINTOP/s', round(intOPMaxPerfTFLOP, 3))
-
-balancePointSPFLOPPerByte = spOPMaxPerfTFLOP / maxBandwidthTBPerSec
-balancePointDPFLOPPerByte = dpOPMaxPerfTFLOP / maxBandwidthTBPerSec
-balancePointINTOPPerByte = intOPMaxPerfTFLOP / maxBandwidthTBPerSec
-print(f'SP Balance Point is at: {round(balancePointSPFLOPPerByte, 2)} flop/byte')
-print(f'DP Balance Point is at: {round(balancePointDPFLOPPerByte, 2)} flop/byte')
-print(f'INT Balance Point is at: {round(balancePointINTOPPerByte, 2)} intop/byte')
-
-peakPerfGspFLOPs = spOPMaxPerfTFLOP * 1e3
-peakPerfGdpFLOPs = dpOPMaxPerfTFLOP * 1e3
-peakPerfGINTOPs = intOPMaxPerfTFLOP * 1e3
-memBandwidthGBs = maxBandwidthTBPerSec * 1e3
-
-print()
-print('These values get passed as LLM context so the model can infer about rooflines:')
-print(f'Peak SP GFLOP/s {round(peakPerfGspFLOPs, 3)} with FMA')
-print(f'Peak DP GFLOP/s {round(peakPerfGdpFLOPs, 3)} with FMA')
-print(f'Peak GINTOP/s {round(peakPerfGINTOPs, 3)} with FMA')
-
-
 
 def chat_history_to_json_line(ctxMessages:list):
     jsonDict = {'messages':[]}
@@ -113,7 +54,7 @@ questionTemplate ='''Question: Given a GPU having a global memory with a max ban
 
 simpleAnswerTemplate='''Answer: {}'''
 
-cotAnswerTemplate='''Answer: The max bandwidth is {} GB/s, and peak performance is {} GFLOP/s. The balance point is at {} / {} = {} FLOP/Byte. The program's Arithmetic Intensity is {} FLOP/Byte. Because {} {} {}, it is {} the balance point, putting the program in the {} region. The roofline model would consider the program as {}.'''
+cotThoughtTemplate='''Thought: The max bandwidth is {} GB/s, and peak performance is {} GFLOP/s. The balance point is at {} / {} = {} FLOP/Byte. The program's Arithmetic Intensity is {} FLOP/Byte. Because {} {} {}, it is {} the balance point, putting the program in the {} region. The roofline model would consider the program as {}.'''
 
 
 def gen_prompt_str(maxBandwidth, peakPerf, arithmInten, measuredPerf, promptType='simple'):
@@ -140,11 +81,13 @@ def gen_prompt_str(maxBandwidth, peakPerf, arithmInten, measuredPerf, promptType
       answer = 'Compute' 
 
   if promptType == 'simple':
-    return question + '\n\n' + simpleAnswerTemplate.format(answer)
+    return question + '\n' + simpleAnswerTemplate.format(answer)
   elif promptType == 'cot':
-    return question + '\n\n' + cotAnswerTemplate.format(maxBandwidth, peakPerf, peakPerf, maxBandwidth, balancePoint,
+    return question + '\n' + cotThoughtTemplate.format(maxBandwidth, peakPerf, peakPerf, maxBandwidth, balancePoint,
                                                         arithmInten, 
-                                                        arithmInten, inequality, balancePoint, ltORgt, region, answer)
+                                                        arithmInten, inequality, balancePoint, ltORgt, region, region) \
+                            + '\n' \
+                            + simpleAnswerTemplate.format(answer)
   else:
     assert False, "invalid prompt type requested!"
 
@@ -202,7 +145,7 @@ def make_system_message(examples, msgType='simple'):
 
   for idx, ex in enumerate(examples):
     maxBandwidth, peakPerf, arithmInten, measuredPerf = ex
-    sysMessage += f'**Example {idx}:**\n' + gen_prompt_str(maxBandwidth, peakPerf, arithmInten, measuredPerf, promptType=msgType) + '\n\n'
+    sysMessage += f'**Example {idx+1}:**\n' + gen_prompt_str(maxBandwidth, peakPerf, arithmInten, measuredPerf, promptType=msgType) + '\n\n'
 
   sysMessage += end_systemMessage
 
@@ -211,6 +154,12 @@ def make_system_message(examples, msgType='simple'):
 
 def make_user_message(target):
   maxBandwidth, peakPerf, arithmInten, measuredPerf = target
+
+  maxBandwidth = float(format(maxBandwidth, '.2f'))
+  peakPerf     = float(format(peakPerf,     '.2f'))
+  arithmInten  = float(format(arithmInten,  '.2f'))
+  measuredPerf = float(format(measuredPerf, '.2f'))
+
   return questionTemplate.format(maxBandwidth, peakPerf, arithmInten, measuredPerf)
 
 
@@ -236,17 +185,40 @@ def writeToFile(filename, lines):
 
 
 def bytes_to_ascii(bytesList):
+  if bytesList == None:
+    return None
+  else:
     bytes_arr = bytes(bytesList)
-    return bytes_arr.decode('ascii')
+    # for some reason we get responses back with character codes in the `latin` set instead of `utf-8`
+    # `utf-8` kept throwing errors when decoding
+    return bytes_arr.decode('latin')
 
 # logprobs [ChatCompletionTokenLogprob(token='Bandwidth', logprob=-0.00010902655776590109, top_logprobs=[TopLogprob(logprob=-0.00010902655776590109, bytes=[66, 97, 110, 100, 119, 105, 100, 116, 104]), TopLogprob(logprob=-9.25010871887207, bytes=[67, 111, 109, 112, 117, 116, 101])]
+
+def parse_toplogprobs(ccTL):
+  parsed = []
+  for top in ccTL.top_logprobs:
+    logprob = top.logprob
+    tokens = bytes_to_ascii(top.bytes)
+
+    if not (tokens is None):
+      parsed.append((tokens, logprob))
+
+  return parsed
+
 
 def convert_logprobs_to_json_str(logProbsObj):
     if logProbsObj is None:
         return ''
 
+    #print(logProbsObj)
     toReturn = {}
     for ccTL in logProbsObj:
-        toReturn[ccTL.token] = {'logprob':ccTL.logprob, 'topLogprob':dict([(bytes_to_ascii(top.bytes), top.logprob) for top in ccTL.top_logprobs])}
+        #print(ccTL)
+        toReturn[ccTL.token] = {'logprob':ccTL.logprob, 'topLogprob':dict(parse_toplogprobs(ccTL))}
+        #print(toReturn[ccTL.token])
 
     return json.dumps(toReturn)
+
+
+ 

@@ -6,6 +6,7 @@ import argparse
 
 import openai
 import sys
+import copy
 
 # please create a file called '.llm-api-key' with your api key and no newline characters
 with open('../dataset-gen/.llm-api-key', 'r') as file:
@@ -14,17 +15,19 @@ with open('../dataset-gen/.llm-api-key', 'r') as file:
 with open('../dataset-gen/.openrouter-api-key', 'r') as file:
     OPENROUTER_API_KEY=file.read().strip()
 
+IS_REASONING_MODEL = False
 
-async def ask_llm_for_roofline_classification(chatHistory, modelName, useAzure=False, temp=1.0, topp=0.1, timeout=60, storeLogProbs=False, isReasoningModel=False):
+async def ask_llm_for_roofline_classification(chatHistory, modelName, useAzure=False, temp=1.0, topp=0.1, timeout=60, storeLogProbs=False):
 
     model_client = None
     logprob_args = {}
     temp_args = {}
 
-    if storeLogProbs:
-        logprob_args = {'logprobs': storeLogProbs, 'top_logprobs': 4}
-    if not isReasoningModel:
+    if not IS_REASONING_MODEL:
         temp_args = {'top_p':topp, 'temperature':temp}
+        # reasoning models don't let us save logprobs
+        if storeLogProbs:
+            logprob_args = {'logprobs': storeLogProbs, 'top_logprobs': 4}
 
     if useAzure:
         model_client = AzureOpenAIChatCompletionClient(
@@ -64,17 +67,6 @@ async def ask_llm_for_roofline_classification(chatHistory, modelName, useAzure=F
                 model_info = {'vision':False, 'function_calling':True, 'json_output':True, 'family':'unknown'}
         )
 
-    #agent = AssistantAgent(
-    #    name="assistant",
-    #    model_client=model_client,
-    #    model_context=chatHistory
-    #)
-
-    #response = await agent.run()
-    #for msg in response.messages:
-    #    print('msg', msg)
-    #    print()
-
     #result = await model_client.create(messages = await chatHistory.get_messages(), extra_create_args={'logprobs':True, 'top_logprobs':10})
     result = await model_client.create(messages = await chatHistory.get_messages())
 
@@ -85,7 +77,7 @@ async def ask_llm_for_roofline_classification(chatHistory, modelName, useAzure=F
 
 
 #resultMsgs, logProbs = await run_row_trial(modelName, temp, topp, useAzure, useCOT, storeLogProbs, chatHist)
-async def run_row_trial(modelName, temp, topp, useAzure, useCOT, storeLogProbs, chatHist):
+async def run_row_trial(modelName, temp, topp, useAzure, storeLogProbs, chatHist):
 
     assert chatHist != None
     resultHist, logProbs = await ask_llm_for_roofline_classification(chatHist, modelName, useAzure=useAzure, temp=temp, topp=topp, timeout=120, storeLogProbs=storeLogProbs)
@@ -122,6 +114,9 @@ async def run_row_trial_task(resultsDF, modelName, trial, temp, topp, numExample
         print(f'Already sampled, skipping... \t{sampleName}')
         return None
 
+    # make a copy of the chatHist object, as it gets re-used between trials
+    chatHist = copy.deepcopy(chatHist)
+
     # make a dictionary with all the trial info
     # this will be turned into a DF and appended to the
     # output df
@@ -134,7 +129,7 @@ async def run_row_trial_task(resultsDF, modelName, trial, temp, topp, numExample
            'numExamples':numExamples}
 
     try:
-        resultMsgs, logProbs = await run_row_trial(modelName, temp, topp, useAzure, useCOT, storeLogProbs, chatHist)
+        resultMsgs, logProbs = await run_row_trial(modelName, temp, topp, useAzure, storeLogProbs, chatHist)
     except TypeError as e:
         print(f'Unable to gather sample {sampleName} -- it may exceed input context limits')
         print(e)
@@ -250,6 +245,8 @@ async def generate_chat_histories(numTrials, exampleCounts, msgType='simple', se
     assert len(examples) == maxExamples, f"{len(examples)}, {maxExamples}"
 
     # set the seed to get consistent/repeatable generations
+    # this will allow us to up the number of trials later and keep
+    # adding to the same dataframe
     random.seed(seed+1)
 
     trialValues = []
@@ -278,6 +275,7 @@ async def generate_chat_histories(numTrials, exampleCounts, msgType='simple', se
 async def main():
     global LLM_API_KEY
     global OPENROUTER_API_KEY
+    global IS_REASONING_MODEL
 
     parser = argparse.ArgumentParser(description="A script to handle various arguments for model inference")
     
@@ -285,22 +283,30 @@ async def main():
     parser.add_argument('--apiKey', type=str, default='', help='User-provided API key')
     parser.add_argument('--useAzure', action='store_true', default=False, help='Flag to use Azure')
     parser.add_argument('--useCOT', action='store_true', default=False, help='Flag to use COT instead of simple prompt')
+    parser.add_argument('--reasoning', action='store_true', default=False, help='Indicate if the model uses reasoning, to avoid passing topp and temp args')
     parser.add_argument('--includeLogProbs', action='store_true', default=False, help='Record Lob Probabilities for Tokens')
     parser.add_argument('--postQuerySleep', type=float, default=0.5, help='Sleep time after each query')
     parser.add_argument('--numTrials', type=int, default=1, help='Number of trials -- each trial will use different values due to provider caching. Each trial will do 2 queries.')
     parser.add_argument('--temps', type=float, nargs='+', default=[0.1, 0.5, 1.0], help='List of temperature values')
     parser.add_argument('--topps', type=float, nargs='+', default=[0.2, 0.5, 0.9], help='List of top-p values')
-    parser.add_argument('--exampleCounts', type=float, nargs='+', default=[2, 4, 8], help='List of top-p values')
+    parser.add_argument('--exampleCounts', type=float, nargs='+', default=[2, 4], help='List of top-p values')
     
     args = parser.parse_args()
+
+    if args.reasoning:
+        IS_REASONING_MODEL = True
 
     if args.useCOT:
         outcsvPrefix = 'COT'
     else:
         outcsvPrefix = 'simple'
 
-    if args.includeLogProbs:
-        outcsvPrefix += '-withLogProbs'
+    if not IS_REASONING_MODEL:
+        if args.includeLogProbs:
+            outcsvPrefix += '-withLogProbs'
+    else:
+        args.temps = [-1.0]
+        args.topps = [-1.0]
 
     parser.add_argument('--outputCSV', type=str, default=f'{outcsvPrefix}-inference-results-{args.modelName.split("/")[-1]}.csv', help='Output CSV file name')
 
@@ -310,6 +316,7 @@ async def main():
     print(f"Model Name: {args.modelName}")
     print(f"Use Azure: {args.useAzure}")
     print(f"Use COT: {args.useCOT}")
+    print(f"Is Reasoning Model: {IS_REASONING_MODEL}")
     print(f"Include Log Probs: {args.includeLogProbs}")
     print(f"Output CSV: {args.outputCSV}")
     print(f"Post Query Sleep: {args.postQuerySleep}")
