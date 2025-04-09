@@ -60,8 +60,10 @@ dtypes['isTrain'] = np.int64
 def cleanup_responses(x):
     #print('input:', x)
     if not (str(x) == '<NA>'):
-        matches = re.finditer(r'(Bandwidth|Compute)', x, re.MULTILINE)
+        matches = re.finditer(r'([Bb]andwidth|[Cc]ompute)', x, re.MULTILINE)
         matches = [m for m in matches]
+        if len(matches) == 0:
+            return '<NA>'
         if len(matches) > 1:
             # just take the last match
             print('\tMore than 1 match, taking last one!')
@@ -70,7 +72,7 @@ def cleanup_responses(x):
             assert len(matches) == 1
         for match in matches:
             m = match.group()
-            return m
+            return m.title()
 
     print(f'returning NA for [{x}]')
     assert False, "this should never be reached!"
@@ -198,8 +200,13 @@ def read_results_csv(csvFile):
 
     # do some response cleanup for returned strings that have more than 1 token
     df['llmResponse'] = df['llmResponse'].apply(cleanup_responses)
+
     # check if the LLM produced the correct answer
     df['isLLMCorrect'] = df.apply(lambda x: x['answer'] == x['llmResponse'], axis=1)
+
+    # some of the 'llmResponse' columns are '<NA>' after cleanup for no matches
+    # make the response the opposite value -- so it's counted as wrong
+    df['llmResponse'] = df.apply(lambda x: x['answer'] if x['isLLMCorrect'] else ('Compute' if x['answer'] == 'Bandwidth' else 'Bandwidth'), axis=1)
     
     return (df, modelName, isZeroShot, isSASS, isTrainedModel)
 
