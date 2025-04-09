@@ -256,8 +256,8 @@ async def generate_chat_histories(numTrials, exampleCounts, msgType='simple', se
         maxBand, peakPerf = gen_random_roofline(50.0, 893.8, 2535.8, 7068.9)
         bbSample = gen_x_samples_from_roofline(maxBand, peakPerf, 1, 'BB')
         cbSample = gen_x_samples_from_roofline(maxBand, peakPerf, 1, 'CB')
-        trialValues.append((maxBandEx, peakPerfEx, bbSample[0][0], bbSample[0][1]))
-        trialValues.append((maxBandEx, peakPerfEx, cbSample[0][0], cbSample[0][1]))
+        trialValues.append((maxBand, peakPerf, bbSample[0][0], bbSample[0][1]))
+        trialValues.append((maxBand, peakPerf, cbSample[0][0], cbSample[0][1]))
 
 
     # we're going to loop over this array for each temp and topp value
@@ -284,6 +284,7 @@ async def main():
     parser.add_argument('--useAzure', action='store_true', default=False, help='Flag to use Azure')
     parser.add_argument('--useCOT', action='store_true', default=False, help='Flag to use COT instead of simple prompt')
     parser.add_argument('--reasoning', action='store_true', default=False, help='Indicate if the model uses reasoning, to avoid passing topp and temp args')
+    parser.add_argument('--yes', action='store_true', default=False, help='Skip user confirmation prior to running')
     parser.add_argument('--includeLogProbs', action='store_true', default=False, help='Record Lob Probabilities for Tokens')
     parser.add_argument('--postQuerySleep', type=float, default=0.5, help='Sleep time after each query')
     parser.add_argument('--numTrials', type=int, default=1, help='Number of trials -- each trial will use different values due to provider caching. Each trial will do 2 queries.')
@@ -336,11 +337,15 @@ async def main():
 
     chatHistories = await generate_chat_histories(args.numTrials, args.exampleCounts, msgType='cot' if args.useCOT else 'simple')
 
+    # check with the user before continuing
     print('------------------------------------------------\n\n')
     print('Will start collecting data, press ENTER to confirm settings are correct!')
     print('If output CSV file exists, will be appended to!')
     print('Total Number of LLM queries to be made:', len(chatHistories)*len(temps)*len(topps))
-    input()
+
+    if not args.yes:
+        input()
+
     print('Starting data collection!')
 
     await run_all_trials(args.outputCSV, args.modelName, temps, topps, chatHistories, args.postQuerySleep, args.useAzure, args.useCOT, incLogProbs)
