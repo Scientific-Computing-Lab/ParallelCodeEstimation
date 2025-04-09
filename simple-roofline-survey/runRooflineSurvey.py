@@ -345,5 +345,7 @@ async def main():
 
     await run_all_trials(args.outputCSV, args.modelName, temps, topps, chatHistories, args.postQuerySleep, args.useAzure, args.useCOT, incLogProbs)
 
+    print('Done gathering data! Results saved to:', args.outputCSV)
+
 if __name__ == "__main__":
     asyncio.run(main())
