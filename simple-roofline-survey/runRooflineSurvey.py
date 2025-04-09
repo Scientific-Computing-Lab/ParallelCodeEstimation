@@ -289,9 +289,13 @@ async def main():
     parser.add_argument('--numTrials', type=int, default=1, help='Number of trials -- each trial will use different values due to provider caching. Each trial will do 2 queries.')
     parser.add_argument('--temps', type=float, nargs='+', default=[0.1, 0.5, 1.0], help='List of temperature values')
     parser.add_argument('--topps', type=float, nargs='+', default=[0.2, 0.5, 0.9], help='List of top-p values')
-    parser.add_argument('--exampleCounts', type=float, nargs='+', default=[2, 4], help='List of top-p values')
+    parser.add_argument('--exampleCounts', type=float, nargs='+', default=[2, 4, 8], help='List of top-p values')
     
     args = parser.parse_args()
+
+    temps = [-1.0]
+    topps = [-1.0]
+    incLogProbs = False
 
     if args.reasoning:
         IS_REASONING_MODEL = True
@@ -302,11 +306,11 @@ async def main():
         outcsvPrefix = 'simple'
 
     if not IS_REASONING_MODEL:
+        temps = args.temps
+        topps = args.topps
         if args.includeLogProbs:
+            incLogProbs = True
             outcsvPrefix += '-withLogProbs'
-    else:
-        args.temps = [-1.0]
-        args.topps = [-1.0]
 
     parser.add_argument('--outputCSV', type=str, default=f'{outcsvPrefix}-inference-results-{args.modelName.split("/")[-1]}.csv', help='Output CSV file name')
 
@@ -321,8 +325,8 @@ async def main():
     print(f"Output CSV: {args.outputCSV}")
     print(f"Post Query Sleep: {args.postQuerySleep}")
     print(f"Number of Trials: {args.numTrials}")
-    print(f"Temperatures: {args.temps}")
-    print(f"Top-p Values: {args.topps}")
+    print(f"Temperatures: {temps}")
+    print(f"Top-p Values: {topps}")
     print(f"Example Counts: {args.exampleCounts}")
 
     if args.apiKey != '':
@@ -335,11 +339,11 @@ async def main():
     print('------------------------------------------------\n\n')
     print('Will start collecting data, press ENTER to confirm settings are correct!')
     print('If output CSV file exists, will be appended to!')
-    print('Total Number of LLM queries to be made:', len(chatHistories)*len(args.temps)*len(args.topps))
+    print('Total Number of LLM queries to be made:', len(chatHistories)*len(temps)*len(topps))
     input()
     print('Starting data collection!')
 
-    await run_all_trials(args.outputCSV, args.modelName, args.temps, args.topps, chatHistories, args.postQuerySleep, args.useAzure, args.useCOT, args.includeLogProbs)
+    await run_all_trials(args.outputCSV, args.modelName, temps, topps, chatHistories, args.postQuerySleep, args.useAzure, args.useCOT, incLogProbs)
 
 if __name__ == "__main__":
     asyncio.run(main())
